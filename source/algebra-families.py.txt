@@ -1,0 +1,85 @@
+"""Year 5 equations and picture patterns: linked 3-part sets in the CSSE style. Every answer is computed."""
+from make_practice_tests import NAMES
+
+def eq_solve(R):
+    x1, a = R.randint(3, 40), R.randint(5, 60)
+    k, x2, c = R.randint(3, 9), R.randint(3, 15), R.randint(2, 30)
+    p, q = R.sample(range(2, 8), 2); p, q = max(p, q), min(p, q); x3 = R.randint(2, 12); d = R.randint(1, 20); e = p * x3 - d - q * x3
+    if e <= 0: e += (q + 1) * 3; d = p * x3 - q * x3 - e
+    if d <= 0: return eq_solve(R)
+    v = R.choice("xyna")
+    return ("Solve these equations.", [
+        (f"{v} + {a} = {x1 + a}", str(x1), f"Take {a} from both sides: {v} = {x1 + a} − {a} = {x1}."),
+        (f"{k}{v} + {c} = {k * x2 + c}", str(x2), f"Take {c} from both sides: {k}{v} = {k * x2}. Divide by {k}: {v} = {x2}."),
+        (f"{p}{v} − {d} = {q}{v} + {e}", str(x3), f"Take {q}{v} from both sides: {p - q}{v} − {d} = {e}. Add {d}: {p - q}{v} = {e + d}. So {v} = {x3}.")])
+
+def eq_think(R):
+    a, b, c = R.sample(NAMES, 3)
+    n1, m1, s1 = R.randint(3, 20), R.randint(2, 6), R.randint(2, 20)
+    n2 = R.randint(2, 15) * 2; s2 = R.randint(1, 9)
+    n3 = R.randint(8, 25); k = R.randint(2, 4); add = R.randint(1, 6); sub = n3 - add   # (k+1)n - sub = kn + add
+    if sub <= 0: return eq_think(R)
+    return ("Think of a number.", [
+        (f"{a} thinks of a number, multiplies it by {m1} and adds {s1}. The answer is {n1 * m1 + s1}. What was the number?", str(n1),
+         f"Work backwards: {n1 * m1 + s1} − {s1} = {n1 * m1}. {n1 * m1} ÷ {m1} = {n1}."),
+        (f"{b} thinks of a number, halves it and takes away {s2}. The answer is {n2 // 2 - s2}. What was the number?", str(n2),
+         f"Work backwards: {n2 // 2 - s2} + {s2} = {n2 // 2}. Double it: {n2}."),
+        (f"{c} thinks of a number. {k + 1} times the number take away {sub} gives the same answer as {k} times the number add {add}. What is the number?", str(n3),
+         f"({k + 1} × n) − {sub} = ({k} × n) + {add}. Take {k} × n from both sides: n − {sub} = {add}, so n = {add} + {sub} = {n3}.")])
+
+SYMS = [("□", "△"), ("★", "●"), ("♦", "■")]
+
+def eq_symbols(R):
+    s, t = R.choice(SYMS); a, b = R.randint(2, 15), R.randint(2, 15)
+    while a == b: b = R.randint(2, 15)
+    return (f"Each shape stands for a number.\n{s} + {s} + {t} = {2 * a + b}\n{s} + {t} = {a + b}", [
+        (f"What is {s}?", str(a), f"The first line has one more {s} than the second. {2 * a + b} − {a + b} = {a}, so {s} = {a}."),
+        (f"What is {t}?", str(b), f"{s} + {t} = {a + b}, so {t} = {a + b} − {a} = {b}."),
+        (f"What is {s} × {t} − {s}?", str(a * b - a), f"{a} × {b} = {a * b}. {a * b} − {a} = {a * b - a}.")])
+
+def eq_two(R):
+    a, b = R.randint(8, 60), R.randint(2, 40)
+    if a == b: a += 3
+    if a < b: a, b = b, a
+    S, D = a + b, a - b
+    return (f"Two numbers add up to {S}. Their difference is {D}.", [
+        ("What is the larger number?", str(a), f"Add the total and the difference: {S} + {D} = {2 * a}. Halve it: {a}."),
+        ("What is the smaller number?", str(b), f"{S} − {a} = {b}."),
+        ("What do the two numbers multiply to make?", str(a * b), f"{a} × {b} = {a * b}.")])
+
+def eq_balance_fixed(R):
+    fr, big = R.choice([("apples", "melon"), ("oranges", "pineapple"), ("pears", "cabbage"), ("lemons", "coconut")])
+    f = R.randrange(80, 200, 10); j = R.randint(3, 9); m = f * j; n = R.randint(2, 6); k = R.randint(2, 4)
+    return (f"{n} {fr} and 1 {big} weigh {n * f + m} g. The {big} weighs {m} g. All the {fr} weigh the same.", [
+        (f"How much does 1 of the {fr} weigh?", f"{f} g", f"{n * f + m} − {m} = {n * f}. {n * f} ÷ {n} = {f} g."),
+        (f"How much do {k} {big}s and {n + 3} {fr} weigh?", f"{k * m + (n + 3) * f} g", f"{k} × {m} = {k * m}. {n + 3} × {f} = {(n + 3) * f}. Total {k * m + (n + 3) * f} g."),
+        (f"How many {fr} balance 1 {big}?", str(j), f"{m} ÷ {f} = {j}.")])
+
+EQ = [eq_solve, eq_think, eq_symbols, eq_two, eq_balance_fixed]
+
+def eq(R):
+    return R.choice(EQ)(R)
+
+# ---- picture patterns: pic "pattern <kind>" draws patterns 1, 2 and 3 ----
+PATTERNS = {
+    "sq":    ("matchsticks", lambda n: 3 * n + 1, "Each new square adds 3 matchsticks to the first 1. Number of matchsticks = 3 × pattern number + 1."),
+    "tri":   ("matchsticks", lambda n: 2 * n + 1, "Each new triangle adds 2 matchsticks. Number of matchsticks = 2 × pattern number + 1."),
+    "house": ("matchsticks", lambda n: 5 * n + 1, "Each new house adds 5 matchsticks. Number of matchsticks = 5 × pattern number + 1."),
+    "dotL":  ("dots", lambda n: 2 * n + 1, "Each pattern adds one dot to each arm. Number of dots = 2 × pattern number + 1."),
+    "plus":  ("tiles", lambda n: 4 * n + 1, "Each pattern adds one tile to each of the 4 arms. Number of tiles = 4 × pattern number + 1."),
+    "tsq":   ("tiles", lambda n: n * n, "Pattern n is a square n tiles wide, so it has n × n tiles."),
+    "rect":  ("dots", lambda n: n * (n + 1), "Pattern n is n rows of n + 1 dots, so it has n × (n + 1) dots."),
+}
+
+def pattern(R):
+    kind = R.choice(list(PATTERNS)); what, f, rule = PATTERNS[kind]
+    n1 = R.randint(4, 12); n2 = R.choice([10, 12, 15, 20, 25, 30, 50]) if kind not in ("tsq", "rect") else R.randint(8, 12)
+    n3 = R.randint(n2 + 3, n2 + 40) if kind not in ("tsq", "rect") else R.randint(13, 20)
+    unit = {"matchsticks": "matchsticks", "dots": "dots", "tiles": "tiles"}[what]
+    shape = {"sq": "a row of squares made of matchsticks", "tri": "a row of triangles made of matchsticks", "house": "a row of houses made of matchsticks",
+             "dotL": "L shapes made of dots", "plus": "crosses made of tiles", "tsq": "squares made of tiles", "rect": "rectangles made of dots"}[kind]
+    return (f"The pictures show the first three patterns in a sequence: {shape}.", [
+        (f"How many {unit} are needed for pattern {n1}?", str(f(n1)), f"Pattern 1, 2, 3 use {f(1)}, {f(2)}, {f(3)}. Keep going to pattern {n1}: {f(n1)}."),
+        (f"How many {unit} are needed for pattern {n2}?", str(f(n2)), f"{rule} For pattern {n2}: {f(n2)}."),
+        (f"Which pattern uses exactly {f(n3)} {unit}?", f"Pattern {n3}", f"{rule} Work backwards from {f(n3)}: Pattern {n3}.",
+         [f"Pattern {n3 - 1}", f"Pattern {n3 + 1}", f"Pattern {f(n3) // 2}" if f(n3) // 2 not in (n3, n3 - 1, n3 + 1) else f"Pattern {n3 + 2}"])], f"pattern {kind}")

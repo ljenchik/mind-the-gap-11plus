@@ -1,0 +1,129 @@
+"""Richer Year 5 families for skills whose practice-test family has too little variety. Every answer is computed."""
+from fractions import Fraction as F
+from decimal import Decimal as D
+from make_practice_tests import mixed, money, t12, t24, dur, NAMES
+
+def dz(x): s = format(D(x).normalize(), "f"); return s
+
+def units(R):
+    kind = R.choice([("km", "m", 1000), ("m", "cm", 100), ("kg", "g", 1000), ("l", "ml", 1000), ("cm", "mm", 10)])
+    big = D(R.randint(101, 989)) / (D(100) if kind[2] >= 100 else D(10))
+    if R.random() < .4: big = D(R.randint(11, 99)) / 10
+    small = R.randint(1050, 9950) // 10 * 10 if kind[2] == 1000 else R.randint(105, 995) if kind[2] == 100 else R.randint(15, 95)
+    p1 = (f"How many {kind[1]} are there in {dz(big)} {kind[0]}?", f"{dz(big * kind[2])} {kind[1]}", f"1 {kind[0]} = {kind[2]} {kind[1]}, so {dz(big)} × {kind[2]} = {dz(big * kind[2])} {kind[1]}.")
+    k2 = R.choice([k for k in [("km", "m", 1000), ("kg", "g", 1000), ("l", "ml", 1000), ("m", "cm", 100)] if k != kind])
+    sm = R.randint(1050, 9950) if k2[2] == 1000 else R.randint(105, 995)
+    p2 = (f"Write {sm} {k2[1]} in {k2[0]}.", f"{dz(D(sm) / k2[2])} {k2[0]}", f"{k2[2]} {k2[1]} = 1 {k2[0]}, so {sm} ÷ {k2[2]} = {dz(D(sm) / k2[2])} {k2[0]}.")
+    if R.random() < .5:
+        a, b = R.randint(2, 9), R.randint(1, 6)
+        p3 = (f"A rectangle is {a} m long and {b} m wide. What is its area in cm²?", f"{a * 100 * b * 100} cm²", f"{a} m = {a * 100} cm and {b} m = {b * 100} cm. {a * 100} × {b * 100} = {a * b * 10000} cm².")
+    else:
+        y = R.randint(2, 15)
+        p3 = (f"1 foot = 12 inches and 1 yard = 3 feet. How many inches are there in {y} yards?", str(36 * y), f"1 yard = 3 × 12 = 36 inches. {y} × 36 = {36 * y} inches.")
+    return ("Measures.", [p1, p2, p3])
+
+def money_(R):
+    p = R.choice([5, 10, 15, 20, 25, 30, 35, 40, 45, 60, 75, 12.5, 17.5]); N = R.choice(range(40, 961, 40))
+    v = D(str(p)) * N / 100
+    p1 = (f"Find {p:g}% of {N}.", dz(v), f"10% of {N} = {dz(D(N) / 10)}. Build up {p:g}% from 10%, 5% and 2.5%: {dz(v)}.")
+    price = R.randint(4, 60) * 5; off = R.choice([10, 15, 20, 25, 30, 40])
+    sale = price * (100 - off)  # pence
+    p2 = (f"A coat costs £{price}. In a sale it is {off}% cheaper. What is the sale price?", money(sale), f"{off}% of £{price} = {money(price * off)}. £{price} − {money(price * off)} = {money(sale)}.")
+    inc = R.choice([10, 20, 25, 50]); old = R.randint(4, 40) * (4 if inc == 25 else 2 if inc == 50 else 10 if inc == 10 else 5)
+    new = old * (100 + inc) // 100
+    p3 = (f"After a {inc}% increase, a ticket costs £{new}. What did it cost before?", f"£{old}", f"£{new} is {100 + inc}% of the old price. 1% = £{new} ÷ {100 + inc}, so 100% = £{old}.")
+    return ("Percentages.", [p1, p2, p3])
+
+def ratio(R):
+    r1, r2 = R.choice([(1, 2), (2, 3), (3, 4), (3, 5), (4, 5), (2, 7), (5, 7), (1, 4), (3, 7)]); part = R.randint(4, 25); tot = (r1 + r2) * part
+    p1 = (f"£{tot} is shared in the ratio {r1} : {r2}. How much is the larger share?", f"£{part * r2}", f"{r1 + r2} parts. £{tot} ÷ {r1 + r2} = £{part} a part. {r2} × £{part} = £{part * r2}.")
+    ppl = R.choice([2, 3, 4, 5, 6]); per = R.choice([15, 20, 25, 30, 40, 45, 50, 60, 75]); to = R.choice([n for n in range(2, 13) if n != ppl])
+    food = R.choice([("rice", "g"), ("flour", "g"), ("milk", "ml"), ("pasta", "g")])
+    p2 = (f"A recipe for {ppl} people uses {per * ppl} {food[1]} of {food[0]}. How much {food[0]} is needed for {to} people?", f"{per * to} {food[1]}", f"For 1 person: {per * ppl} ÷ {ppl} = {per} {food[1]}. For {to}: {per} × {to} = {per * to} {food[1]}.")
+    a, b = R.sample(NAMES, 2); d = R.randint(2, 20); bb = R.randint(5, 40); T = 2 * bb + d
+    p3 = (f"{a} and {b} share £{T}. {a} gets £{d} more than {b}. How much does {b} get?", f"£{bb}", f"Take away the extra £{d}: £{T - d}. Share equally: £{T - d} ÷ 2 = £{bb}.")
+    return ("Sharing.", [p1, p2, p3])
+
+def mach(R):
+    a = R.randint(2, 6); x0 = R.randint(2, 12); b = x0 * (a - 1); i1 = R.randint(3, 15); i2 = R.randint(x0 + 2, x0 + 20)
+    return (f"A number machine multiplies the input by {a}, then takes away {b}.", [
+        (f"What is the output when the input is {i1}?", str(a * i1 - b), f"{i1} × {a} = {a * i1}. {a * i1} − {b} = {a * i1 - b}."),
+        (f"The output is {a * i2 - b}. What was the input?", str(i2), f"Work backwards: {a * i2 - b} + {b} = {a * i2}. {a * i2} ÷ {a} = {i2}."),
+        ("Which input gives an output equal to the input?", str(x0), f"Try {x0}: {x0} × {a} = {a * x0}, and {a * x0} − {b} = {x0}.")])
+
+def ang(R):
+    ks = [k for k in range(2, 20) if 180 % (k + 1) == 0]
+    if R.random() < .5:
+        k = R.choice(ks); p1 = (f"Two angles on a straight line are x and {k}x. Find x.", f"{180 // (k + 1)}°", f"x + {k}x = {k + 1}x = 180°, so x = {180 // (k + 1)}°.")
+    else:
+        d = R.randrange(10, 140, 2); p1 = (f"Two angles on a straight line differ by {d}°. What is the smaller angle?", f"{(180 - d) // 2}°", f"180° − {d}° = {180 - d}°. Half of that is {(180 - d) // 2}°.")
+    if R.random() < .5:
+        x, y = R.randint(25, 80), R.randint(25, 80); p2 = (f"Two angles of a triangle are {x}° and {y}°. What is the third angle?", f"{180 - x - y}°", f"180° − {x}° − {y}° = {180 - x - y}°.")
+    else:
+        top = R.randrange(20, 141, 2); p2 = (f"An isosceles triangle has a top angle of {top}°. What is each of the two equal angles?", f"{(180 - top) // 2}°", f"180° − {top}° = {180 - top}°. Half of that is {(180 - top) // 2}°.")
+    n, nm = R.choice([(5, "pentagon"), (6, "hexagon"), (8, "octagon"), (9, "nonagon"), (10, "decagon"), (12, "12-sided shape")])
+    if R.random() < .5: p3 = (f"What is each inside angle of a regular {nm}?", f"{(n - 2) * 180 // n}°", f"The inside angles add up to {(n - 2) * 180}°. {(n - 2) * 180} ÷ {n} = {(n - 2) * 180 // n}°.")
+    else: p3 = (f"What is each outside angle of a regular {nm}?", f"{360 // n}°", f"The outside angles of any shape add up to 360°. 360 ÷ {n} = {360 // n}°.")
+    return ("Angles.", [p1, p2, p3])
+
+def time_(R):
+    L = R.randrange(65, 180, 5); st = R.randrange(10 * 60, 20 * 60, 5)
+    p1 = (f"A film lasts {dur(L)}. It starts at {t12(st)}. When does it end?", t12(st + L), f"Add the hours, then the minutes: {t12(st + L)}.", [t12(st + L + 60), t12(st + L - 10), t12(st + L + 10)])
+    dep = R.randrange(6 * 60, 12 * 60, 1); jr = R.randint(75, 230)
+    p2 = (f"A train leaves at {t24(dep)} and arrives at {t24(dep + jr)}. How long is the journey?", dur(jr), f"Count on from {t24(dep)} to the next hour, then to {t24(dep + jr)}: {dur(jr)}.", [dur(jr + 40), dur(jr - 10), dur(jr + 60)])
+    n = R.choice([2, 3, 4]); ep = R.randrange(20, 56); s0 = R.randrange(15 * 60, 20 * 60, 5)
+    p3 = (f"{['', '', 'Two', 'Three', 'Four'][n]} {ep}-minute episodes are watched one after another, starting at {t24(s0)}. At what time does the last one finish?", t24(s0 + n * ep), f"{n} × {ep} = {n * ep} minutes = {dur(n * ep)}. {t24(s0)} + {dur(n * ep)} = {t24(s0 + n * ep)}.", [t24(s0 + (n - 1) * ep), t24(s0 + n * ep + 10), t24(s0 + n * ep - 60)])
+    return ("Time.", [p1, p2, p3])
+
+def mean(R):
+    while True:
+        L = R.sample(range(4, 40), 5)
+        if sum(L) % 5 == 0: break
+    m4 = R.randint(5, 20); m5 = m4 + R.choice([1, 2, 3, -1])
+    while True:
+        nb, ng = R.choice([(3, 2), (2, 3), (4, 2), (3, 3), (2, 4), (4, 4), (5, 3)]); bw, gw = R.randint(28, 48), R.randint(28, 48)
+        if bw != gw and (nb * bw + ng * gw) % (nb + ng) == 0: break
+    W = {2: "Two", 3: "Three", 4: "Four", 5: "Five"}; T = {5: "five", 6: "six", 8: "eight"}
+    return ("Averages.", [
+        (f"Find the mean of {', '.join(map(str, L[:-1]))} and {L[-1]}.", str(sum(L) // 5), f"Total {sum(L)}. {sum(L)} ÷ 5 = {sum(L) // 5}."),
+        (f"The mean of four numbers is {m4}. A fifth number is added and the mean becomes {m5}. What is the fifth number?", str(5 * m5 - 4 * m4), f"4 × {m4} = {4 * m4}. 5 × {m5} = {5 * m5}. {5 * m5} − {4 * m4} = {5 * m5 - 4 * m4}."),
+        (f"{W[nb]} boys have a mean weight of {bw} kg. {W[ng]} girls have a mean weight of {gw} kg. What is the mean weight of all {T.get(nb + ng, str(nb + ng))} children?", f"{(nb * bw + ng * gw) // (nb + ng)} kg", f"{nb} × {bw} = {nb * bw} kg and {ng} × {gw} = {ng * gw} kg. {nb * bw + ng * gw} ÷ {nb + ng} = {(nb * bw + ng * gw) // (nb + ng)} kg.")])
+
+def rect(R):
+    L, Wd = R.randint(6, 25), R.randint(2, 12)
+    while L == Wd: Wd = R.randint(2, 12)
+    P = 2 * (L + Wd)
+    s = R.choice([4, 6, 8, 10, 12]); l2 = R.choice([d for d in range(s + 1, s * s + 1) if s * s % d == 0 and d <= 36])
+    a, b = R.randint(3, 9), R.randint(2, 8); c = R.randint(2, a + b - 1)
+    return (f"Rectangles.", [
+        (f"A rectangle has a perimeter of {P} cm. It is {L} cm long. How wide is it?", f"{Wd} cm", f"Half the perimeter is {P // 2} cm = length + width. {P // 2} − {L} = {Wd} cm."),
+        (f"A rectangle {l2} cm long has the same area as a square with sides of {s} cm. How wide is the rectangle?", f"{s * s // l2} cm", f"The square's area is {s} × {s} = {s * s} cm². {s * s} ÷ {l2} = {s * s // l2} cm."),
+        (f"Rectangle A is {a} cm by {b} cm. Rectangle B has the same perimeter and is {c} cm wide. How long is B?", f"{a + b - c} cm", f"A's perimeter is 2 × ({a} + {b}) = {2 * (a + b)} cm, so length + width = {a + b} cm. {a + b} − {c} = {a + b - c} cm.")])
+
+def pow_(R):
+    b, e = R.choice([(2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (3, 3), (3, 4), (3, 5), (4, 3), (4, 4), (5, 3), (5, 4), (6, 3), (7, 3), (10, 4), (10, 6), (9, 3), (8, 3)])
+    x, y = R.choice([(3, 4), (2, 5), (4, 5), (2, 6), (3, 5), (2, 3)])
+    k = R.randint(2, 9); ex = R.choice([2, 3])
+    return ("Powers. 7⁵ means 7 × 7 × 7 × 7 × 7.", [
+        (f"Fill in the box: {b} to the power □ = {b ** e}", str(e), "Keep multiplying by " + str(b) + ": " + ", ".join(str(b ** i) for i in range(1, e + 1)) + f". That is {e} lots of {b}."),
+        (f"Which is bigger, {x} to the power {y} or {y} to the power {x}?     {x} to the power {y}     {y} to the power {x}", f"{x} to the power {y}" if x ** y > y ** x else f"{y} to the power {x}", f"{x} to the power {y} = {x ** y} and {y} to the power {x} = {y ** x}."),
+        (f"What is {k}² + {k}³?", str(k * k + k ** 3), f"{k}² = {k * k} and {k}³ = {k ** 3}. {k * k} + {k ** 3} = {k * k + k ** 3}.")])
+
+ASN = [("The sum of an odd and an even number is odd.", "Always"), ("A multiple of 6 is even.", "Always"), ("A multiple of 6 is a multiple of 4.", "Sometimes"),
+       ("A square number ends in 7.", "Never"), ("A square number ends in 6.", "Sometimes"), ("The product of three whole numbers in a row (like 4 × 5 × 6) is even.", "Always"),
+       ("Adding 10 to a whole number changes its ones digit.", "Never"), ("A number whose digits add up to 12 is a multiple of 3.", "Always"), ("A number whose digits add up to 12 is a multiple of 9.", "Never"),
+       ("A multiple of 5 is a multiple of 10.", "Sometimes"), ("Halving an even number gives an odd number.", "Sometimes"), ("A prime number is a multiple of 3.", "Sometimes"),
+       ("A prime number bigger than 5 ends in 5.", "Never"), ("A number multiplied by 0 gives 0.", "Always"), ("A whole number multiplied by 2 and then by 5 ends in 0.", "Always"),
+       ("Two square numbers add up to a square number.", "Sometimes"), ("A cube number is odd.", "Sometimes"), ("Taking a number away from itself gives 1.", "Never"),
+       ("Two multiples of 7 add up to a multiple of 7.", "Always"), ("A factor of 12 is a factor of 24.", "Always"), ("A factor of 24 is a factor of 12.", "Sometimes"),
+       ("Two multiples of 3 add up to a multiple of 6.", "Sometimes"), ("A whole number bigger than 1 has at least two factors.", "Always"), ("The difference between two even numbers is odd.", "Never"),
+       ("Multiplying a whole number by 10 gives a number ending in 0.", "Always"), ("A shape with four sides and four right angles is a square.", "Sometimes"), ("A triangle has two right angles.", "Never"),
+       ("A square is a rectangle.", "Always"), ("A rectangle is a square.", "Sometimes"), ("The angles of a triangle add up to 180°.", "Always"),
+       ("A pentagon has five right angles.", "Never"), ("Three odd numbers add up to an odd number.", "Always"), ("A number ending in 25 is a multiple of 25.", "Always"),
+       ("A multiple of 4 ends in 2.", "Sometimes"), ("A multiple of 4 ends in 5.", "Never"), ("Two whole numbers in a row (like 7 and 8) add up to an odd number.", "Always"),
+       ("A number that divides by 9 also divides by 3.", "Always"), ("A number that divides by 3 also divides by 9.", "Sometimes"), ("A fraction with a bigger numerator than denominator is less than 1.", "Never"),
+       ("A decimal with two decimal places is less than 1.", "Sometimes"), ("Rounding a number to the nearest 10 makes it bigger.", "Sometimes"), ("A whole number multiplied by itself is bigger than the number.", "Sometimes"),
+       ("Of two fractions with the same numerator, the one with the bigger denominator is smaller.", "Always"), ("A multiple of 2 and of 5 is a multiple of 10.", "Always")]
+WHY = {"Always": "It works for every number you try, and you can see why.", "Never": "It can never happen.", "Sometimes": "It is true for some numbers but not others – find one of each."}
+
+FAMS = {"units": units, "money": money_, "ratio": ratio, "mach": mach, "ang": ang, "time": time_, "mean": mean, "rect": rect, "pow": pow_}

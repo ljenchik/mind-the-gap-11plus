@@ -1,0 +1,127 @@
+/* Auto-marking for exam-style answers. Pure functions, no page needed.
+   mark(spec, input) -> true / false.  input is a string, or an array of strings for spec.k === "multi". */
+const MK = (() => {
+  const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a || 1; };
+  const rat = (n, d = 1) => { if (d < 0) { n = -n; d = -d; } const g = gcd(n, d); return [n / g, d / g]; };
+  const eq = (a, b) => a && b && a[0] === b[0] && a[1] === b[1];
+  const VUL = { "½": [1, 2], "⅓": [1, 3], "⅔": [2, 3], "¼": [1, 4], "¾": [3, 4], "⅕": [1, 5], "⅖": [2, 5], "⅗": [3, 5], "⅘": [4, 5], "⅙": [1, 6], "⅚": [5, 6], "⅛": [1, 8], "⅜": [3, 8], "⅝": [5, 8], "⅞": [7, 8] };
+  const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹", SUB = "₀₁₂₃₄₅₆₇₈₉";
+  const deSS = s => s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]/g, c => { const i = SUP.indexOf(c); return i >= 0 ? i : SUB.indexOf(c); });
+  function clean(s) {
+    s = String(s == null ? "" : s).replace(/[−–—‐-‒]/g, "-").replace(/[×✕]/g, "x").replace(/[⁄∕]/g, "/").replace(/ /g, " ");
+    s = deSS(s);
+    s = s.replace(/([0-9])\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (m, w, f) => w + " " + VUL[f][0] + "/" + VUL[f][1]).replace(/[½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, f => VUL[f][0] + "/" + VUL[f][1]);
+    return s.trim();
+  }
+  /* any single number: whole, decimal, fraction, mixed number -> [n, d] or null */
+  function value(s) {
+    s = clean(s).replace(/,(?=\d{3}(\D|$))/g, "").replace(/\s+/g, " ");
+    let m;
+    if ((m = /^(-?)(\d*)\.(\d+)$/.exec(s)) || (m = /^(-?)(\d+)\.?$/.exec(s))) {
+      const frac = m[3] || "", n = parseInt((m[2] || "0") + frac, 10); if (!isFinite(n)) return null;
+      return rat(m[1] ? -n : n, Math.pow(10, frac.length));
+    }
+    if ((m = /^(-?)(\d+) (\d+)\/(\d+)$/.exec(s))) { const d = +m[4]; if (!d) return null; const n = +m[2] * d + +m[3]; return rat(m[1] ? -n : n, d); }
+    if ((m = /^(-?)(\d+)\/(\d+)$/.exec(s))) { const d = +m[3]; if (!d) return null; return rat(m[1] ? -+m[2] : +m[2], d); }
+    return null;
+  }
+  const UNIT = /\s*(?:(?:sq|square)\.?\s*)?(?:cm2|cm²|mm2|mm²|m2|m²|km2|km²|cm|mm|km|kg|mg|g|ml|l|litres?|liters?|m|minutes?|mins?|min|hours?|hrs?|hr|h|years?|yrs?|days?|degrees?|deg|°\s*[cf]?|º|%|pence|pounds?|dollars?|p|points?|goals?|penalties|terms?|marks?|games?|people|children|sweets?|stickers?)\s*$/i;
+  function stripUnits(s) {
+    s = clean(s).replace(/^[£$€]\s*/, "").replace(/^(term|number|n\s*=|x\s*=|y\s*=|=)\s*/i, "");
+    for (let i = 0; i < 3; i++) { const t = s.replace(UNIT, ""); if (t === s) break; s = t.trim(); }
+    return s.replace(/^[£$€]\s*/, "").trim();
+  }
+  const num = s => value(stripUnits(s));
+  const V = s => value(s);  // spec values are written plainly
+  function reduced(s) {  // is a typed fraction / mixed number in simplest form (or a whole number)?
+    s = clean(s).replace(/\s+/g, " ");
+    let m;
+    if ((m = /^-?(\d+)$/.exec(s))) return true;
+    if ((m = /^-?(?:\d+ )?(\d+)\/(\d+)$/.exec(s))) return gcd(+m[1], +m[2]) === 1;
+    return false;
+  }
+  function timeOf(s) {
+    s = clean(s).toLowerCase().replace(/\b(the )?next day\b|two days later|tomorrow/g, "").trim();
+    let ap = null; const a = /(a\.?m\.?|p\.?m\.?)\s*$/.exec(s); if (a) { ap = a[1][0]; s = s.slice(0, a.index).trim(); }
+    let h, m, mm;
+    if ((mm = /^(\d{1,2})\s*[:.h]\s*(\d{2})$/.exec(s))) { h = +mm[1]; m = +mm[2]; }
+    else if ((mm = /^(\d{1,2})(\d{2})$/.exec(s))) { h = +mm[1]; m = +mm[2]; }
+    else if ((mm = /^(\d{1,2})$/.exec(s)) && ap) { h = +mm[1]; m = 0; }
+    else return null;
+    if (m > 59 || h > 24 || (ap && (h < 1 || h > 12))) return null;
+    if (ap) { h = h % 12 + (ap === "p" ? 12 : 0); }
+    return { t: (h % 24) * 60 + m, ap: !!ap };
+  }
+  function durOf(s, unit) {
+    s = clean(s).toLowerCase().replace(/\band\b/g, " ").replace(/\s+/g, " ").trim();
+    let m, tot = 0, hit = false;
+    if ((m = /^(\d+):(\d{2})$/.exec(s))) return +m[1] * 60 + +m[2];
+    const h = /(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|hr|h)(?![a-z])/.exec(s), mi = /(\d+)\s*(?:minutes?|mins?|min|m)(?![a-z])/.exec(s);
+    if (h) { tot += Math.round(parseFloat(h[1]) * 60); hit = true; }
+    if (mi) { tot += +mi[1]; hit = true; }
+    if (hit) return tot;
+    if ((m = /^(\d+(?:\.\d+)?)$/.exec(s)) && unit) return Math.round(parseFloat(m[1]) * (unit === "h" ? 60 : 1));
+    return null;
+  }
+  function tokens(s) {
+    s = clean(s).toLowerCase().replace(/\b(between|from|the|is|are|a|an)\b/g, " ").replace(/\s*(a\.?m\.?|p\.?m\.?)(?![a-z])/g, " ");
+    return s.split(/\s+and\s+|\s*[,;&–-]\s*|\s+to\s+|\s+/).map(x => x.trim()).filter(Boolean).map(normTok);
+  }
+  function normTok(t) {
+    let m;
+    if ((m = /^(\d{1,2})[:.](\d{2})$/.exec(t))) return m[2] === "00" ? +m[1] + "/1" : +m[1] + ":" + m[2];
+    if (/^\d/.test(t)) { const v = value(t); return v ? v[0] + "/" + v[1] : t; }
+    return t.slice(0, 3);
+  }
+  const normText = s => clean(s).toLowerCase().replace(/[-–,.]/g, " ").replace(/\band\b/g, " ").replace(/\s+/g, " ").trim();
+  const sameSet = (a, b) => a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+  const nums = s => clean(s).split(/\s*(?:,|;|\band\b|\s)\s*/i).filter(Boolean);
+
+  function mark(spec, input) {
+    if (!spec) return false;
+    if (spec.k === "multi") {
+      const inp = Array.isArray(input) ? input : [];
+      return spec.parts.every((p, i) => p.optional ? true : mark(p, inp[i]));
+    }
+    if (spec.k === "lin") {
+      const a = (Array.isArray(input) ? input : []).map(x => num(x || ""));
+      if (a.length !== 2 || !a[0] || !a[1] || a[0][1] !== 1 || a[1][1] !== 1) return false;
+      const g = a[0][0], p = a[1][0];
+      return g >= 0 && p >= 0 && spec.a * g + spec.b * p === spec.N && !spec.excl.some(e => e[0] === g && e[1] === p);
+    }
+    const s = input == null ? "" : String(input).trim();
+    if (!s) return false;
+    switch (spec.k) {
+      case "n": {
+        const x = num(s); if (!x) return false;
+        if (spec.dec && /\//.test(clean(s))) return false;
+        if ([spec.v, ...(spec.alt || [])].some(v => eq(x, V(v)))) return true;
+        const u = (/(kg|km|ml|mm|cm|g|m|l)\s*$/i.exec(clean(s)) || [])[1];
+        return !!u && (spec.au || []).some(([v, un]) => un === u.toLowerCase() && eq(x, V(v)));
+      }
+      case "f": {
+        const t = stripUnits(s), x = value(t); if (!x) return false;
+        if (!eq(x, V(spec.v))) return false;
+        if (spec.den) { const q = /^(-?\d+)\s*\/\s*(\d+)$/.exec(clean(t)); return !!q && +q[2] === spec.den; }
+        return spec.strict ? reduced(t) : true;
+      }
+      case "t": {
+        const x = timeOf(s); if (!x) return false;
+        if (spec.h12 && !x.ap) return x.t % 720 === spec.v % 720;
+        return x.t === spec.v % 1440;
+      }
+      case "d": { const x = durOf(s, spec.u); return x != null && x === spec.v; }
+      case "c": { const m = /^\(?\s*(-?\d+)\s*[,; ]\s*(-?\d+)\s*\)?$/.exec(clean(s)); return !!m && +m[1] === spec.v[0] && +m[2] === spec.v[1]; }
+      case "ch": return s === spec.v;
+      case "list": { const a = nums(s).map(num); return a.length === spec.v.length && a.every((x, i) => x && eq(x, V(spec.v[i]))); }
+      case "set": return sameSet(tokens(s), spec.v.map(normTok));
+      case "pairs": { const t = tokens(s); return spec.v.some(p => sameSet(t, p.map(normTok))); }
+      case "x": return spec.v.some(v => normText(v) === normText(s));
+      case "dig": { const d = clean(s).replace(/\D/g, ""); if (d.length !== 3) return false; const [x, y, z] = d.split("").map(Number);
+        return x && y && z && new Set([x, y, z]).size === 3 && spec.a * (10 * x + y + z) === spec.T; }
+    }
+    return false;
+  }
+  return { mark, value, num, clean };
+})();
+if (typeof module !== "undefined") module.exports = MK;

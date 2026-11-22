@@ -1,0 +1,190 @@
+"""Creative, story-based CSSE-style families for the exam-like papers (PT11 onwards).
+Every answer is computed. Answers are phone-friendly: a whole number, money, a simple decimal, a time,
+a fraction, or a multiple-choice pick with a fixed list of options."""
+from itertools import product
+from math import gcd
+from make_practice_tests import money, NAMES
+
+DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+MONTHS = [("January", 31), ("February", 28), ("March", 31), ("April", 30), ("May", 31), ("June", 30), ("July", 31), ("August", 31), ("September", 30), ("October", 31), ("November", 30), ("December", 31)]
+
+def calendar(R):
+    mi = R.randint(0, 10); mn, ml = MONTHS[mi]; d0 = R.randint(0, 6); a = R.randint(12, ml)
+    nm, nl = MONTHS[mi + 1]; b = R.randint(3, 25)
+    off = (a - 1) % 7; dA = DAYS[(d0 + off) % 7]
+    total = ml - 1 + b; dB = DAYS[(d0 + total) % 7]
+    fri = sum(1 for d in range(ml) if (d0 + d) % 7 == 4)
+    return (f"In a year that is not a leap year, 1 {mn} is a {DAYS[d0]}.", [
+        (f"What day of the week is {a} {mn}?", dA, f"{a} {mn} is {a - 1} days after 1 {mn}. {a - 1} = {(a - 1) // 7} weeks and {off} day{'s' if off != 1 else ''}, so {off} day{'s' if off != 1 else ''} after {DAYS[d0]}: {dA}.", R.sample([d for d in DAYS if d != dA], 3)),
+        (f"How many Fridays are there in {mn}?", str(fri), f"{mn} has {ml} days: 4 full weeks and {ml - 28} more day{'s' if ml - 28 != 1 else ''}. Count the Fridays: {fri}."),
+        (f"What day of the week is {b} {nm}?", dB, f"From 1 {mn} to {b} {nm} is {ml - 1} + {b} = {total} days. {total} = {total // 7} weeks and {total % 7} day{'s' if total % 7 != 1 else ''}, so it is a {dB}.", R.sample([d for d in DAYS if d != dB], 3))])
+
+def league(R):
+    teams = R.sample(["Rovers", "City", "United", "Athletic", "Wanderers", "Town", "Rangers", "Albion"], 3)
+    w = [R.randint(2, 9) for _ in teams]; d = [R.randint(0, 5) for _ in teams]; l = [R.randint(0, 6) for _ in teams]
+    pts = [3 * a + b for a, b in zip(w, d)]
+    if len(set(pts)) < 3: return league(R)
+    gap = max(pts) - pts[2] + 1; needed = -(-gap // 3)
+    lines = "\n".join(f"{t}: won {a}, drew {b}, lost {c}" for t, a, b, c in zip(teams, w, d, l))
+    top = teams[pts.index(max(pts))]
+    return (f"In a football league a win scores 3 points, a draw 1 point and a loss 0 points.\n{lines}", [
+        (f"How many points do {teams[0]} have?", str(pts[0]), f"{w[0]} × 3 + {d[0]} × 1 = {pts[0]} points."),
+        ("Which team has the most points?", top, f"Points: {', '.join(f'{t} {p}' for t, p in zip(teams, pts))}. {top} have the most.", [t for t in teams if t != top]),
+        (f"{teams[2]} play more games and win them all. What is the smallest number of wins they need to have more points than every other team has now?", str(needed),
+         f"{teams[2]} have {pts[2]} and the leaders have {max(pts)}. They need more than {max(pts) - pts[2]} extra point{'s' if max(pts) - pts[2] != 1 else ''}, so {needed} win{'s' if needed != 1 else ''} ({needed * 3} points).")])
+
+def treasure(R):
+    x, y = R.randint(1, 4), R.randint(1, 4); m1 = R.randint(2, 5); m2 = R.randint(2, 6); m3 = R.randint(1, x + m1 - 1); m4 = R.randint(1, 3)
+    p1 = (x + m1, y + m2); p2 = (p1[0] - m3, p1[1] + m4)
+    kx, ky = R.randint(5, 9), R.randint(5, 9); pir = (kx, ky)
+    steps = abs(kx - p2[0]) + abs(ky - p2[1])
+    P = lambda a: f"({a[0]}, {a[1]})"
+    return (f"On a treasure map, Captain {R.choice(NAMES)} starts at the palm tree at {P((x, y))}.", [
+        (f"The captain walks {m1} squares right and {m2} squares up. Where is she now?", P(p1), f"x: {x} + {m1} = {p1[0]}. y: {y} + {m2} = {p1[1]}. So {P(p1)}.", [P((x + m2, y + m1)), P((p1[0], p1[1] - 1)), P((x + m1, y - m2 if y - m2 >= 0 else y + m2 + 1))]),
+        (f"Then the captain walks {m3} square{'s' if m3 > 1 else ''} left and {m4} square{'s' if m4 > 1 else ''} up. Where is she now?", P(p2), f"x: {p1[0]} − {m3} = {p2[0]}. y: {p1[1]} + {m4} = {p2[1]}. So {P(p2)}.", [P((p1[0] + m3, p2[1])), P((p2[1], p2[0])) if p2[0] != p2[1] else P((p2[0] + 1, p2[1])), P((p2[0], p1[1] - m4))]),
+        (f"The treasure is at {P(pir)}. The captain can only walk along the grid lines. What is the smallest number of squares the captain must walk to reach it?", str(steps),
+         f"Across: {abs(kx - p2[0])}. Up or down: {abs(ky - p2[1])}. {abs(kx - p2[0])} + {abs(ky - p2[1])} = {steps}.")])
+
+def digital_clock(R):
+    dgt = R.randint(1, 5); h = R.choice([7, 8, 9, 10, 11])
+    cnt = sum(1 for m in range(60) if str(dgt) in f"{h:02d}{m:02d}"[2:])
+    start = R.randint(6, 11) * 60 + R.choice([5, 10, 15, 20, 25, 35, 40, 50]); add = R.choice([95, 125, 145, 170, 205, 250])
+    end = start + add; e = f"{end // 60:02d}:{end % 60:02d}"
+    pal = [f"{hh}:{mm:02d}" for hh in range(1, 10) for mm in range(60) if f"{hh}{mm:02d}" == f"{hh}{mm:02d}"[::-1]]
+    return ("A digital clock shows hours and minutes, like 09:47.", [
+        (f"From {h:02d}:00 to {h:02d}:59, on how many minutes does the digit {dgt} appear in the minutes part?", str(cnt),
+         f"Minutes with a {dgt}: {dgt}0–{dgt}9 gives 10, plus x{dgt} in the other tens (0{dgt}, 1{dgt}, …) gives {cnt - 10}. Total {cnt}."),
+        (f"The clock shows {start // 60:02d}:{start % 60:02d}. What will it show {add} minutes later?", e, f"{add} minutes = {add // 60} h {add % 60} min. {start // 60:02d}:{start % 60:02d} + {add // 60} h {add % 60} min = {e}."),
+        ("A time like 1:21 or 4:54 reads the same backwards. How many times like this are there from 1:00 to 9:59?", str(len(pal)),
+         f"The minutes must be (any tens digit 0–5) then the hour digit again, e.g. 3:03, 3:13 … 3:53. That is 6 a hour × 9 hours = {len(pal)}.")])
+
+def dice(R):
+    t = R.choice([5, 6, 8, 9, 10]); ways = sum(1 for a, b in product(range(1, 7), repeat=2) if a + b == t)
+    k = R.choice([3, 4, 5, 6]); mult = sum(1 for a, b in product(range(1, 7), repeat=2) if (a * b) % k == 0)
+    big = R.choice([10, 12, 15, 16]); three = sum(1 for a, b, c in product(range(1, 7), repeat=3) if a + b + c == big)
+    return ("A red dice and a blue dice are thrown. Red 2 and blue 5 is a different result from red 5 and blue 2.", [
+        (f"In how many ways can the total be {t}?", str(ways), f"List red–blue pairs that add to {t}: {', '.join(f'{a}+{b}' for a, b in product(range(1, 7), repeat=2) if a + b == t)}. That is {ways} ways."),
+        (f"In how many of the 36 results is the product of the two numbers a multiple of {k}?", str(mult), f"Check all 36 pairs (6 × 6 grid) and count the products that divide by {k}: {mult}."),
+        (f"A green dice is added. In how many ways can the three dice total {big}?", str(three), f"Fix the red dice (1 to 6) and count the red–blue pairs that make up the rest. Altogether: {three}.")])
+
+def riddle(R):
+    while True:
+        m = R.choice([3, 4, 6, 7, 8, 9]); s = R.randint(7, 14)
+        sols = [n for n in range(10, 100) if n % m == 0 and n // 10 + n % 10 == s]
+        if len(sols) == 1: break
+    n1 = sols[0]
+    while True:
+        lo, hi = R.choice([(30, 60), (40, 80), (50, 100), (60, 99)])
+        dd = R.choice([1, 3, 7, 9]); cands = [n for n in range(lo, hi) if n > 1 and all(n % p for p in range(2, int(n ** .5) + 1)) and n % 10 == dd]
+        if len(cands) == 1: break
+    n2 = cands[0]
+    a = R.randint(3, 7); b = R.randint(1, a - 1)
+    n3 = None
+    for n in range(10, 100):
+        if n % a == b and n % (a + 1) == b and (n3 is None): n3 = n
+    return ("Number riddles. Each riddle has exactly one answer.", [
+        (f"I am a 2-digit number. I am a multiple of {m}. My digits add up to {s}. What number am I?", str(n1), f"Go through the multiples of {m} and add the digits: only {n1} has digits adding to {s}."),
+        (f"I am a prime number between {lo} and {hi}. My last digit is {dd}. What number am I?", str(n2), f"Numbers between {lo} and {hi} ending in {dd}: test each for factors. Only {n2} is prime."),
+        (f"I am the smallest 2-digit number that leaves a remainder of {b} when divided by {a} and also when divided by {a + 1}. What number am I?", str(n3),
+         f"Take {b} away and the number must divide by both {a} and {a + 1}, so it is a multiple of {a * (a + 1)}. The smallest 2-digit one: {n3} ({n3} − {b} = {n3 - b}).")])
+
+def magic(R):
+    a, b, c = R.randint(2, 9), R.randint(1, 5), R.randint(5, 15)
+    # Lucas form: centre c, all entries distinct and positive
+    sq = [[c - b, c + a + b, c - a], [c - a + b, c, c + a - b], [c + a, c - a - b, c + b]]
+    if len({v for r in sq for v in r}) < 9 or min(v for r in sq for v in r) < 1: return magic(R)
+    S = 3 * c; hide = [(0, 1), (1, 2), (2, 0)]
+    grid = "\n".join("   ".join("□" if (i, j) in [(0, 0), (1, 0), (2, 2)] else str(sq[i][j]) for j in range(3)) for i in range(3))
+    return (f"In this magic square every row, column and diagonal adds up to the same total.\n{grid}", [
+        ("What is the magic total?", str(S), f"The middle row or column has all its numbers shown: e.g. {sq[0][1]} + {sq[1][1]} + {sq[2][1]} = {S}."),
+        ("What number goes in the top left box?", str(sq[0][0]), f"Top row: {S} − {sq[0][1]} − {sq[0][2]} = {sq[0][0]}."),
+        ("What number goes in the bottom right box?", str(sq[2][2]), f"Bottom row: {S} − {sq[2][0]} − {sq[2][1]} = {sq[2][2]}.")])
+
+PLANETS = [("Mercury", 167), ("Venus", 464), ("Mars", -65), ("Jupiter", -110), ("Saturn", -140), ("Uranus", -195), ("Neptune", -200)]
+
+def space_temps(R):
+    (p1, t1), (p2, t2) = R.sample(PLANETS, 2)
+    if t1 < t2: (p1, t1), (p2, t2) = (p2, t2), (p1, t1)
+    night = R.randint(-90, -40); day = R.randint(5, 30)
+    drop = R.randint(15, 60); start = R.randint(-30, 20)
+    fm = lambda v: f"{v}°C".replace("-", "−")
+    return ("A space probe measures temperatures.", [
+        (f"The average temperature on {p1} is {fm(t1)} and on {p2} it is {fm(t2)}. How many degrees warmer is {p1}?", str(t1 - t2), (f"From {fm(t2)} up to 0°C is {-t2}, then up to {fm(t1)} is {t1} more: {-t2} + {t1} = {t1 - t2} degrees." if t2 < 0 < t1 else f"{t1} − {t2} = {t1 - t2} degrees.".replace("-", "−"))),
+        (f"Inside the probe it is {fm(start)}. It falls by {drop} degrees. What is the temperature now?", fm(start - drop), f"{start} − {drop} = {start - drop}, so {fm(start - drop)}.".replace("-", "−")),
+        (f"On the Moon one night it was {fm(night)} and the next day {fm(day)}. By how many degrees did it rise?", str(day - night), f"From {fm(night)} to 0 is {-night}, then to {fm(day)} is {day} more: {-night} + {day} = {day - night}.")])
+
+def bake_sale(R):
+    n1, p1 = R.randint(12, 40), R.choice([35, 40, 45, 50, 60, 75]); n2, p2 = R.randint(10, 30), R.choice([80, 90, 120, 125, 150])
+    cost = R.randint(8, 18) * 100 + R.choice([0, 50]); inc = n1 * p1 + n2 * p2
+    if inc <= cost: return bake_sale(R)
+    left = R.randint(3, 9); off = R.choice([o for o in (20, 25, 50) if p1 * (100 - o) % 100 == 0] or [50])
+    return (f"At the school bake sale, cupcakes cost {money(p1)} each and brownies cost {money(p2)} each.", [
+        (f"{n1} cupcakes and {n2} brownies are sold. How much money is taken?", money(inc), f"{n1} × {money(p1)} = {money(n1 * p1)}. {n2} × {money(p2)} = {money(n2 * p2)}. Total {money(inc)}."),
+        (f"The ingredients cost {money(cost)}. How much profit is made?", money(inc - cost), f"{money(inc)} − {money(cost)} = {money(inc - cost)}."),
+        (f"At the end, the last {left * 4} cupcakes are sold at {off}% off. How much is taken for these cupcakes?", money(left * 4 * p1 * (100 - off) // 100),
+         f"{off}% off {money(p1)} is {money(p1 * (100 - off) // 100)} each. {left * 4} × that = {money(left * 4 * p1 * (100 - off) // 100)}.")])
+
+def patio(R):
+    L, W = R.randint(4, 9), R.randint(3, 7); t = R.choice([50, 25]); per = (100 // t) ** 2
+    price = R.choice([2, 3, 4, 5]) * 100 + R.choice([0, 50]); fence = R.randint(3, 6) * 100 + R.choice([0, 50])
+    return (f"A garden patio is a rectangle {L} m long and {W} m wide.", [
+        ("What is the area of the patio?", f"{L * W} m²".replace("m²", "m²"), f"{L} × {W} = {L * W} m²."),
+        (f"It is covered with square tiles {t} cm by {t} cm. How many tiles are needed?", str(L * W * per), f"Each m² needs {100 // t} × {100 // t} = {per} tiles. {L * W} × {per} = {L * W * per}."),
+        (f"A fence goes round three sides: both long sides and one short side. Fencing costs {money(fence)} a metre. How much does the fence cost?", money((2 * L + W) * fence),
+         f"Length of fence: {L} + {L} + {W} = {2 * L + W} m. {2 * L + W} × {money(fence)} = {money((2 * L + W) * fence)}.")])
+
+def cinema(R):
+    rows, seats = R.randint(12, 24), R.randint(14, 28); sold = R.randint(rows * seats // 2, rows * seats - 10)
+    grp = R.randint(150, 400); per = R.choice([18, 20, 22, 24, 25, 30])
+    tA, tC = R.choice([850, 900, 950, 1050]), R.choice([550, 600, 650, 700]); a, c = R.randint(2, 4), R.randint(2, 5)
+    return (f"A cinema has {rows} rows with {seats} seats in each row.", [
+        (f"{sold} tickets are sold for a film. How many seats are empty?", str(rows * seats - sold), f"Seats: {rows} × {seats} = {rows * seats}. {rows * seats} − {sold} = {rows * seats - sold}."),
+        (f"{grp} children come on school trips. Each row holds {per} children in a different screen. How many rows do they need?", str(-(-grp // per)),
+         f"{grp} ÷ {per} = {grp // per} remainder {grp % per}. {'The rest still need a row, so ' + str(grp // per + 1) if grp % per else 'Exactly ' + str(grp // per)}."),
+        (f"Adult tickets cost {money(tA)} and child tickets cost {money(tC)}. How much do {a} adults and {c} children pay?", money(a * tA + c * tC), f"{a} × {money(tA)} = {money(a * tA)}. {c} × {money(tC)} = {money(c * tC)}. Total {money(a * tA + c * tC)}.")])
+
+def zoo(R):
+    pen, fish = R.randint(3, 8), R.randint(3, 6); days = R.choice([5, 7, 10, 14])
+    kg, hay = R.randint(4, 9), R.randint(2, 5); ele = R.randint(2, 4); bale = R.choice([10, 15, 20, 25])
+    need = ele * kg * hay; bales = -(-need // bale)
+    return ("At the zoo, the keepers plan the food.", [
+        (f"Each of the {pen} penguins eats {fish} fish a day. How many fish do they eat in {days} days?", str(pen * fish * days), f"{pen} × {fish} = {pen * fish} a day. × {days} = {pen * fish * days}."),
+        (f"An elephant eats {kg * hay} kg of hay a day. How much hay do {ele} elephants eat in a week?", f"{ele * kg * hay * 7} kg", f"{ele} × {kg * hay} = {ele * kg * hay} kg a day. × 7 = {ele * kg * hay * 7} kg."),
+        (f"Hay comes in bales of {bale} kg. How many bales are needed for {ele} elephants for one day?", str(bales), f"{ele} × {kg * hay} = {need} kg. {need} ÷ {bale} = {need / bale:g}, so {bales} bale{'s' if bales > 1 else ''} (you can't buy part of a bale).")])
+
+def sports_mean(R):
+    k = R.randint(4, 6); target = R.randint(110, 180); xs = [target + R.randint(-25, 25) for _ in range(k - 1)]
+    last = target * k - sum(xs)
+    if last < 60 or last > 260: return sports_mean(R)
+    who = R.choice(NAMES); jumps = xs + [last]
+    return (f"On sports day {who} has {k} long jumps. The first {k - 1} are {', '.join(f'{x} cm' for x in xs)}.", [
+        (f"What is the total of the first {k - 1} jumps?", f"{sum(xs)} cm", " + ".join(map(str, xs)) + f" = {sum(xs)} cm."),
+        (f"How long must the last jump be for the mean of all {k} jumps to be {target} cm?", f"{last} cm", f"Total needed: {k} × {target} = {k * target} cm. {k * target} − {sum(xs)} = {last} cm."),
+        (f"What is the range of all {k} jumps?", f"{max(jumps) - min(jumps)} cm", f"Longest {max(jumps)} − shortest {min(jumps)} = {max(jumps) - min(jumps)} cm.")])
+
+def shop(R):
+    items = R.sample([("comic", 275), ("yo-yo", 180), ("puzzle book", 425), ("pen set", 350), ("sticker pack", 120), ("torch", 599), ("kite", 750), ("water bottle", 495)], 3)
+    budget = R.choice([1000, 1500, 2000]); (i1, c1), (i2, c2), (i3, c3) = items
+    q1, q2 = R.randint(1, 3), R.randint(1, 2)
+    spent = q1 * c1 + q2 * c2
+    if spent + c3 > budget: return shop(R)
+    most = (budget - spent) // c3
+    return (f"{R.choice(NAMES)} has {money(budget)} to spend. A {i1} costs {money(c1)}, a {i2} costs {money(c2)} and a {i3} costs {money(c3)}.", [
+        (f"How much do {q1} {i1}{'s' if q1 > 1 else ''} and {q2} {i2}{'s' if q2 > 1 else ''} cost?", money(spent), f"{q1} × {money(c1)} + {q2} × {money(c2)} = {money(spent)}."),
+        ("How much change is there from the money after buying these?", money(budget - spent), f"{money(budget)} − {money(spent)} = {money(budget - spent)}."),
+        (f"What is the greatest number of {i3}s that could be bought with the change?", str(most), f"{money(budget - spent)} ÷ {money(c3)} = {(budget - spent) / c3:.2f}…, so {most}.")])
+
+def code_words(R):
+    word = R.choice(["MATHS", "BRAIN", "QUIZ", "PUZZLE", "NUMBER", "SHAPE", "ANGLE", "PRIME", "ESSEX", "SCHOOL", "ROCKET", "PLANET", "DRAGON", "CASTLE", "GARDEN", "PENCIL"])
+    v = lambda w: sum(ord(ch) - 64 for ch in w)
+    target = R.choice(["CAB", "BED", "DOG", "CAT", "HAT", "FIG", "JAM", "BUS", "OWL", "FOX", "HEN", "PIG", "ANT", "BEE"])
+    opts = R.sample(["ZOO", "EGG", "ICE", "FUN", "KEY", "MAP", "SUN", "TOY", "WAX", "JOY", "SKY", "WEB", "NUT", "RAY"], 4)
+    best = max(opts, key=v)
+    if [v(o) for o in opts].count(v(best)) > 1: return code_words(R)
+    return ("In a secret code A = 1, B = 2, C = 3 and so on up to Z = 26. The value of a word is the total of its letters.", [
+        (f"What is the value of {target}?", str(v(target)), " + ".join(str(ord(ch) - 64) for ch in target) + f" = {v(target)}."),
+        (f"What is the value of {word}?", str(v(word)), " + ".join(str(ord(ch) - 64) for ch in word) + f" = {v(word)}."),
+        ("Which of these words has the greatest value?", best, "; ".join(f"{o} = {v(o)}" for o in opts) + f". {best} is greatest.", [o for o in opts if o != best])])
+
+FAMS = {"calendar": calendar, "league": league, "treasure": treasure, "clock": digital_clock, "dice": dice, "riddle": riddle, "magic": magic,
+        "space": space_temps, "bake": bake_sale, "patio": patio, "cinema": cinema, "zoo": zoo, "jumps": sports_mean, "shop": shop, "code": code_words}
