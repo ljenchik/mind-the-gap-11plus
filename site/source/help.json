@@ -1,0 +1,564 @@
+{
+ "Number|Place value": {
+  "intro": "Each digit is worth a different amount depending on its place: thousands, hundreds, tens, ones.",
+  "pic": "pv 4738",
+  "examples": [
+   [
+    "What is the 7 worth in 4738?",
+    "It is in the hundreds place, so it is worth 700. 4738 = 4000 + 700 + 30 + 8."
+   ]
+  ]
+ },
+ "Number|Sequences": {
+  "intro": "Find the jump between neighbours. Check it works for every pair, then keep jumping.",
+  "pic": "line 0 40 8 labels=0,5,10,15,20,25,30,35,40",
+  "examples": [
+   [
+    "5, 10, 15, 20, ___",
+    "Each jump is +5. 20 + 5 = 25."
+   ],
+   [
+    "50, 44, 38, 32, ___",
+    "Each jump is −6 (going down). 32 − 6 = 26."
+   ],
+   [
+    "What is the 5th number? Start at 20, jump +4",
+    "The 5th number is 4 jumps after the 1st: 20 + 4 × 4 = 36. (20, 24, 28, 32, 36)"
+   ]
+  ]
+ },
+ "Number|Negative numbers": {
+  "intro": "Numbers below zero are negative. On a number line, smaller numbers are to the left and bigger numbers are to the right.",
+  "examples": [
+   [
+    "Which is smaller, −6 or −2?",
+    "−6 is further to the left on the line, so −6 < −2.",
+    "line -8 2 10 labels=-8,,-6,,,,-2,,0,,2"
+   ],
+   [
+    "What is 10 more than −4?",
+    "Start at −4 and jump 10 to the right: 4 jumps take you to 0, then 6 more. Answer: 6.",
+    "line -5 7 12 mark=1 labels=,-4,,,,0,,,,,,6,"
+   ],
+   [
+    "Difference between −3°C and 5°C",
+    "Find both numbers on the line and count the jumps between them: 3 jumps from −3 to 0, then 5 jumps from 0 to 5. 3 + 5 = 8 degrees.",
+    "line -4 6 10 labels=,-3,,,0,,,,,5,"
+   ],
+   [
+    "Start at 5 and count back in 4s: 5, 1, ___",
+    "Jump 4 to the left from 1: 1 jump to 0, then 3 more. Answer: −3.",
+    "line -4 6 10 labels=,-3,,,0,1,,,,5,"
+   ]
+  ]
+ },
+ "Number|Rounding": {
+  "intro": "Look at the digit just after the place you round to. 5 or more: round up. 4 or less: round down. On the number line, see which end the number is nearer.",
+  "examples": [
+   [
+    "Round 4738 to the nearest 10",
+    "4738 is between 4730 and 4740. The ones digit is 8 (5 or more), so round up: 4740.",
+    "line 4730 4740 10 mark=8 labels=4730,,,,,4735,,,,,4740"
+   ],
+   [
+    "Round 4738 to the nearest 100",
+    "4738 is between 4700 and 4800. The tens digit is 3 (4 or less), so round down: 4700.",
+    "line 4700 4800 10 mark=3.8 labels=4700,,,,,4750,,,,,4800"
+   ],
+   [
+    "Round 4738 to the nearest 1000",
+    "4738 is between 4000 and 5000. The hundreds digit is 7, so round up: 5000.",
+    "line 4000 5000 10 mark=7.38 labels=4000,,,,,4500,,,,,5000"
+   ],
+   [
+    "Smallest whole number that rounds to 600 (nearest 100)",
+    "550. Halfway between 500 and 600 is 550, and halfway rounds up. Numbers from 550 to 649 round to 600.",
+    "line 500 700 4 mark=1 labels=500,550,600,650,700"
+   ]
+  ]
+ },
+ "Number|Roman numerals": {
+  "intro": "I = 1, V = 5, X = 10, L = 50, C = 100. A smaller letter in front of a bigger one means take it away.",
+  "examples": [
+   [
+    "What is XIV?",
+    "X + IV = 10 + 4 = 14."
+   ],
+   [
+    "What is XC?",
+    "X before C means 100 − 10 = 90."
+   ],
+   [
+    "Write 94",
+    "94 = 90 + 4 = XC + IV = XCIV."
+   ],
+   [
+    "Write 77",
+    "77 = 50 + 20 + 7 = L + XX + VII = LXXVII."
+   ]
+  ]
+ },
+ "Add and subtract|Adding": {
+  "intro": "Line up ones under ones. Add from the right. If a column makes 10 or more, write the ones and carry the ten.",
+  "pic": "column 476|258|",
+  "examples": [
+   [
+    "476 + 258",
+    "Ones: 6 + 8 = 14, write 4 carry 1. Tens: 7 + 5 + 1 = 13, write 3 carry 1. Hundreds: 4 + 2 + 1 = 7. Answer: 734."
+   ],
+   [
+    "998 + 4",
+    "2 makes 1000, then 2 more: 1002."
+   ]
+  ]
+ },
+ "Add and subtract|Subtracting": {
+  "intro": "Start with the ones. If the top digit is too small, exchange 1 ten for 10 ones.",
+  "examples": [
+   [
+    "843 − 367",
+    "Ones: 3 − 7 can't be done, exchange: 13 − 7 = 6. Tens: 3 − 6, exchange: 13 − 6 = 7. Hundreds: 7 − 3 = 4. Answer: 476."
+   ],
+   [
+    "1000 − 438 (count up)",
+    "438 → 440 is 2, → 500 is 60, → 1000 is 500. 2 + 60 + 500 = 562."
+   ],
+   [
+    "Difference between 72 and 45",
+    "72 − 45 = 27."
+   ]
+  ]
+ },
+ "Add and subtract|Missing digits": {
+  "intro": "Work column by column from the ones. Remember any number carried.",
+  "examples": [
+   [
+    "3□6 + 24□ = 581",
+    "Ones: 6 + □ ends in 1, so □ = 5 (11, carry 1). Tens: □ + 4 + 1 = 8, so □ = 3."
+   ]
+  ]
+ },
+ "Add and subtract|Checking calculations": {
+  "intro": "Check a subtraction by adding back. Compare by working out each side.",
+  "examples": [
+   [
+    "Is 508 − 249 = 259 right?",
+    "259 + 249 = 508, so yes."
+   ],
+   [
+    "5 + 12 − 3 ___ 7 × 2",
+    "Left: 14. Right: 14. So the sign is =."
+   ]
+  ]
+ },
+ "Add and subtract|Word problems": {
+  "intro": "Read it twice. Write each step as a calculation, then answer the question that was asked.",
+  "examples": [
+   [
+    "52 on a bus, some get off, 17 get on, now 46. How many got off?",
+    "52 + 17 = 69. 69 − 46 = 23 got off."
+   ],
+   [
+    "Zara is 8, her dad is 41. How old is dad when Zara is 20?",
+    "The age gap stays 33. 20 + 33 = 53."
+   ]
+  ]
+ },
+ "Multiply and divide|Times tables": {
+  "intro": "Use a fact you know to find one you don't. Division is a times table backwards.",
+  "pic": "times 7 3=21 4=28 5=35 6=42",
+  "examples": [
+   [
+    "7 × 8",
+    "7 × 4 = 28, then double: 56."
+   ],
+   [
+    "56 ÷ 7",
+    "Which number × 7 = 56? 8."
+   ],
+   [
+    "9 × 6",
+    "10 × 6 = 60, take away one 6: 54."
+   ]
+  ]
+ },
+ "Multiply and divide|× by 0 and 1, three numbers": {
+  "intro": "× 1 leaves a number the same. × 0 is always 0. You can multiply three numbers in any order.",
+  "examples": [
+   [
+    "67 × 1 and 67 × 0",
+    "× 1 stays the same: 67. × 0 is always 0."
+   ],
+   [
+    "4 × 7 × 5",
+    "4 × 5 = 20, then 20 × 7 = 140."
+   ],
+   [
+    "___ × 6 × 2 = 84",
+    "6 × 2 = 12, and 84 ÷ 12 = 7."
+   ]
+  ]
+ },
+ "Multiply and divide|× and ÷ by 10 and 100": {
+  "intro": "× 10: every digit moves 1 place to the left. × 100: 2 places to the left. Dividing moves the digits to the right.",
+  "examples": [
+   [
+    "35 × 10",
+    "Digits move 1 place left: 350."
+   ],
+   [
+    "35 × 100",
+    "Digits move 2 places left: 3500."
+   ],
+   [
+    "4200 ÷ 100",
+    "Digits move 2 places right: 42."
+   ],
+   [
+    "58 × ___ = 580",
+    "The digits moved 1 place, so × 10."
+   ]
+  ]
+ },
+ "Multiply and divide|× and ÷ by 10, 100, 1000": {
+  "intro": "× 10, 100, 1000: digits move 1, 2 or 3 places left. ÷: digits move right.",
+  "examples": [
+   [
+    "35 × 100",
+    "Digits move 2 places left: 3500."
+   ],
+   [
+    "4200 ÷ 100",
+    "Digits move 2 places right: 42."
+   ],
+   [
+    "67 × 1 and 67 × 0",
+    "× 1 stays the same: 67. × 0 is always 0."
+   ]
+  ]
+ },
+ "Multiply and divide|Column multiplication": {
+  "intro": "Write the numbers in columns. Multiply the ones first, then the tens, then the hundreds. Carry when an answer is 10 or more.",
+  "pic": "column 346|×7|",
+  "examples": [
+   [
+    "47 × 6",
+    "7 × 6 = 42, write 2 carry 4. 4 × 6 = 24, + 4 = 28. Answer: 282."
+   ],
+   [
+    "346 × 7",
+    "6 × 7 = 42, write 2 carry 4. 4 × 7 = 28, + 4 = 32, write 2 carry 3. 3 × 7 = 21, + 3 = 24. Answer: 2422."
+   ]
+  ]
+ },
+ "Multiply and divide|Short division": {
+  "intro": "Start on the left. Divide one digit at a time and write each answer above the line. Carry anything left over to the next digit.",
+  "pic": "division 96 4",
+  "examples": [
+   [
+    "96 ÷ 4",
+    "9 ÷ 4 = 2 r 1. Carry the 1 to make 16. 16 ÷ 4 = 4. Answer: 24."
+   ],
+   [
+    "365 ÷ 5",
+    "3 is smaller than 5, so start with 36. 36 ÷ 5 = 7 r 1. Carry the 1 to make 15. 15 ÷ 5 = 3. Answer: 73."
+   ]
+  ]
+ },
+ "Multiply and divide|Division with remainders": {
+  "intro": "Find how many whole groups fit. What is left over is the remainder.",
+  "examples": [
+   [
+    "47 ÷ 5",
+    "9 × 5 = 45, 2 left over: 9 remainder 2."
+   ],
+   [
+    "87 ÷ 4",
+    "8 ÷ 4 = 2. 7 ÷ 4 = 1 r 3. Answer: 21 remainder 3."
+   ]
+  ]
+ },
+ "Multiply and divide|Comparing calculations": {
+  "intro": "Work out each side first, then choose <, > or =.",
+  "examples": [
+   [
+    "6 × 4 ___ 30 − 5",
+    "24 and 25. 24 is less, so <."
+   ],
+   [
+    "48 ÷ 6 ___ 2 × 4",
+    "8 and 8, so =."
+   ]
+  ]
+ },
+ "Multiply and divide|Word problems": {
+  "intro": "With a remainder, decide: do you need one more (round up) or only full groups (round down)?",
+  "examples": [
+   [
+    "28 children, 6 in each car. How many cars?",
+    "28 ÷ 6 = 4 r 4. The 4 left over need a car too: 5 cars."
+   ],
+   [
+    "28 eggs, boxes of 6. How many full boxes?",
+    "28 ÷ 6 = 4 r 4. Only 4 boxes are full."
+   ]
+  ]
+ },
+ "Fractions|Equivalent fractions": {
+  "intro": "Multiply the top and the bottom by the same number and the fraction stays the same size. Follow the arrows: the same × on the top and on the bottom.",
+  "pic": "equiv 3/4 ×5",
+  "examples": [
+   [
+    "3/4 = ___/20",
+    "4 × 5 = 20, so 3 × 5 = 15. Answer: 15/20."
+   ],
+   [
+    "1/2 = 5/___",
+    "1 × 5 = 5, so 2 × 5 = 10. Answer: 5/10."
+   ],
+   [
+    "6/8 = ___/4",
+    "8 ÷ 2 = 4, so 6 ÷ 2 = 3. Answer: 3/4."
+   ]
+  ]
+ },
+ "Fractions|Simplest form": {
+  "intro": "Divide the top and the bottom by the same number until you cannot go any further. Follow the arrows: the same ÷ on the top and on the bottom.",
+  "examples": [
+   [
+    "6/8 in simplest form",
+    "Divide top and bottom by 2: 3/4."
+   ],
+   [
+    "10/15 in simplest form",
+    "Divide top and bottom by 5: 2/3."
+   ]
+  ],
+  "pic": "equiv 6/8 ÷2"
+ },
+ "Fractions|Mixed numbers": {
+  "intro": "A mixed number is a whole number and a fraction. An improper fraction has a top number bigger than the bottom.",
+  "examples": [
+   [
+    "7/4 as a mixed number",
+    "4 quarters make 1 whole. 7 ÷ 4 = 1 r 3, so 1 3/4."
+   ],
+   [
+    "2 1/3 as an improper fraction",
+    "2 wholes = 6 thirds. 6 + 1 = 7, so 7/3."
+   ],
+   [
+    "How many fifths in 1 2/5?",
+    "5 + 2 = 7 fifths."
+   ]
+  ]
+ },
+ "Fractions|Compare & order": {
+  "intro": "Same bottom number: compare the tops. Same top number: the bigger bottom means smaller pieces. Counting in fractions: the top changes, the bottom stays.",
+  "examples": [
+   [
+    "3/8 or 5/8?",
+    "Same bottom: 5 is more than 3, so 5/8 is bigger."
+   ],
+   [
+    "1/3 or 1/5?",
+    "Fifths are smaller pieces than thirds, so 1/3 is bigger."
+   ],
+   [
+    "7/4 or 1 1/4?",
+    "1 1/4 = 5/4. 7 is more than 5, so 7/4 is bigger."
+   ],
+   [
+    "47/100, 48/100, 49/100, ___",
+    "Counting on in hundredths: 50/100."
+   ]
+  ]
+ },
+ "Fractions|Add & subtract": {
+  "intro": "When the bottom numbers are the same, add or take away the tops. The bottom stays the same.",
+  "examples": [
+   [
+    "2/7 + 3/7",
+    "2 + 3 = 5, so 5/7."
+   ],
+   [
+    "7/9 − 4/9",
+    "7 − 4 = 3, so 3/9."
+   ],
+   [
+    "5/7 + 4/7",
+    "5 + 4 = 9, so 9/7. That is 1 whole and 2/7: 1 2/7."
+   ],
+   [
+    "1 − 3/8",
+    "1 whole is 8/8. 8 − 3 = 5, so 5/8."
+   ]
+  ]
+ },
+ "Fractions|Fractions of amounts": {
+  "intro": "Divide by the bottom number, then multiply by the top number.",
+  "examples": [
+   [
+    "1/4 of 20",
+    "20 ÷ 4 = 5."
+   ],
+   [
+    "3/4 of 20",
+    "20 ÷ 4 = 5, then 5 × 3 = 15."
+   ],
+   [
+    "2/5 of 35",
+    "35 ÷ 5 = 7, then 7 × 2 = 14."
+   ]
+  ]
+ },
+ "Fractions|Fractions ↔ decimals": {
+  "intro": "Tenths go in the first place after the point, hundredths in the second. Learn 1/2, 1/4 and 3/4 by heart.",
+  "examples": [
+   [
+    "1/2, 1/4, 3/4",
+    "0.5, 0.25, 0.75."
+   ],
+   [
+    "7/10 and 23/100",
+    "0.7 and 0.23."
+   ],
+   [
+    "9/100",
+    "No tenths, 9 hundredths: 0.09."
+   ],
+   [
+    "3/10 = ___/100",
+    "Each tenth is 10 hundredths: 30/100."
+   ]
+  ]
+ },
+ "Fractions|Word problems": {
+  "intro": "Draw a bar split into equal parts to see the fraction of the amount.",
+  "examples": [
+   [
+    "A pizza has 8 slices. Tom eats 3/8. How many slices are left?",
+    "8 − 3 = 5 slices, which is 5/8."
+   ]
+  ]
+ },
+ "Decimals|Fractions ↔ decimals": {
+  "intro": "The first place after the point is tenths, the second is hundredths.",
+  "examples": [
+   [
+    "0.3 as a fraction",
+    "3/10."
+   ],
+   [
+    "0.25 as a fraction",
+    "25/100 = 1/4."
+   ]
+  ]
+ },
+ "Decimals|Compare & order": {
+  "intro": "Compare the whole numbers first, then tenths, then hundredths.",
+  "pic": "line 0 1 10 labels=0,0.1,,0.3,,0.5,,0.7,,0.9,1",
+  "examples": [
+   [
+    "0.7 or 0.65?",
+    "Tenths: 7 is more than 6, so 0.7 is bigger."
+   ],
+   [
+    "2.4 or 2.38?",
+    "Tenths: 4 is more than 3, so 2.4 is bigger."
+   ]
+  ]
+ },
+ "Decimals|Rounding": {
+  "intro": "To the nearest whole number, look at the tenths digit: 5 or more round up, 4 or less round down.",
+  "examples": [
+   [
+    "Round 3.6",
+    "Tenths digit 6: round up to 4."
+   ],
+   [
+    "Round 12.4",
+    "Tenths digit 4: round down to 12."
+   ]
+  ]
+ },
+ "Decimals|÷ by 10, 100, 1000": {
+  "intro": "Dividing by 10 moves the digits one place right. By 100, two places.",
+  "examples": [
+   [
+    "45 ÷ 10",
+    "4.5"
+   ],
+   [
+    "45 ÷ 100",
+    "0.45"
+   ]
+  ]
+ },
+ "Decimals|Word problems": {
+  "intro": "Line up the decimal points when adding or taking away, and write the units in your answer.",
+  "examples": [
+   [
+    "1.5 m + 0.75 m",
+    "1.50 + 0.75 = 2.25 m."
+   ]
+  ]
+ },
+ "Money & Time|Rounding money": {
+  "intro": "To the nearest pound, look at the pence: 50p or more round up.",
+  "examples": [
+   [
+    "Round £4.65",
+    "65p is 50p or more: £5."
+   ],
+   [
+    "Round £12.30",
+    "30p is less than 50p: £12."
+   ]
+  ]
+ },
+ "Money & Time|Word problems": {
+  "intro": "£1 = 100p. Add up the cost of everything bought first. Then take the total away from the money paid (for example £10) to find the change.",
+  "examples": [
+   [
+    "Write 365p in pounds",
+    "£3.65"
+   ],
+   [
+    "Cost £3.65, pay with £5. Change?",
+    "£3.65 → £4 is 35p, → £5 is £1. Change £1.35."
+   ]
+  ]
+ },
+ "Money & Time|Telling the time": {
+  "intro": "The short hand shows the hour. The long hand shows minutes: each number is 5 minutes.",
+  "pic": "clock 6:50",
+  "examples": [
+   [
+    "The long hand points to 10",
+    "10 × 5 = 50 minutes past, which is 10 minutes to the next hour."
+   ],
+   [
+    "6:50 in words",
+    "ten to seven."
+   ],
+   [
+    "4:35 pm on a 24-hour clock",
+    "Add 12 to the hours: 16:35."
+   ]
+  ]
+ },
+ "Money & Time|Time problems": {
+  "intro": "Count on in steps: first to the next o'clock, then the rest.",
+  "examples": [
+   [
+    "9:20 + 45 minutes",
+    "40 minutes to 10:00, then 5 more: 10:05."
+   ],
+   [
+    "Time facts",
+    "60 seconds = 1 minute, 60 minutes = 1 hour, 24 hours = 1 day, 7 days = 1 week."
+   ]
+  ]
+ }
+}

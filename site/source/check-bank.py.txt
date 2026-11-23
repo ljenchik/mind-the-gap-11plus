@@ -1,0 +1,54 @@
+"""Automatic checks for the question bank.
+1) every calculation written in a worked solution is re-done by the computer
+2) the answer appears in the worked solution
+3) house rules: no thousands commas, marks match the level, no duplicates,
+   multiple-choice options include the answer."""
+import json, re, sys, collections
+Q = json.load(open('/home/claude/data/questions.json'))
+NUM = r'−?£?\d+(?:\.\d+)?p?'
+EQ = re.compile(r'(?<![\d./:£−\-])(' + NUM + r'(?:\s*[+\-−×÷]\s*' + NUM + r')+)\s*=\s*(' + NUM + r')(?![\d/:])(\s*(?:remainder|r)\s+(\d+))?')
+def val(tok):
+    t = tok.replace('−', '-').replace('£', '')
+    return float(t[:-1]) / 100 if t.endswith('p') and '£' not in tok else float(t.rstrip('p'))
+def ev(expr):
+    if '£' in expr and re.search(r'\dp\b', expr): return None
+    e = re.sub(NUM, lambda m: repr(val(m.group(0))), expr)
+    e = e.replace('×', '*').replace('÷', '/').replace('−', '-')
+    try: return eval(e)
+    except Exception: return None
+issues = collections.defaultdict(list)
+seen = {}
+for q in Q:
+    i, s, a, text = q['id'], q.get('s', ''), q['a'], q['q']
+    for m in EQ.finditer(s):
+        left, right, rem = m.group(1), m.group(2), m.group(4)
+        before = s[:m.start()].rstrip()
+        if before and before[-1] in '+-−×÷□' or re.search(r'(box|□|\?)\s*[+\-−×÷]\s*$', before): continue
+        if rem is not None and '÷' in left:
+            nums = [val(x) for x in re.findall(NUM, left)]
+            if len(nums) == 2 and (nums[0] // nums[1] != val(right) or nums[0] % nums[1] != int(rem)):
+                issues[i].append(f"sum wrong: {m.group(0)}")
+            continue
+        got = ev(left)
+        if got is None: continue
+        r = val(right)
+        if '£' in left and right.endswith('p') and '£' not in right: r = val(right) * 1  # pence answer for pounds sum
+        if abs(got - r) > 1e-6 and not (right.endswith('p') and abs(got * 100 - float(right[:-1].replace('−','-'))) < 1e-6):
+            issues[i].append(f"sum wrong: {m.group(0)} (computer gets {round(got, 4)})")
+    if re.search(r'\d,\d{3}(?!\d)', text + ' ' + a): issues[i].append("thousands comma")
+    lv, m = q.get('lv'), q.get('m', 1)
+    two = bool(re.search(r'^a\)| and |, by ', a)) and a.count(',') <= 1
+    if lv == 'Hard' and m != 2: issues[i].append(f"Hard but {m} mark(s)")
+    if lv == 'Challenge' and m not in (2, 3) and not q.get('paper'): issues[i].append(f"Challenge but {m} mark(s)")
+    if lv == 'Easy' and m != (2 if two else 1): issues[i].append(f"Easy with {'two answers' if two else 'one answer'} but {m} mark(s)")
+    opts = [o.strip() for o in re.split(r'\s{5,}', text)[1:]]
+    if len(opts) >= 2 and a not in opts and not re.search(r'[,·]| and ', a): issues[i].append("answer is not one of the options")
+    key = (q.get('yr', 4), q.get('pic', ''), re.sub(r'[^\w+−×÷=-]+', ' ', text.lower()).strip())
+    if key in seen: issues[i].append(f"same question as {seen[key]}")
+    else: seen[key] = i
+rows = [(i, q['tab'], q.get('yr', 4), msg) for q in Q for i in [q['id']] for msg in issues.get(i, [])]
+json.dump(rows, open('/tmp/check_issues.json', 'w'), ensure_ascii=False)
+print(len(Q), 'questions checked;', len(issues), 'with issues')
+c=collections.Counter(re.sub(r':.*|\(.*|[0-9]+ mark.*|with .*','',r[3]).strip() for r in rows)
+print(c)
+for r in rows: print(r)

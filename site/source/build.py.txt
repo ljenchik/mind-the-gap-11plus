@@ -1,0 +1,6 @@
+import json
+t = open('app-template.html').read()
+h = json.dumps(json.load(open('help.json')), ensure_ascii=False)
+out = (t.replace('__DATA__', open('questions.json').read()).replace('__HELP__', h)
+        .replace('__STARTER__', open('starter-data.json').read()).replace('/*__MARKER__*/', open('marker.js').read()))
+open('index.html', 'w').write(out)

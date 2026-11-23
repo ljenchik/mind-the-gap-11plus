@@ -1,0 +1,128 @@
+"""Year 5 practice by exam skill: linked sets in the CSSE format, every answer computed.
+Reuses the practice-test families (but never the sets already used in PT1-PT10) and adds
+three missing families: powers fill-in, ordering fractions and decimals, rounding bounds."""
+import json, random, sys
+from fractions import Fraction as F
+sys.path.insert(0, "/home/claude/scripts")
+import make_practice_tests as m
+
+# family index in make_practice_tests.test() -> skill id (index 2 decided by its stem)
+FAM2SKILL = {0: "skip", 1: "frac", 3: "units", 4: "money", 5: "ratio", 6: "puz2", 7: "time", 8: "time",
+             9: "chart", 10: "mean", 11: "ang", 12: "coord", 13: "puz1", 14: "asn", 15: "seq", 16: "rect",
+             17: "dec", 18: "puz1", 19: "mach"}
+TARGET = 30          # linked sets per skill
+
+def fam_key(stem, parts):
+    return [stem + "|" + p[0] for p in parts] if not stem.startswith("Always") else [p[0] for p in parts]
+
+def used_in_papers():
+    seen = set()
+    for f in ("/home/claude/data/pt1.json", "/home/claude/data/pt2_10.json", "/home/claude/data/pt11_30.json"):
+        for q in json.load(open(f)):
+            t = q["q"]
+            if "\n" in t:
+                st, pt = t.split("\n", 1); seen.add(st + "|" + pt[3:])
+            elif t.startswith("Always, sometimes or never true? "):
+                seen.add(t[len("Always, sometimes or never true? "):])
+            else:
+                for ps in ("Work these out.", "Fractions.", "Place value.", "Measures.", "Percentages.", "Sharing.", "Time.", "Speed.", "Averages.", "Angles.", "Two unknowns.", "Decimals.", "Rectangles."):
+                    seen.add(ps + "|" + t)
+    return seen
+
+# ---- new families -------------------------------------------------------
+def fam_pow(R):
+    b, e = R.choice([(2, 5), (2, 6), (2, 7), (3, 3), (3, 4), (3, 5), (4, 3), (5, 3), (5, 4), (10, 3), (10, 5), (6, 3), (7, 3)])
+    x, y = R.choice([(3, 4), (2, 5), (4, 3), (2, 6), (5, 2), (3, 5)])
+    bigger = f"{x}^{y}" if x ** y > y ** x else f"{y}^{x}"
+    return ("Powers. 7⁵ means 7 × 7 × 7 × 7 × 7.", [
+        (f"Fill in the box: {b} to the power □ = {b ** e}", str(e), f"Keep multiplying by {b}: " + ", ".join(str(b ** i) for i in range(1, e + 1)) + f". That is {e} lots of {b}."),
+        (f"Which is bigger, {x} to the power {y} or {y} to the power {x}?     {x} to the power {y}     {y} to the power {x}",
+         f"{x} to the power {y}" if x ** y > y ** x else f"{y} to the power {x}",
+         f"{x} to the power {y} = {x ** y} and {y} to the power {x} = {y ** x}.")])
+
+def fdec(v):  # how a value is shown
+    return v if isinstance(v, str) else None
+
+def fam_order(R):
+    while True:
+        fr = R.sample([(1, 2), (2, 5), (3, 5), (3, 4), (5, 8), (3, 8), (7, 10), (2, 3), (1, 3), (4, 5), (7, 12), (5, 6), (9, 20), (11, 20)], 3)
+        de = R.sample([0.35, 0.45, 0.55, 0.62, 0.7, 0.38, 0.48, 0.58, 0.66, 0.72, 0.52, 0.42], 2)
+        vals = [(f"{a}/{b}", F(a, b)) for a, b in fr] + [(f"{d:g}", F(str(d))) for d in de]
+        nums = [v for _, v in vals]
+        if len(set(nums)) < 5: continue
+        dist = sorted(abs(v - F(1, 2)) for v in nums)
+        if dist[0] == dist[1] or dist[0] == 0: continue
+        break
+    R.shuffle(vals)
+    shown = "     ".join(s for s, _ in vals)
+    lo = min(vals, key=lambda x: x[1]); hi = max(vals, key=lambda x: x[1]); cl = min(vals, key=lambda x: abs(x[1] - F(1, 2)))
+    as_dec = ", ".join(f"{s} = {float(v):.3f}".rstrip("0").rstrip(".") for s, v in vals)
+    return ("Look at these five numbers: " + ", ".join(s for s, _ in vals) + ".", [
+        ("Which is the smallest?     " + shown, lo[0], f"Change them all to decimals: {as_dec}. The smallest is {lo[0]}."),
+        ("Which is the largest?     " + shown, hi[0], f"Change them all to decimals: {as_dec}. The largest is {hi[0]}."),
+        ("Which is closest to 1/2?     " + shown, cl[0], f"1/2 = 0.5. {cl[0]} is the nearest to 0.5.")])
+
+def fam_round(R):
+    t = R.choice([10, 100]); X = R.randint(12, 89) * t; Y = R.randint(3, 9) * t
+    hiX = X + t // 2 - 1; loX = X - t // 2; loY = Y - t // 2
+    who = R.choice(m.NAMES)
+    return (f"{who} thinks of a whole number X. Rounded to the nearest {t}, X is {X}. Another whole number Y rounded to the nearest {t} is {Y}.", [
+        ("What is the largest X could be?", str(hiX), f"Numbers from {loX} to {hiX} round to {X}. {X + t // 2} would round up to {X + t}."),
+        ("What is the smallest X could be?", str(loX), f"{loX} rounds up to {X}, but {loX - 1} rounds down to {X - t}."),
+        ("What is the largest X + Y could be?", str(hiX + Y + t // 2 - 1), f"Largest X = {hiX}, largest Y = {Y + t // 2 - 1}. {hiX} + {Y + t // 2 - 1} = {hiX + Y + t // 2 - 1}."),
+        ("What is the smallest X − Y could be?", str(loX - (Y + t // 2 - 1)), f"Smallest X take away largest Y: {loX} − {Y + t // 2 - 1} = {loX - (Y + t // 2 - 1)}.")])
+
+import skill_families as SF
+import ratio_families as RF, algebra_families as AF, arith_families as XF, geom_families as GF, extra_families as EF
+NEW = {"order": fam_order, "round": fam_round, **SF.FAMS, "ratio": RF.ratio, "eq": AF.eq, **XF.FAMS, "refl": GF.refl, **EF.FAMS}
+TARGETS = {"ratio": 80, "eq": 40, "as": 40, "md": 40, "refl": 40, "roman": 40, "fdpwp": 40, "count": 40}
+PATTERN_SETS = 30   # picture-pattern sets added to Sequences and patterns
+
+def main():
+    skills = json.load(open("/home/claude/b3/starter-data.json"))["sk56"]
+    name = {s["id"]: s["name"] for s in skills}
+    papers = used_in_papers(); seen = set(); got = {s["id"]: [] for s in skills}
+    def clash(key):   # never reuse a paper part; in practice, only the opening part must be new
+        return key[0] in papers or key[0] in seen   # the opening part is always new; later parts may echo a paper
+    for sd in range(20000, 26000):
+        for i, (stem, parts, tab, t, bp) in enumerate(m.test(sd)):
+            sk = FAM2SKILL.get(i) or ("pow" if stem.startswith("Powers") else "dec")
+            if sk == "skip" or len(got[sk]) >= TARGET or sk in NEW: continue
+            key = fam_key(stem, parts)
+            if clash(key): continue
+            seen.update(key); got[sk].append((stem, [tuple(p[:3]) + ((p[3],) if len(p) > 3 and p[3] else ()) for p in parts], t))
+    for sk, f in NEW.items():
+        R = random.Random(sk)
+        for _ in range(8000):
+            if len(got[sk]) >= TARGETS.get(sk, TARGET): break
+            stem, parts = f(R); key = fam_key(stem, parts)
+            if any(not p[1] or "-" in p[1] for p in parts): continue   # never a missing or negative-sign answer
+            if clash(key): continue
+            seen.update(key); got[sk].append((stem, parts, "Exam skill"))
+    R = random.Random("pattern"); npat = 0
+    for _ in range(4000):
+        if npat >= PATTERN_SETS: break
+        stem, parts, pic = AF.pattern(R); key = [pic + "|" + p[0] for p in parts]
+        if key[0] in seen: continue
+        seen.update(key); got["seq"].append((stem, parts, "Exam skill", pic)); npat += 1
+    R = random.Random("asn"); pool = SF.ASN[:]; R.shuffle(pool)
+    for i in range(0, len(pool) - 3, 4):
+        got["asn"].append(("Always, sometimes or never true?", [(f"{a}     Always     Sometimes     Never", b, SF.WHY[b]) for a, b in pool[i:i + 4]], "Exam skill"))
+    out = []
+    PLAIN = ("Work these out.", "Fractions.", "Place value.", "Measures.", "Percentages.", "Sharing.", "Time.", "Speed.", "Averages.", "Angles.", "Two unknowns.", "Decimals.", "Rectangles.")
+    for s in skills:
+        sk = s["id"]
+        for n, (stem, parts, t, *pic) in enumerate(got[sk], 1):
+            for j, part in enumerate(parts):
+                q, a, sol = part[:3]
+                lab = "abcd"[j]
+                text = (f"Always, sometimes or never true? {q}" if stem.startswith("Always") else q if stem in PLAIN else f"{stem}\n{lab}) {q}")
+                lv = "Easy" if j == 0 else "Challenge" if j == len(parts) - 1 and len(parts) > 2 else "Hard"
+                out.append(dict(id=f"SK-{sk}-{n:02d}{lab}", q=text, a=a, s=sol, k=name[sk], t=name[sk], tab=name[sk], m=1, wp=False,
+                                lv=lv, yr=5, skill=sk, set=f"{sk}-{n:02d}", src="Written for this app in the CSSE style", **({"pic": pic[0]} if pic else {}), **({"wrong": list(part[3])} if len(part) > 3 else {})))
+    json.dump(out, open("/home/claude/data/skill_practice.json", "w"), ensure_ascii=False)
+    for s in skills: print(s["id"], len(got[s["id"]]), "sets")
+    print(len(out), "questions")
+
+if __name__ == "__main__":
+    main()

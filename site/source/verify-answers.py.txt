@@ -1,0 +1,59 @@
+"""Independent answer check: recompute what can be recomputed, and sanity-check the rest."""
+import json, re, sys
+from fractions import Fraction as F
+def num(s):
+    s = s.replace("−", "-").replace("£", "").replace(",", "").strip()
+    s = re.sub(r"\s*(cm²|m²|km per hour|kg|km|cm|mm|ml|g|m|l|p|°|minutes?|inches)$", "", s).strip()
+    m = re.fullmatch(r"(-?\d+) (\d+)/(\d+)", s)
+    if m: return F(int(m[1])) + F(int(m[2]), int(m[3]))
+    m = re.fullmatch(r"(-?\d+)/(\d+)", s)
+    if m: return F(int(m[1]), int(m[2]))
+    try: return F(s)
+    except Exception: return None
+OPS = {"+": lambda a, b: a + b, "−": lambda a, b: a - b, "×": lambda a, b: a * b, "÷": lambda a, b: a / b}
+TERM = r"(\d+ \d+/\d+|\d+/\d+|\d+(?:\.\d+)?)"
+def check(q):
+    t, a = q["q"].split("\n")[-1], q["a"]
+    t = re.sub(r"^[a-d]\) ", "", t)
+    opts = [x.strip() for x in re.split(r"\s{3,}", t)[1:]]
+    if opts: return a in opts or f"answer not among options {opts}"
+    m = re.fullmatch(TERM + r" ([+−×÷]) " + TERM + r" =", t)
+    if m:
+        v = OPS[m[2]](num(m[1]), num(m[3])); got = num(a)
+        if got is None: return f"cannot read answer {a}"
+        if a.count(" ") == 0 and "/" in a and F(a) != v: return f"{v}"
+        return got == v or f"expected {v}"
+    m = re.fullmatch(r"Find (\d+(?:\.\d+)?)% of (\d+)\.", t)
+    if m: return num(a) == F(m[1]) * int(m[2]) / 100 or f"expected {F(m[1]) * int(m[2]) / 100}"
+    m = re.fullmatch(r"What is (\d+)/(\d+) of (\d+)\?", t)
+    if m: return num(a) == F(int(m[1]), int(m[2])) * int(m[3]) or "fraction of amount"
+    m = re.fullmatch(r"Find the mean of ([\d, ]+) and (\d+)\.", t)
+    if m:
+        L = [int(x) for x in m[1].split(", ")] + [int(m[2])]; return num(a) == F(sum(L), len(L)) or "mean"
+    m = re.fullmatch(r"How many (\w+) are there in ([\d.]+) (\w+)\?", t)
+    if m:
+        f = {("m", "km"): 1000, ("cm", "m"): 100, ("g", "kg"): 1000, ("ml", "l"): 1000, ("mm", "cm"): 10}.get((m[1], m[3]))
+        if f: return num(a) == F(m[2]) * f or "unit conversion"
+    m = re.fullmatch(r"Write (\d+) (\w+) in (\w+)\.", t)
+    if m:
+        f = {("m", "km"): 1000, ("cm", "m"): 100, ("g", "kg"): 1000, ("ml", "l"): 1000}.get((m[2], m[3]))
+        if f: return num(a) == F(int(m[1]), f) or "unit conversion back"
+    m = re.search(r"corners at \((\d+), (\d+)\), \((\d+), (\d+)\) and \((\d+), (\d+)\)", q["q"])
+    P = lambda x, y: f"({x}, {y})"
+    if m:
+        x0, y0, x1, y1, x2, y2 = map(int, m.groups())
+        if "fourth corner" in t: return a == P(x0, y2) or f"expected {P(x0, y2)}"
+        mm = re.fullmatch(r"The square moves (\d+) left and (\d+) down\. Where does the corner \((\d+), (\d+)\) go\?", t)
+        if mm: return a == P(int(mm[3]) - int(mm[1]), int(mm[4]) - int(mm[2])) or "move"
+        mm = re.fullmatch(r"What point is exactly halfway between \((\d+), (\d+)\) and \((\d+), (\d+)\)\?", t)
+        if mm:
+            X = F(int(mm[1]) + int(mm[3]), 2); Y = F(int(mm[2]) + int(mm[4]), 2); return a == P(X, Y) or f"halfway expected {X},{Y}"
+    # everything else: the worked solution must end with (or contain) the answer
+    core = a.replace("°", "")
+    return core in q["s"].replace("°", "") or "answer not in worked solution"
+if __name__ == "__main__":
+    Q = json.load(open(sys.argv[1])); bad = 0; kinds = {"recomputed": 0, "solution": 0}
+    for q in Q:
+        r = check(q)
+        if r is not True: bad += 1; print(q["id"], "|", q["q"].replace("\n", " / ")[:120], "|", q["a"], "|", r)
+    print(len(Q), "checked,", bad, "problems")

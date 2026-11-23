@@ -1,0 +1,221 @@
+"""Generate original CSSE-style practice tests (60 one-mark parts each), every answer computed."""
+import json, random
+from fractions import Fraction as F
+from math import gcd
+
+def mixed(fr):
+    fr=F(fr); w=fr.numerator//fr.denominator; r=fr-w
+    return (f"{w} {r.numerator}/{r.denominator}" if w else f"{r.numerator}/{r.denominator}") if r else str(w)
+def money(p):  # p in pence
+    return f"£{p//100}.{p%100:02d}" if p%100 else f"£{p//100}"
+def hm(m): h,mi=divmod(m%1440,60); return h,mi
+def t12(m):
+    h,mi=hm(m); s="am" if h<12 else "pm"; h=h%12 or 12; return f"{h}:{mi:02d} {s}"
+def t24(m): h,mi=hm(m); return f"{h:02d}:{mi:02d}"
+def dur(m):
+    h,mi=divmod(m,60); a=[]
+    if h: a.append(f"{h} hour{'s' if h>1 else ''}")
+    if mi: a.append(f"{mi} minute{'s' if mi>1 else ''}")
+    return " ".join(a)
+
+SEEN=set()
+NAMES=["Ava","Ben","Chloe","Dev","Ella","Finn","Grace","Harry","Isla","Jay","Kai","Lily","Mia","Noah","Omar","Priya","Ruby","Sam","Tia","Zara"]
+
+def test(seed):
+    R=random.Random(seed); P=[]  # (qn, stem, parts[(q,a,s,wrong)], tab, t, bp)
+    def add(stem,parts,tab,t,bp): P.append((stem,parts,tab,t,bp))
+    nm=lambda: R.choice(NAMES)
+    # 1 written calculation
+    a=R.randint(2000,6999); b=R.randint(150,980); c=R.randint(4001,8009); d=R.randint(1100,c-1500)
+    dv=R.choice([6,7,8,9]); qn=R.randint(105,140)
+    add("Work these out.",[(f"{a} + {b} =",str(a+b),f"Add in columns: {a} + {b} = {a+b}.",None),
+        (f"{c} − {d} =",str(c-d),f"Subtract in columns: {c} − {d} = {c-d}.",None),
+        (f"{dv*qn} ÷ {dv} =",str(qn),f"Short division: {dv*qn} ÷ {dv} = {qn}. Check: {qn} × {dv} = {dv*qn}.",None)],"Add & Subtract","Totals","Addition and subtraction (mental and written)")
+    # 2 fractions
+    while True:
+        d1,d2=R.sample([3,4,5,6,8,10],2); n1,n2=R.randint(1,d1-1),R.randint(1,d2-1)
+        if gcd(n1,d1)==1 and gcd(n2,d2)==1 and F(n1,d1)+F(n2,d2)>1: break
+    s1=F(n1,d1)+F(n2,d2)
+    w1,w2=R.randint(3,5),R.randint(1,2); e1,e2=R.choice([(1,4),(1,3),(1,6),(2,5)]),R.choice([(2,3),(3,4),(5,6),(4,5)])
+    big=w1+F(*e1); small=w2+F(*e2)
+    fd=R.choice([3,4,5,6]); fn=R.randint(2,fd-1)
+    while gcd(fn,fd)!=1: fn=R.randint(2,fd-1) if fd>3 else 2
+    amt=fd*R.randint(9,25)
+    add("Fractions.",[(f"{n1}/{d1} + {n2}/{d2} =",mixed(s1),f"Use a common denominator, then add: {mixed(s1)}.",None),
+        (f"{w1} {e1[0]}/{e1[1]} − {w2} {e2[0]}/{e2[1]} =",mixed(big-small),f"Change to a common denominator and exchange a whole if needed: {mixed(big-small)}.",None),
+        (f"What is {fn}/{fd} of {amt}?",str(amt//fd*fn),f"{amt} ÷ {fd} = {amt//fd}, then × {fn} = {amt//fd*fn}.",None)],"Fractions","Word problems","Adding and subtracting fractions and mixed numbers")
+    # 3 place value or powers
+    if seed%2:
+        n=R.randint(10000,99999); x=R.randint(11,999)/100; y=R.randint(11,99)/10
+        add("Place value.",[(f"Round {n} to the nearest thousand.",str(round(n,-3)),f"Look at the hundreds digit: {round(n,-3)}.",None),
+            (f"{x} × 100 =",('%g'%(x*100)),f"Each digit moves two places to the left: {'%g'%(x*100)}.",None),
+            (f"{y} ÷ 1000 =",('%g'%(y/1000)),f"Each digit moves three places to the right: {'%g'%(y/1000)}.",None)],"Decimals","Dividing by 10, 100, 1000","Decimals: place value and four operations")
+    else:
+        b,e=R.choice([(2,5),(2,6),(2,7),(2,8),(3,3),(3,4),(3,5),(4,3),(4,4),(5,3),(10,4)]); k=R.randint(3,9); rt=R.randint(11,19)
+        add("Powers. 2³ means 2 × 2 × 2.",[(f"What is {b} to the power {e}?",str(b**e),f"Multiply {b} by itself {e} times: {b**e}.",None),
+            (f"What is {k}² + {k}³?",str(k*k+k**3),f"{k}² = {k*k} and {k}³ = {k**3}. {k*k} + {k**3} = {k*k+k**3}.",None),
+            (f"Which whole number squared gives {rt*rt}?",str(rt),f"{rt} × {rt} = {rt*rt}.",None)],"Number","Puzzles","Square and cube numbers")
+    # 4 measures
+    kg=R.choice([2.06,4.3,5.08,7.25,3.45,6.07,1.9,8.6,9.04]); side=R.choice([2,3,4,5,6]); s2=R.choice([1,2,3,4]); mi=R.choice([15,20,25,30,35,40,45,55,60,65,70])
+    add("Measures.",[(f"How many grams are there in {kg} kg?",f"{round(kg*1000)} g",f"1 kg = 1000 g, so {kg} × 1000 = {round(kg*1000)} g.",None),
+        (f"A rectangle is {side} m long and {s2} m wide. What is its area in cm²?",f"{side*100*s2*100} cm²",f"{side} m = {side*100} cm and {s2} m = {s2*100} cm. {side*100} × {s2*100} = {side*100*s2*100} cm².",None),
+        (f"5 miles is about 8 km. About how many km is {mi} miles?",f"{mi//5*8} km",f"{mi} miles is {mi//5} lots of 5 miles, so {mi//5} × 8 = {mi//5*8} km.",None)],"Money & Time","Measures","Metric unit conversions")
+    # 5 percentages
+    p=R.choice([15,35,45,55,65,85]); N=R.choice([140,260,320,480,360,540,620]); price=R.choice([40,60,80,120,160,240,180]); off=R.choice([15,25,35,45])
+    inc=R.choice([(25,40),(20,36),(25,55),(10,44),(20,54),(50,66),(25,70),(10,77),(20,42)])
+    add("Percentages.",[(f"Find {p}% of {N}.",('%g'%(N*p/100)),f"10% = {N//10}, 5% = {N/20:g}. Build up {p}%: {N*p/100:g}.",None),
+        (f"A coat costs £{price}. In a sale it is {off}% cheaper. What is the sale price?",money(round(price*(100-off))),f"{off}% of £{price} = {money(price*off)}. £{price} − {money(price*off)} = {money(round(price*(100-off)))}.",None),
+        (f"After a {inc[0]}% increase, a ticket costs £{inc[1]}. What did it cost before?",money(round(inc[1]*100*100/(100+inc[0]))),f"The new price is {100+inc[0]}% of the old one. Find 1% or {inc[0]}% first, then 100%.",None)],"Fractions","Percentages","Percentages of amounts and percentage change")
+    # 6 sharing
+    r1,r2=R.choice([(2,3),(3,5),(4,5),(2,7)]); tot=(r1+r2)*R.randint(6,15); ppl=R.choice([4,6]); g=R.choice([240,360,480]); to=R.choice([10,9,15])
+    a1,a2,a3=R.sample(NAMES,3); dif=R.choice([4,6,8]); share=R.choice([84,104,124])
+    A=F(share-dif,4)
+    add("Sharing.",[(f"£{tot} is shared in the ratio {r1} : {r2}. How much is the larger share?",f"£{tot//(r1+r2)*r2}",f"{r1+r2} parts. £{tot} ÷ {r1+r2} = £{tot//(r1+r2)} a part. Larger share: {r2} × £{tot//(r1+r2)} = £{tot//(r1+r2)*r2}.",None),
+        (f"A recipe for {ppl} people uses {g} g of rice. How much rice is needed for {to} people?",f"{g*to//ppl} g",f"For 1 person: {g} ÷ {ppl} = {g//ppl} g. For {to}: {g//ppl} × {to} = {g*to//ppl} g.",None),
+        (f"{a1}, {a2} and {a3} share £{share}. {a2} gets £{dif} more than {a1}, and {a3} gets twice as much as {a1}. How much does {a1} get?",money(int(A*100)),f"{a1} = 1 part, {a2} = 1 part + £{dif}, {a3} = 2 parts. 4 parts = £{share} − £{dif} = £{share-dif}, so 1 part = {money(int(A*100))}.",None),
+        (f"{a1}, {a2} and {a3} share £{share}. {a2} gets £{dif} more than {a1}, and {a3} gets twice as much as {a1}. How much does {a3} get?",money(int(2*A*100)),f"{a3} gets 2 × {money(int(A*100))} = {money(int(2*A*100))}.",None)],"Multiply & Divide","Ratio","Sharing a quantity in a ratio")
+    # 7 algebra relations
+    k=R.choice([2,3]); c=R.choice([4,5,7,9]); Q=R.randint(6,14); tot=k*Q+Q+Q+c
+    add(f"P is {'twice' if k==2 else 'three times'} Q. R is {c} more than Q. P + Q + R = {tot}.",[("Find Q.",str(Q),f"P + Q + R = {k}Q + Q + Q + {c} = {k+2}Q + {c} = {tot}, so {k+2}Q = {tot-c} and Q = {Q}.",None),
+        ("Find R.",str(Q+c),f"R = Q + {c} = {Q+c}.",None)],"Multiply & Divide","Two unknowns","Solving one- and two-step equations")
+    # 8 time
+    L=R.choice([95,125,140,155]); st=R.choice([18*60+45,19*60+35,13*60+50]); dep=R.randint(7*60,9*60); jr=R.randint(110,200); ep=R.choice([36,42,45,48,52,55]); s0=R.choice([17*60+40,18*60+15,16*60+25,19*60+5])
+    add("Time.",[(f"A film lasts {dur(L)}. It starts at {t12(st)}. When does it end?",t12(st+L),f"Add the hours, then the minutes: {t12(st+L)}.",[t12(st+L+60),t12(st+L-10),t12(st+L+10)]),
+        (f"A train leaves at {t24(dep)} and arrives at {t24(dep+jr)}. How long is the journey?",dur(jr),f"Count on from {t24(dep)} to the next hour, then to {t24(dep+jr)}: {dur(jr)}.",[dur(jr+40),dur(jr-10),dur(jr+60)]),
+        (f"Three {ep}-minute episodes are watched one after another, starting at {t24(s0)}. At what time does the last one finish?",t24(s0+3*ep),f"3 × {ep} = {3*ep} minutes = {dur(3*ep)}. {t24(s0)} + {dur(3*ep)} = {t24(s0+3*ep)}.",[t24(s0+2*ep),t24(s0+3*ep+10),t24(s0+3*ep-60)])],"Money & Time","Time word problems","Time, timetables and durations")
+    # 9 speed
+    sp=R.choice([12,16,18,24]); hrs=R.choice([F(3,2),F(5,2),F(7,2)]); d=R.choice([150,240,270,320]); h2=R.choice([3,4,5])
+    while d%h2: d+=10
+    who=nm()
+    add("Speed.",[(f"{who} cycles at {sp} km per hour for {mixed(hrs)} hours. How far does {who} cycle?",f"{int(sp*hrs)} km",f"{int(hrs)} hours: {sp*int(hrs)} km. Half an hour: {sp//2} km. Total {int(sp*hrs)} km.",None),
+        (f"A car travels {d} km in {h2} hours. What is its average speed?",f"{d//h2} km per hour",f"{d} ÷ {h2} = {d//h2} km per hour.",None)],"Multiply & Divide","Multiplication word problems","Speed, distance and time")
+    # 10 data
+    while True:
+        f=[R.randint(1,6) for _ in range(5)]; n=sum(f); t=sum(i*x for i,x in enumerate(f))
+        if n in (16,20,25) and f.count(max(f))==1 and (t*10)%n==0: break
+    thing=R.choice([("books they read last month","books"),("brothers and sisters they have","brothers and sisters"),("pets they have","pets")])
+    desc=", ".join(f"{x} said {i}" for i,x in enumerate(f))
+    add(f"{n} children were asked how many {thing[0]}. {desc}.",[(f"How many {thing[1]} is that altogether?",str(t),f"Multiply and add: {' + '.join(str(i*x) for i,x in enumerate(f))} = {t}.",None),
+        ("What is the mean per child?",('%g'%(t/n)),f"{t} ÷ {n} = {t/n:g}.",None),
+        ("What is the mode?",str(f.index(max(f))),f"The most children ({max(f)}) had {f.index(max(f))}.",None)],"Decimals","Word problems","Mean (average)")
+    # 11 averages
+    while True:
+        L5=R.sample(range(6,30),5)
+        if sum(L5)%5==0: break
+    m4=R.randint(7,12); m5=m4+R.choice([1,2])
+    while True:
+        nb,ng=R.choice([(3,2),(2,3),(4,2),(3,3),(2,4)]); bw,gw=R.randint(30,45),R.randint(30,45)
+        if bw!=gw and (nb*bw+ng*gw)%(nb+ng)==0: break
+    NW={2:"Two",3:"Three",4:"Four"}
+    add("Averages.",[(f"Find the mean of {', '.join(map(str,L5[:-1]))} and {L5[-1]}.",str(sum(L5)//5),f"Total {sum(L5)}. {sum(L5)} ÷ 5 = {sum(L5)//5}.",None),
+        (f"The mean of four numbers is {m4}. A fifth number is added and the mean becomes {m5}. What is the fifth number?",str(5*m5-4*m4),f"4 × {m4} = {4*m4}. 5 × {m5} = {5*m5}. {5*m5} − {4*m4} = {5*m5-4*m4}.",None),
+        (f"{NW[nb]} boys have a mean weight of {bw} kg. {NW[ng]} girls have a mean weight of {gw} kg. What is the mean weight of all {({5:"five",6:"six"})[nb+ng]}?",f"{(nb*bw+ng*gw)//(nb+ng)} kg",f"Boys {nb} × {bw} = {nb*bw} kg, girls {ng} × {gw} = {ng*gw} kg. {nb*bw+ng*gw} ÷ {nb+ng} = {(nb*bw+ng*gw)//(nb+ng)} kg.",None)],"Decimals","Word problems","Mean (average)")
+    # 12 angles
+    k=R.choice([2,3,4,5,8,9,11]); dd_=R.choice(range(10,120,2)); poly=R.choice([("pentagon",5),("hexagon",6),("octagon",8),("decagon",10),("nonagon (9 sides)",9),("12-sided polygon",12)]); top=R.choice(range(20,110,4))
+    add("Angles.",[((f"Two angles on a straight line are x and {k}x. Find x.",f"{180//(k+1)}°",f"x + {k}x = 180°, so {k+1}x = 180° and x = {180//(k+1)}°.",None) if R.random()<.4 else (f"Two angles on a straight line differ by {dd_}°. What is the smaller angle?",f"{(180-dd_)//2}°",f"Take the difference away: 180° − {dd_}° = {180-dd_}°. Half of that is {(180-dd_)//2}°.",None)),
+        ((f"What is each inside angle of a regular {poly[0]}?",f"{(poly[1]-2)*180//poly[1]}°",f"Angles inside a {poly[0]} add up to {(poly[1]-2)*180}°. {(poly[1]-2)*180} ÷ {poly[1]} = {(poly[1]-2)*180//poly[1]}°.",None) if R.random()<.5 else (f"What is each outside angle of a regular {poly[0]}?",f"{360//poly[1]}°",f"The outside angles of any polygon add up to 360°. 360 ÷ {poly[1]} = {360//poly[1]}°.",None)),
+        (f"An isosceles triangle has a top angle of {top}°. What is each of the two equal angles?",f"{(180-top)//2}°",f"180° − {top}° = {180-top}°. Half of that is {(180-top)//2}°.",None)],"Number","Puzzles","Angles in triangles, quadrilaterals and polygons")
+    if (180%(k+1)): pass
+    # 13 coordinates
+    x0,y0=R.randint(1,3),R.randint(1,3); s=R.choice([3,4,5]); dx,dy=R.choice([(2,1),(3,2),(1,3)]); p1=(R.randint(0,4)*2,R.randint(1,4)*2); p2=(p1[0]+R.choice([4,6]),p1[1]+R.choice([2,4]))
+    C=lambda x,y:f"({x}, {y})"
+    add(f"Coordinates. A square has three corners at {C(x0,y0)}, {C(x0+s,y0)} and {C(x0+s,y0+s)}.",[("What are the coordinates of the fourth corner?",C(x0,y0+s),f"It has the x of {C(x0,y0)} and the y of {C(x0+s,y0+s)}: {C(x0,y0+s)}.",[C(x0+s,y0),C(y0+s,x0),C(x0+s,y0+s+1)]),
+        (f"The square moves {dx} left and {dy} down. Where does the corner {C(x0+s,y0+s)} go?",C(x0+s-dx,y0+s-dy),f"x: {x0+s} − {dx} = {x0+s-dx}. y: {y0+s} − {dy} = {y0+s-dy}.",[C(x0+s+dx,y0+s-dy),C(x0+s-dy,y0+s-dx),C(x0+s-dx,y0+s+dy)]),
+        (f"What point is exactly halfway between {C(*p1)} and {C(*p2)}?",C((p1[0]+p2[0])//2,(p1[1]+p2[1])//2),"Halfway between the x values, and halfway between the y values.",[C(p2[0]-p1[0],p2[1]-p1[1]),C((p1[0]+p2[0])//2+1,(p1[1]+p2[1])//2),C(p1[0]+p2[0],p1[1]+p2[1])])],"Number","Puzzles","Coordinates in four quadrants")
+    # 14 two unknowns
+    sm=R.randint(15,40); df=R.randint(6,20)*2//2; lg=sm+df; pc=R.choice([20,25,30,35]); pn=R.choice([40,45,55,60]); a_,b_=2,R.choice([3,4])
+    add("Two unknowns.",[(f"Two numbers add up to {sm+lg} and their difference is {df}. What is the larger number?",str(lg),f"{sm+lg} − {df} = {2*sm}. Half is {sm}, the smaller. {sm} + {df} = {lg}.",None),
+        (f"Two numbers add up to {sm+lg} and their difference is {df}. What is the smaller number?",str(sm),f"{sm+lg} − {df} = {2*sm}, and {2*sm} ÷ 2 = {sm}.",None),
+        (f"2 pens and {b_} rubbers cost {money(2*pn+b_*pc)}. 2 pens and 1 rubber cost {money(2*pn+pc)}. How much is one rubber?",f"{pc}p",f"The difference is {b_-1} rubbers = {2*pn+b_*pc-(2*pn+pc)}p, so 1 rubber = {pc}p.",None),
+        (f"2 pens and {b_} rubbers cost {money(2*pn+b_*pc)}. 2 pens and 1 rubber cost {money(2*pn+pc)}. How much is one pen?",f"{pn}p",f"2 pens = {money(2*pn+pc)} − {pc}p = {2*pn}p, so 1 pen = {pn}p.",None)],"Multiply & Divide","Two unknowns","Pairs of numbers satisfying an equation")
+    # 15 always / sometimes / never
+    ST=[("The sum of two even numbers is even.","Always"),("The sum of two odd numbers is odd.","Never"),("A multiple of 4 is also a multiple of 8.","Sometimes"),("A multiple of 10 is also a multiple of 5.","Always"),
+        ("A prime number is odd.","Sometimes"),("The product of two odd numbers is even.","Never"),("A square number is even.","Sometimes"),("Doubling a whole number gives an even number.","Always"),
+        ("A number ending in 5 is a multiple of 3.","Sometimes"),("A multiple of 9 has digits that add up to a multiple of 9.","Always"),("The sum of three even numbers is odd.","Never"),("A cube number is a square number.","Sometimes"),
+        ("A multiple of 3 is odd.","Sometimes"),("The difference between two odd numbers is even.","Always"),("A two-digit number is bigger than the sum of its digits.","Always"),
+        ("Halving a multiple of 4 gives an even number.","Always"),("The sum of four odd numbers is odd.","Never"),("Multiplying a whole number by 5 gives an answer ending in 5.","Sometimes"),
+        ("A number ending in 0 is a multiple of 4.","Sometimes"),("A prime number has exactly two factors.","Always"),("A square number has an odd number of factors.","Always"),
+        ("Two different prime numbers add up to an even number.","Sometimes"),("The product of two even numbers is a multiple of 4.","Always"),("A number bigger than 2 that ends in 2 is prime.","Never"),
+        ("Taking an odd number away from an even number gives an even number.","Never"),("A multiple of 7 is also a multiple of 14.","Sometimes"),("A number that divides by 2 and by 3 also divides by 6.","Always"),
+        ("Doubling a number makes it bigger.","Sometimes"),("An odd number multiplied by itself is odd.","Always"),("A number ending in 9 is a square number.","Sometimes"),
+        ("A multiple of 5 ends in 0.","Sometimes"),("A multiple of 8 is odd.","Never"),("Three numbers in a row (like 4, 5, 6) add up to a multiple of 3.","Always"),
+        ("A number with more than two factors is prime.","Never"),("Adding 1 to an even number gives a prime number.","Sometimes"),("A whole number divided by itself gives 1 (not zero).","Always"),
+        ("The sum of five odd numbers is even.","Never"),("A multiple of 12 is a multiple of 3.","Always"),("A number ending in 4 is a square number.","Sometimes")]
+    why={"Always":"It works for every number you try, and you can see why.","Never":"It can never happen.","Sometimes":"It is true for some numbers but not others – find one of each."}
+    add("Always, sometimes or never true?",[(f"{s_}     Always     Sometimes     Never",ans,why[ans],None) for s_,ans in (lambda pool: R.sample(pool, min(4, len(pool))))([x for x in ST if f"{x[0]}     Always     Sometimes     Never" not in SEEN])],"Number","Puzzles","Prime numbers and prime factors")
+    # 16 sequences
+    a0=R.randint(3,9); st_=R.choice([3,4,6,7]); term=R.choice([15,20,25]); probe=a0+st_*R.randint(20,30)+R.choice([0,1]); dbl=R.choice([3,5,7,9,11]); lim=R.choice([300,500,1000,2000])
+    seq=[dbl]; 
+    while seq[-1]<=lim: seq.append(seq[-1]*2)
+    inseq=(probe-a0)%st_==0
+    add(f"A sequence starts {a0}, {a0+st_}, {a0+2*st_}, {a0+3*st_} …",[(f"What is the {term}th term?",str(a0+(term-1)*st_),f"The {term}th term is {term-1} jumps of {st_} after {a0}: {a0} + {term-1} × {st_} = {a0+(term-1)*st_}.",None),
+        (f"Is {probe} in the sequence?     Yes     No","Yes" if inseq else "No",f"{probe} − {a0} = {probe-a0}, which {'is' if inseq else 'is not'} a multiple of {st_}.",None),
+        (f"Another sequence starts at {dbl} and doubles each time. What is the first term bigger than {lim}?",str(seq[-1]),", ".join(map(str,seq))+".",None)],"Number","Sequences","Linear sequences and term-to-term rules")
+    # 17 perimeter algebra
+    x=R.randint(4,9); a2,b2=R.choice([(2,3),(3,1),(2,5)]); Lr=a2*x+b2; per=2*(Lr+x)
+    add(f"A rectangle is ({a2}x + {b2}) cm long and x cm wide. Its perimeter is {per} cm.",[("Find x.",str(x),f"Perimeter = 2 × ({a2}x + {b2} + x) = {2*(a2+1)}x + {2*b2} = {per}, so x = {x}.",None),
+        ("Find the area of the rectangle.",f"{Lr*x} cm²",f"Length {Lr} cm, width {x} cm. {Lr} × {x} = {Lr*x} cm².",None),
+        ("A square has the same perimeter. How long is each side?",f"{per/4:g} cm",f"{per} ÷ 4 = {per/4:g} cm.",None)],"Multiply & Divide","Two unknowns","Writing and using expressions and formulae")
+    # 18 decimals
+    u=R.randint(21,189)/10; v=R.randint(201,1899)/100; w=R.randint(5,12); z=R.randint(111,489)/100; m=R.randint(12,98)/10
+    while m*10%10==0: m=R.randint(12,98)/10
+    mm=R.randint(3,9); dv=R.choice([0.2,0.3,0.4,0.5,0.6,0.8]); qq=R.randint(6,24); dd=(round(qq*dv,1),dv)
+    add("Decimals.",[(f"{u} + {v} =",f"{u+v:.2f}".rstrip('0').rstrip('.'),f"Line up the points: {u+v:.2f}.".replace('.00',''),None),
+        (f"{w} − {z} =",f"{w-z:.2f}".rstrip('0').rstrip('.'),f"{w}.00 − {z} = {w-z:.2f}.",None),
+        (f"{m} × {mm} =",f"{m*mm:.1f}".rstrip('0').rstrip('.'),f"{round(m*10)} × {mm} = {round(m*10)*mm}, so {m} × {mm} = {m*mm:.1f}.",None),
+        (f"{dd[0]:g} ÷ {dd[1]:g} =",str(qq),f"Multiply both by 10: {round(dd[0]*10)} ÷ {round(dd[1]*10)} = {qq}.",None)],"Decimals","Word problems","Decimals: place value and four operations")
+    # 19 combinations or ages
+    if seed%3:
+        fl,tp=R.choice([(4,3),(5,2),(3,4),(5,3)]); thing=R.choice([("ice-cream stall","flavours","toppings"),("sandwich bar","breads","fillings"),("pizza shop","bases","toppings")])
+        add(f"A {thing[0]} has {fl} {thing[1]} and {tp} {thing[2]}.",[(f"How many choices are there of one of the {thing[1]} with one of the {thing[2]}?",str(fl*tp),f"{fl} × {tp} = {fl*tp}.",None),
+            (f"How many choices are there of two different {thing[1]} with one of the {thing[2]}?",str(fl*(fl-1)//2*tp),f"Pairs of {thing[1]}: {fl*(fl-1)//2}. {fl*(fl-1)//2} × {tp} = {fl*(fl-1)//2*tp}.",None)],"Number","Puzzles","Pairs of numbers satisfying an equation")
+    else:
+        gap=R.choice([24,26,28,30]); yb=R.choice([1950,1955,1960])
+        add(f"A mum was born in {yb} and her son in {yb+gap}.",[(f"In which year was the son half his mum's age?",str(yb+2*gap),f"The gap is always {gap} years. The son is half her age when he is {gap} and she is {2*gap}: {yb+gap} + {gap} = {yb+2*gap}.",None),
+            (f"In which year did their ages add up to {gap+2*20}?",str(yb+gap+20),f"Their ages add to {gap} + 2 × (son's age). {gap+40} − {gap} = 40, so the son is 20: {yb+gap} + 20 = {yb+gap+20}.",None)],"Add & Subtract","Ages","Multi-step word problems")
+    # 20 function machine
+    sub=R.choice([3,5,7]); mul=R.choice([2,3]); i1=R.randint(3,5); i2=R.randint(6,9)
+    add(f"A number machine: square the input, take away {sub}, then multiply by {mul}.",[(f"What is the output when the input is {i1}?",str((i1*i1-sub)*mul),f"{i1}² = {i1*i1}. {i1*i1} − {sub} = {i1*i1-sub}. × {mul} = {(i1*i1-sub)*mul}.",None),
+        (f"The output is {(i2*i2-sub)*mul}. What was the input?",str(i2),f"Work backwards: ÷ {mul} = {i2*i2-sub}, + {sub} = {i2*i2}, which is {i2} squared.",None)],"Number","Think of a number","Function machines")
+    return P
+
+def build(code,seed):
+    P=test(seed); out=[]
+    for n,(stem,parts,tab,t,bp) in enumerate(P,1):
+        for j,(q,a,s,w) in enumerate(parts):
+            lab="abcd"[j]
+            plain=stem in("Work these out.","Fractions.","Place value.","Measures.","Percentages.","Sharing.","Time.","Speed.","Averages.","Angles.","Two unknowns.","Decimals.")
+            text=(f"Always, sometimes or never true? {q}" if stem.startswith("Always") else q if plain else f"{stem}\n{lab}) {q}")
+            d=dict(id=f"{code}-{n:02d}{lab}",q=text,a=a,s=s,k=tab,t=t,tab=tab,m=1,wp=False,lv="Challenge",yr=6,src=f"Original CSSE-style practice test {code[2:]}, written for this app",bp=bp,paper=code,pq=f"{n}{lab}")
+            if w: d['wrong']=[x for x in w if x!=a][:3]
+            out.append(d)
+    return out
+def build_unique(code, start, seen):
+    fams=[]
+    for i in range(20):
+        for sd in range(start, start+5000):
+            fam=test(sd)[i]; texts=[q for q,_,_,_ in fam[1]]
+            key=[fam[0]+"|"+q for q in texts] if not fam[0].startswith("Always") else texts
+            if not any(k in seen for k in key):
+                seen.update(key); fams.append(fam); break
+        else: raise SystemExit(f"no unique family {i}")
+    return fams
+if __name__=="__main__":
+    import json as _j
+    seen=SEEN; allq=[]
+    pt1=_j.load(open('/home/claude/data/pt1.json'))
+    PLAIN=["Work these out.","Fractions.","Place value.","Measures.","Percentages.","Sharing.","Time.","Speed.","Averages.","Angles.","Two unknowns.","Decimals."]
+    for q in pt1:
+        t=q['q']
+        if "\n" in t: st,pt=t.split("\n",1); seen.add(st+"|"+pt[3:])
+        else:
+            for ps in PLAIN: seen.add(ps+"|"+t)
+    for i in range(2,11):
+        fams=build_unique(f"PT{i}",1000+i*577,seen)
+        test_orig=test
+        globals()['test']=lambda seed,f=fams: f
+        t=build(f"PT{i}",0); globals()['test']=test_orig
+        assert len(t)==60,(i,len(t)); allq+=t
+    json.dump(allq,open('/home/claude/data/pt2_10.json','w'),ensure_ascii=False)
+    print(len(allq))
+    for q in [x for x in allq if x['id'].startswith('PT2-')]: print(q['id'],'|',q['q'].replace('\n',' / ')[:110],'|',q['a'])

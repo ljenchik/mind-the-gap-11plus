@@ -1,0 +1,207 @@
+"""23 Nov: more kinds of task for paper questions 4 (ordering numbers), 5 (measures), 6 (percentages) and 9 (time),
+so that papers do not repeat the same wording. Linked 3-part sets; every answer is computed; phone-friendly answers."""
+from fractions import Fraction as F
+from decimal import Decimal as D
+from make_practice_tests import money, NAMES
+
+def fr(x): return f"{x.numerator}/{x.denominator}"
+def dz(x): s = format(D(str(x)), "f"); return s.rstrip("0").rstrip(".") if "." in s else s
+def t24(m): return f"{m // 60 % 24:02d}:{m % 60:02d}"
+def dur(m): h, mm = divmod(m, 60); return (f"{h} hour{'s' if h != 1 else ''} " if h else "") + (f"{mm} minutes" if mm else "").strip() if mm else f"{h} hour{'s' if h != 1 else ''}"
+
+FRACS = [F(1, 4), F(3, 4), F(2, 5), F(3, 5), F(4, 5), F(3, 8), F(5, 8), F(7, 10), F(3, 10), F(9, 20), F(11, 20), F(13, 20), F(1, 3), F(2, 3), F(5, 6), F(7, 8)]
+
+# ---------- 4: ordering numbers ----------
+def ord_race(R):
+    names = R.sample(NAMES, 4); times = sorted(R.sample(range(1210, 1590), 4))
+    t = [D(x) / 100 for x in times]; R.shuffle(names)
+    who = dict(zip(names, t)); order = sorted(names, key=lambda n: who[n])
+    lst = ", ".join(f"{n} {dz(who[n])} s" for n in names)
+    return (f"Four children ran a race. Their times were: {lst}.", [
+        ("Who won the race (the shortest time)?", order[0], f"The smallest time is {dz(who[order[0]])} s, so {order[0]} won.", [n for n in names if n != order[0]][:3]),
+        ("Who came third?", order[2], f"In order: {', '.join(f'{n} {dz(who[n])}' for n in order)}. Third is {order[2]}.", [n for n in names if n != order[2]][:3]),
+        (f"How many seconds faster was the winner than the child who came last?", f"{dz(who[order[3]] - who[order[0]])} seconds", f"{dz(who[order[3]])} − {dz(who[order[0]])} = {dz(who[order[3]] - who[order[0]])} seconds.")])
+
+def ord_jars(R):
+    TERM = [x for x in FRACS if 100 % x.denominator == 0 or x.denominator == 8]
+    fs = R.sample(TERM, 4); jars = ["A", "B", "C", "D"]; full = dict(zip(jars, fs))
+    most = max(jars, key=lambda j: full[j]); least = min(jars, key=lambda j: full[j])
+    close = min(jars, key=lambda j: abs(full[j] - F(1, 2)))
+    if sum(1 for j in jars if abs(full[j] - F(1, 2)) == abs(full[close] - F(1, 2))) > 1: return ord_jars(R)
+    return (f"Four jars of paint are partly full: jar A is {fr(full['A'])} full, jar B is {float(full['B']):g} full, jar C is {fr(full['C'])} full and jar D is {float(full['D']):g} full.".replace(".0 full", " full"), [
+        ("Which jar has the most paint in it?", f"Jar {most}", f"As decimals: {', '.join(f'{j} {float(full[j]):g}' for j in jars)}. The largest is Jar {most}.", [f"Jar {j}" for j in jars if j != most]),
+        ("Which jar has the least paint in it?", f"Jar {least}", f"The smallest decimal is Jar {least}.", [f"Jar {j}" for j in jars if j != least]),
+        ("Which jar is closest to half full?", f"Jar {close}", f"Half is 0.5. Jar {close} is {float(full[close]):g}, which is nearest to 0.5, so Jar {close}.", [f"Jar {j}" for j in jars if j != close])])
+
+def ord_between(R):
+    a = F(R.randint(1, 4), 5); b = a + F(1, 5); mid = (a + b) / 2
+    da, db = D(a.numerator) / a.denominator, D(b.numerator) / b.denominator
+    opts = [dz((da + db) / 2), dz(da - D("0.05")), dz(db + D("0.05")), dz(db + D("0.15"))]
+    p = R.choice([0.3, 0.45, 0.62, 0.75, 0.81]); q = round(p + R.choice([0.08, 0.12, 0.16]), 2)
+    x, y = R.sample([F(2, 5), F(3, 8), F(7, 20), F(9, 25), F(11, 25), F(3, 10)], 2)
+    big = fr(x) if x > y else fr(y)
+    return ("Comparing numbers.", [
+        (f"Which of these numbers is between {fr(a)} and {fr(b)}?", opts[0], f"{fr(a)} = {float(a):g} and {fr(b)} = {float(b):g}. Only {opts[0]} lies between them.", opts[1:]),
+        (f"What number is exactly halfway between {p:g} and {q:g}?", dz((D(str(p)) + D(str(q))) / 2), f"Add them and halve: ({p:g} + {q:g}) ÷ 2 = {dz((D(str(p)) + D(str(q))) / 2)}."),
+        (f"Which is bigger, {fr(x)} or {fr(y)}?", big, f"As decimals: {fr(x)} = {float(x):g}, {fr(y)} = {float(y):g}. So {big} is bigger.", [fr(y) if big == fr(x) else fr(x)])])
+
+def ord_neg(R):
+    city = R.sample(["Oslo", "Moscow", "London", "Cairo", "Toronto", "Paris", "Helsinki"], 4)
+    tmp = R.sample(range(-15, 16), 4); w = dict(zip(city, tmp)); cold = min(city, key=lambda c: w[c]); warm = max(city, key=lambda c: w[c])
+    f = lambda v: f"{v}°C".replace("-", "−")
+    return (f"At midnight the temperatures were: {', '.join(f'{c} {f(w[c])}' for c in city)}.", [
+        ("Which city was the coldest?", cold, f"The lowest temperature is {f(w[cold])}, in {cold}.", [c for c in city if c != cold]),
+        ("How many degrees warmer was the warmest city than the coldest?", str(w[warm] - w[cold]), f"From {f(w[cold])} to {f(w[warm])} is {w[warm] - w[cold]} degrees."),
+        (f"By morning {city[0]} was 7 degrees warmer. What was the temperature there then?", f(w[city[0]] + 7), f"{w[city[0]]} + 7 = {w[city[0]] + 7}, so {f(w[city[0]] + 7)}.".replace("-", "−"))])
+
+ORDER = [ord_race, ord_jars, ord_between, ord_neg]
+
+# ---------- 5: measures ----------
+def m_kitchen(R):
+    flour = R.choice([1.5, 2, 2.5]); use = R.choice([150, 200, 250, 350]); cups = R.choice([4, 5, 6]); ml = R.choice([150, 200, 250])
+    bot = R.choice([1, 1.5, 2])
+    return (f"In a kitchen there is a {flour:g} kg bag of flour and a {bot:g} litre bottle of milk.", [
+        (f"A cake uses {use} g of flour. How much flour is left in the bag, in grams?", f"{int(flour * 1000) - use} g", f"{flour:g} kg = {int(flour * 1000)} g. {int(flour * 1000)} − {use} = {int(flour * 1000) - use} g."),
+        (f"{cups} cups of {ml} ml are poured from the milk. How many millilitres are left?", f"{int(bot * 1000) - cups * ml} ml", f"{cups} × {ml} = {cups * ml} ml. {int(bot * 1000)} − {cups * ml} = {int(bot * 1000) - cups * ml} ml."),
+        (f"How many {use} g cakes could be made from a full {flour:g} kg bag?", str(int(flour * 1000) // use), f"{int(flour * 1000)} ÷ {use} = {int(flour * 1000) / use:g}, so {int(flour * 1000) // use} cakes.")]) if int(bot * 1000) > cups * ml else m_kitchen(R)
+
+def m_walk(R):
+    km = R.choice([2.4, 3.6, 4.5, 5.2, 6.8]); lap = R.choice([300, 400, 600]); step = R.choice([50, 60, 75])
+    return (f"A charity walk is {km:g} km long.", [
+        ("How many metres is that?", f"{int(km * 1000)} m", f"{km:g} × 1000 = {int(km * 1000)} m."),
+        (f"Mia has walked {lap * 3} m. How many metres are still to go?", f"{int(km * 1000) - lap * 3} m", f"{int(km * 1000)} − {lap * 3} = {int(km * 1000) - lap * 3} m."),
+        (f"Each of Mia's steps is {step} cm long. How many steps does she take to walk 300 m?", str(30000 // step), f"300 m = 30,000 cm. 30,000 ÷ {step} = {30000 // step}.")])
+
+def m_shelf_fix(R, wall, sh, mm, n):
+    g = R.choice([250, 350, 450, 750])
+    return (f"Dad is putting up shelves on a wall {wall:g} m wide.", [
+        (f"How many shelves {sh} cm long fit side by side across the wall?", str(int(wall * 100) // sh), f"{wall:g} m = {int(wall * 100)} cm. {int(wall * 100)} ÷ {sh} = {int(wall * 100) // sh}."),
+        (f"Each shelf is {mm} mm thick. How thick is a stack of {n} shelves, in centimetres?", f"{dz(D(mm * n) / 10)} cm", f"{n} × {mm} = {mm * n} mm = {dz(D(mm * n) / 10)} cm."),
+        (f"A box of screws weighs {dz(D(g) / 1000)} kg. What is that in grams?", f"{g} g", f"{dz(D(g) / 1000)} × 1000 = {g} g.")])
+
+def m_pool(R):
+    L = R.choice([25, 33, 50]); n = R.choice([8, 12, 16, 20]); l = R.choice([2.5, 3, 4]); sm = R.choice([250, 330, 500])
+    return (f"A swimming pool is {L} m long.", [
+        (f"Sam swims {n} lengths. How far is that in kilometres?", f"{dz(D(L * n) / 1000)} km", f"{n} × {L} = {L * n} m = {dz(D(L * n) / 1000)} km."),
+        (f"How many lengths make 1 km?" if 1000 % L == 0 else f"How many whole lengths can Sam swim in 1 km?", str(1000 // L), f"1000 ÷ {L} = {1000 / L:g}" + ("." if 1000 % L == 0 else f", so {1000 // L} whole lengths.")),
+        (f"After swimming Sam drinks {sm} ml from a {l:g} litre bottle. How much is left in millilitres?", f"{int(l * 1000) - sm} ml", f"{l:g} litres = {int(l * 1000)} ml. {int(l * 1000)} − {sm} = {int(l * 1000) - sm} ml.")])
+
+def m_shelf(R): return m_shelf_fix(R, R.choice([2.4, 3, 3.6]), R.choice([40, 60, 80]), R.choice([15, 18, 25]), R.choice([4, 5, 6]))
+
+MEASURE = [m_kitchen, m_walk, m_shelf, m_pool]
+
+# ---------- 6: percentages ----------
+def p_test(R):
+    tot = R.choice([20, 25, 40, 50]); a, b = R.sample(range(tot // 2, tot), 2); pass_ = R.choice([60, 70, 75, 80])
+    need = -(-pass_ * tot // 100)
+    return (f"A spelling test is marked out of {tot}.", [
+        (f"Ava scores {a}. What percentage is that?", f"{dz(D(a * 100) / tot)}%", f"{a} out of {tot} = {a}/{tot} = {dz(D(a * 100) / tot)}%."),
+        (f"Leo scores {dz(D(b * 100) / tot)}%. How many marks did he get?", str(b), f"{dz(D(b * 100) / tot)}% of {tot} = {b}."),
+        (f"To pass you need {pass_}%. What is the lowest mark that passes?", str(need), f"{pass_}% of {tot} = {pass_ * tot / 100:g}, so {need} marks.")])
+
+def p_school(R):
+    n = R.choice([200, 240, 300, 400, 450, 500]); a = R.choice([p for p in (10, 15, 20, 25, 30, 35, 40, 45) if n * p % 100 == 0])
+    b = R.choice([p for p in (10, 20, 25, 30) if p + a < 100 and n * p % 100 == 0]); grow = R.choice([5, 10, 20])
+    return (f"A school has {n} pupils.", [
+        (f"{a}% of them walk to school. How many is that?", str(n * a // 100), f"1% of {n} is {n / 100:g}. {a}% is {n * a // 100}."),
+        (f"{b}% come by bus and the rest come by car. What percentage come by car?", f"{100 - a - b}%", f"100% − {a}% − {b}% = {100 - a - b}%."),
+        (f"Next year the school grows by {grow}%. How many pupils will it have?", str(n + n * grow // 100), f"{grow}% of {n} = {n * grow // 100}. {n} + {n * grow // 100} = {n + n * grow // 100}.")]) if n * grow % 100 == 0 else p_school(R)
+
+def p_shop(R):
+    pr = R.choice([2000, 2400, 3500, 4000, 6000, 8000]); off = R.choice([10, 15, 20, 25, 30]); ex = R.choice([2, 3, 5])
+    if pr * off % 100: return p_shop(R)
+    sale = pr * (100 - off) // 100
+    return (f"A bike shop has a sale. A helmet that cost {money(pr)} is {off}% off.", [
+        ("How much is taken off the price?", money(pr * off // 100), f"{off}% of {money(pr)} = {money(pr * off // 100)}."),
+        ("What is the sale price?", money(sale), f"{money(pr)} − {money(pr * off // 100)} = {money(sale)}."),
+        (f"A bell is £{ex * 4} in the sale, after 20% off. What was its price before the sale?", f"£{ex * 5}", f"After 20% off, 80% is left. 80% = £{ex * 4}, so 10% = £{ex * 4 / 8:g} and 100% = £{ex * 5}.")])
+
+def p_battery(R):
+    import creative_families as C
+    return C.FAMS["battery"](R)
+
+PERCENT = [p_test, p_school, p_shop, p_battery]
+
+# ---------- 9: time ----------
+def t_swim(R):
+    st = R.choice([16 * 60, 16 * 60 + 15, 16 * 60 + 30, 17 * 60]); L = R.choice([35, 40, 45, 50]); gap = R.choice([10, 15]); k = R.choice([3, 4])
+    ends = st + k * L + (k - 1) * gap
+    return (f"Swimming lessons last {L} minutes, with {gap} minutes between lessons. The first lesson starts at {t24(st)}.", [
+        ("When does the first lesson end?", t24(st + L), f"{t24(st)} + {L} minutes = {t24(st + L)}."),
+        ("When does the second lesson start?", t24(st + L + gap), f"{t24(st + L)} + {gap} minutes = {t24(st + L + gap)}."),
+        (f"There are {k} lessons. When does the last one end?", t24(ends), f"{k} lessons = {k * L} minutes and {k - 1} gaps = {(k - 1) * gap} minutes. {t24(st)} + {k * L + (k - 1) * gap} minutes = {t24(ends)}.")])
+
+def t_bus(R):
+    first = R.choice([6 * 60 + 40, 7 * 60 + 5, 7 * 60 + 20]); ev = R.choice([12, 15, 20]); arr = R.choice([8 * 60 + 2, 8 * 60 + 13, 8 * 60 + 28])
+    nxt = first
+    while nxt < arr: nxt += ev
+    j = R.choice([18, 23, 27, 34])
+    return (f"A bus leaves the bus station every {ev} minutes. The first bus is at {t24(first)}.", [
+        ("What time does the third bus leave?", t24(first + 2 * ev), f"{t24(first)}, {t24(first + ev)}, {t24(first + 2 * ev)}."),
+        (f"Kim gets to the station at {t24(arr)}. How many minutes does she wait for the next bus?", f"{nxt - arr} minutes", f"The next bus after {t24(arr)} is at {t24(nxt)}. That is {nxt - arr} minutes."),
+        (f"The journey takes {j} minutes. What time does Kim arrive?", t24(nxt + j), f"{t24(nxt)} + {j} minutes = {t24(nxt + j)}.")])
+
+def t_cook(R):
+    kg = R.choice([1.5, 2, 2.5, 3]); per = R.choice([20, 25, 30]); extra = R.choice([15, 20, 25]); eat = R.choice([18 * 60, 18 * 60 + 30, 19 * 60])
+    cook = int(kg * 2 * per + extra) if (kg * 2 * per) % 1 == 0 else None
+    if cook is None: return t_cook(R)
+    return (f"A chicken needs {per} minutes for every 500 g, plus {extra} minutes. It weighs {kg:g} kg.", [
+        ("How many minutes does it need altogether?", f"{cook} minutes", f"{kg:g} kg = {int(kg * 2)} lots of 500 g. {int(kg * 2)} × {per} + {extra} = {cook} minutes."),
+        ("How long is that in hours and minutes?", dur(cook), f"{cook} minutes = {dur(cook)}."),
+        (f"Dinner is at {t24(eat)}. At what time must the chicken go in the oven?", t24(eat - cook), f"{t24(eat)} − {dur(cook)} = {t24(eat - cook)}.")])
+
+def t_cal(R):
+    import creative_families as C
+    return C.FAMS["calendar"](R)
+
+TIME = [t_swim, t_bus, t_cook, t_cal]
+
+# ---------- 14: always, sometimes, never (23 Nov) ----------
+ASN_OPTS = ["Always true", "Sometimes true", "Never true"]
+ASN = {"Always true": [
+    ("The sum of two even numbers is even.", "Even + even is always even."),
+    ("An odd number plus an odd number is even.", "Odd + odd is always even."),
+    ("A multiple of 6 is a multiple of 3.", "6 = 2 × 3, so every multiple of 6 is a multiple of 3."),
+    ("The product of two odd numbers is odd.", "Odd × odd is always odd."),
+    ("A multiple of 4 is even.", "4 is even, so every multiple of 4 is even."),
+    ("The sum of three numbers in a row (like 4, 5, 6) is a multiple of 3.", "The sum is 3 times the middle number."),
+    ("A square number has an odd number of factors.", "Factors come in pairs, except the square root, which pairs with itself."),
+    ("Doubling a whole number gives an even number.", "Any number × 2 is even."),
+    ("An even number multiplied by any whole number is even.", "If one number is even, the product is even."),
+    ("The product of three numbers in a row (like 4, 5, 6) is even.", "At least one of them is even."),
+    ("A number ending in 5 is a multiple of 5.", "Multiples of 5 end in 0 or 5, and every number ending in 5 is one."),
+    ("Adding 10 to a whole number changes its tens digit.", "Adding 10 adds 1 to the tens digit (9 becomes 0)."),
+    ("A multiple of 9 has digits that add up to a multiple of 9.", "This is the test for 9: it works for every multiple of 9.")],
+  "Sometimes true": [
+    ("A prime number is odd.", "2 is prime and even, but 3, 5 and 7 are odd."),
+    ("A multiple of 3 is odd.", "9 is odd, but 6 is even."),
+    ("A square number is even.", "16 is even, but 9 is odd."),
+    ("The sum of two prime numbers is even.", "3 + 5 = 8 is even, but 2 + 3 = 5 is odd."),
+    ("A number ending in 4 is a multiple of 4.", "24 is, but 14 is not."),
+    ("A multiple of 4 is a multiple of 8.", "16 is, but 12 is not."),
+    ("Half of an even number is even.", "Half of 8 is 4 (even), but half of 6 is 3 (odd)."),
+    ("The product of two prime numbers is odd.", "3 × 5 = 15 is odd, but 2 × 3 = 6 is even."),
+    ("A multiple of 5 is a multiple of 10.", "20 is, but 15 is not."),
+    ("A multiple of both 2 and 3 is a multiple of 12.", "24 is, but 6 is not."),
+    ("A square number ends in 6.", "16 does, but 25 does not."),
+    ("The sum of two odd numbers is a multiple of 4.", "1 + 3 = 4 is, but 1 + 5 = 6 is not."),
+    ("The difference between two square numbers is odd.", "4 − 1 = 3 is odd, but 9 − 1 = 8 is even.")],
+  "Never true": [
+    ("An odd number is a multiple of 2.", "Multiples of 2 are even."),
+    ("A multiple of 6 is odd.", "Every multiple of 6 is a multiple of 2, so it is even."),
+    ("The sum of two even numbers is odd.", "Even + even is always even."),
+    ("A prime number bigger than 2 is even.", "An even number bigger than 2 can be divided by 2, so it is not prime."),
+    ("A square number ends in 7.", "Square numbers end in 0, 1, 4, 5, 6 or 9."),
+    ("A square number ends in 2.", "Square numbers end in 0, 1, 4, 5, 6 or 9."),
+    ("A multiple of 4 is odd.", "Every multiple of 4 is even."),
+    ("An even number multiplied by an odd number is odd.", "If one number is even, the product is even."),
+    ("The sum of three odd numbers is even.", "Odd + odd = even, and even + odd = odd."),
+    ("A multiple of 10 ends in 5.", "Multiples of 10 end in 0."),
+    ("A square number ends in 3.", "Square numbers end in 0, 1, 4, 5, 6 or 9.")]}
+
+def asn(R):
+    kinds = R.sample(ASN_OPTS, 3)
+    parts = []
+    for v in kinds:
+        t, why = R.choice(ASN[v]); parts.append((t, v, f"{why} So: {v}.", ASN_OPTS))
+    return ("Is each statement always true, sometimes true or never true?", parts)

@@ -1,0 +1,722 @@
+from common import *
+from math import gcd
+from itertools import product as iprod
+
+
+def lcm(a, b): return a * b // gcd(a, b)
+
+
+# ---------- 11 Rounding ----------
+def rnd_near(r):
+    k = r.choice([10, 100, 1000]); N = r.randint(k * 2 + 1, k * 95)
+    while N % k == 0: N += 1
+    ctx = r.choice(['Write {} to the nearest {}.', 'A river is {} km long. Write its length to the nearest {} km.', 'A mountain is {} feet high. Write its height to the nearest {} feet.',
+                    '{} people watched a match. Round this to the nearest {}.', 'Round {} to the nearest {}.'])
+    a = (N + k // 2) // k * k
+    return Q(ctx.format(n(N), n(k)), n(a), f'{n(N)} lies between {n(N // k * k)} and {n(N // k * k + k)}. Halfway is {n(N // k * k + k // 2)}, so it rounds {"up" if a > N else "down"} to {n(a)}.', 'Nearest 10, 100, 1000')
+
+
+def rnd_whole(r):
+    x = D(r.randint(1, 4999)) / r.choice([100, 100, 1000])
+    while x % 1 == 0: x += D('0.03')
+    a = int(x + D('0.5'))
+    return Q(f'Write {dec(x)} to the nearest whole number.', a, f'The tenths digit is {int(x * 10) % 10}, so round {"up" if a > x else "down"}: {a}.', 'Nearest whole number')
+
+
+def rnd_pound(r):
+    p = r.randint(101, 9999)
+    while p % 100 == 0: p += 7
+    a = (p + 50) // 100
+    return Q(f'Write {money(p)} correct to the nearest £1.', f'£{a}', f'{p % 100}p is {"50p or more" if p % 100 >= 50 else "less than 50p"}, so round {"up" if p % 100 >= 50 else "down"} to £{a}.', 'Nearest pound')
+
+
+def rnd_big(r):
+    k = r.choice([10_000, 100_000, 1_000_000]); N = r.randint(11_000_000, 180_000_000) // 1000 * 1000
+    while N % k == 0: N += 7000
+    a = (N + k // 2) // k * k; th = r.choice(['An ocean covers {} square km.', 'A country has a population of {}.', 'A company sold {} tickets last year.', 'A desert covers {} square miles.'])
+    return Q(th.format(n(N)) + f' Round this number to the nearest {n(k)}.', n(a), f'Look at the digit to the right of the {n(k)}s place. {n(N)} rounds {"up" if a > N else "down"} to {n(a)}.', 'Rounding large numbers')
+
+
+def rnd_dp(r):
+    dp = r.choice([1, 2]); x = D(r.randint(1001, 99999)) / 1000
+    while (x * 10 ** dp * 10) % 10 == 0: x += D('0.003')
+    q = D(1).scaleb(-dp); a = (x / q + D('0.5')).to_integral_value(rounding='ROUND_FLOOR') * q
+    return Q(f'Round {dec(x)} to {dp} decimal place{"s" if dp > 1 else ""}.', f'{a:.{dp}f}', f'Look at the next digit after the {["tenths", "hundredths"][dp - 1]}: it is {int(x * 10 ** (dp + 1)) % 10}, so round {"up" if a > x else "down"} to {a:.{dp}f}.', 'Decimal places')
+
+
+def rnd_estimate(r):
+    k = r.randint(6, 19); rp = r.randint(3, 19); off = r.choice([-5, -2, -1, 1, 2, 5, -9, 9]); it = r.choice(['films', 'books', 'T-shirts', 'tickets', 'games', 'plants'])
+    return Q(f'By rounding the price to the nearest pound, find the approximate cost of {k} {it} at {money(rp * 100 + off)} each.', f'£{k * rp}',
+             f'{money(rp * 100 + off)} is about £{rp}. {k} × £{rp} = £{k * rp}.', 'Estimating')
+
+
+def rnd_bounds(r):
+    k = r.choice([10, 100, 1000]); X = k * r.randint(3, 95); big = r.random() < .5
+    a = X + k // 2 - 1 if big else X - k // 2
+    return Q(f'A whole number is rounded to the nearest {n(k)} and the answer is {n(X)}. What is the {"largest" if big else "smallest"} number it could have been?', n(a),
+             f'Numbers from {n(X - k // 2)} up to {n(X + k // 2 - 1)} round to {n(X)}. ({n(X + k // 2)} would round up to {n(X + k)}.)', 'Largest and smallest possible')
+
+
+# ---------- 12 Number problems and written arithmetic ----------
+def ari_subtimes(r):
+    d = r.randint(13, 49); k = r.randint(21, 79)
+    return Q(f'How many times can {d} be subtracted from {n(d * k)}?', k, f'{n(d * k)} ÷ {d} = {k}.', 'Repeated subtraction')
+
+
+def ari_product(r):
+    a = r.choice([15, 25, 35, 45, 12, 18, 24, 37, 16, 28, 55]); b = r.randint(11, 49)
+    return Q(f'The product of two numbers is {n(a * b)}. One of the numbers is {a}. What is the other number?', b, f'{n(a * b)} ÷ {a} = {b}.', 'Missing factor')
+
+
+def ari_same(r):
+    while True:
+        a, b, c = r.choice([10, 20, 25, 30, 40, 50, 15, 12]), r.randint(12, 60), r.choice([10, 20, 30, 40, 5, 15, 25])
+        if (b * c) % a == 0 and b * c // a not in (b, c) and a not in (b, c): break
+    return Q(f'Which number, when multiplied by {a}, gives the same answer as {b} × {c}?', b * c // a, f'{b} × {c} = {n(b * c)}. {n(b * c)} ÷ {a} = {b * c // a}.', 'Equal products')
+
+
+def ari_rem(r):
+    d = r.randint(6, 19); q = r.randint(7, 29); rem = r.randint(1, d - 1)
+    return Q(f'What number, when divided by {d}, gives an answer of {q} remainder {rem}?', d * q + rem, f'{d} × {q} = {d * q}. Add the remainder: {d * q} + {rem} = {d * q + rem}.', 'Remainders')
+
+
+def ari_wrong(r):
+    d = r.choice([6, 7, 8, 9]); x = r.randint(4, 30); A = names(r, 1)[0]; y = x * d
+    return Q(f'{A} multiplied a number by {d} instead of dividing it by {d}. The answer {A} got was {n(y * d)}. What should the answer have been?', x,
+             f'Undo the mistake: {n(y * d)} ÷ {d} = {n(y)} was the starting number. Now divide: {n(y)} ÷ {d} = {x}.', 'Correcting a mistake')
+
+
+def ari_digits(r):
+    ds = r.sample(range(1, 10), 4); big = int(''.join(map(str, sorted(ds, reverse=True)))); sm = int(''.join(map(str, sorted(ds))))
+    return Q(f'Make the largest number possible with the digits {", ".join(map(str, ds[:3]))} and {ds[3]}, then take away the smallest number possible. What is your answer?', n(big - sm),
+             f'Largest: {n(big)}. Smallest: {n(sm)}. {n(big)} − {n(sm)} = {n(big - sm)}.', 'Digit cards')
+
+
+def ari_halfway(r):
+    a = r.randint(11, 400); g = 2 * r.randint(7, 90)
+    return Q(f'What number is halfway between {a} and {a + g}?', a + g // 2, f'({a} + {a + g}) ÷ 2 = {2 * a + g} ÷ 2 = {a + g // 2}.', 'Halfway between')
+
+
+def ari_words(r):
+    t = r.randint(0, 2)
+    if t == 0:
+        a = r.randint(3, 19); b = r.choice([1000, 2000, 5000, 10000]) * r.choice([1, 1, 2])
+        return Q(f'Write in figures the number which is {a} less than {n(b)}.', n(b - a), f'{n(b)} − {a} = {n(b - a)}.', 'Words and figures')
+    if t == 1:
+        a = r.randint(11, 19)
+        return Q(f'Take {words(a)} from {words(a)} thousand. Write your answer in figures.', n(a * 1000 - a), f'{n(a * 1000)} − {a} = {n(a * 1000 - a)}.', 'Words and figures')
+    a = r.randint(123, 987); b = r.choice([1000, 2000, 3000])
+    return Q(f'Take {words(a)} from {words(b)}. Write your answer in words.', words(b - a), f'{n(b)} − {a} = {n(b - a)}, which is {words(b - a)}.', 'Words and figures')
+
+
+def ari_related(r):
+    a = r.randint(1100, 3900); b = r.randint(510, 990); da, db = r.choice([(1000, 0), (2000, 0), (1000, 1000), (0, 1000), (3000, 0), (100, 0), (-1000, 0), (10, 10)])
+    return Q(f'{n(a)} + {b} = {n(a + b)}, so what is {n(a + da)} + {n(b + db)}?', n(a + b + da + db), f'The numbers are {n(abs(da + db))} {"more" if da + db > 0 else "less"} in total, so {n(a + b)} {"+" if da + db > 0 else "−"} {n(abs(da + db))} = {n(a + b + da + db)}.', 'Using a known fact')
+
+
+def ari_sum4(r):
+    xs = [r.randint(2345, 9876) for _ in range(4)]
+    return Q(' + '.join(map(str, xs)) + ' = ____', n(sum(xs)), f'Add the columns from the right, carrying each time: {n(sum(xs))}.', 'Column addition')
+
+
+def ari_div(r):
+    if r.random() < .6:
+        d = r.choice([4, 6, 7, 8, 9]); q = r.randint(104, 198)
+    else:
+        d = r.choice([13, 14, 16, 17, 18, 19, 23]); q = r.randint(23, 67)
+    return Q(f'Divide {n(d * q)} by {d}.', q, f'{d} × {q} = {n(d * q)}, so {n(d * q)} ÷ {d} = {q}.', 'Division')
+
+
+def ari_lines(r):
+    L = r.randint(23, 48); N = r.choice([500, 750, 1000, 1200, 1500, 2000])
+    while N % L == 0: L += 1
+    p = N // L + 1
+    return Q(f'A book has {L} lines on every page. On which page will the {n(N)}th line appear?', p, f'{n(N)} ÷ {L} = {N // L} remainder {N % L}. So {N // L} pages are full and the line is on page {p}.', 'Division with remainders')
+
+
+def ari_adddiv(r):
+    d = r.randint(13, 37); N = r.randint(300, 990)
+    while N % d == 0: N += 1
+    a = d - N % d
+    return Q(f'Find the smallest number which must be added to {N} to make it exactly divisible by {d}.', a, f'{N} ÷ {d} = {N // d} remainder {N % d}. The next multiple of {d} is {N + a}, so add {a}.', 'Division with remainders')
+
+
+# ---------- 13 Factors, multiples and primes ----------
+def fpm_factors(r):
+    N = r.choice([x for x in range(12, 121) if 4 <= len(factors(x)) <= 12])
+    return Q(f'Write down all the factors of {N}.', ', '.join(map(str, factors(N))), 'Work in pairs: ' + ', '.join(f'{d} × {N // d}' for d in factors(N) if d * d <= N) + '.', 'Factors')
+
+
+def fpm_common(r):
+    while True:
+        a, b = r.sample(range(8, 73), 2); c = [d for d in factors(a) if b % d == 0]
+        if 3 <= len(c) <= 6 and a % b and b % a: break
+    return Q(f'Which numbers are factors of both {a} and {b}?', ', '.join(map(str, c)), f'Factors of {a}: {", ".join(map(str, factors(a)))}. Factors of {b}: {", ".join(map(str, factors(b)))}. The numbers in both lists are {", ".join(map(str, c))}.', 'Common factors')
+
+
+def fpm_hcf(r):
+    g = r.randint(4, 18)
+    while True:
+        a, b = r.sample(range(2, 10), 2)
+        if gcd(a, b) == 1: break
+    return Q(f'What is the highest common factor of {a * g} and {b * g}?', g, f'{a * g} = {g} × {a} and {b * g} = {g} × {b}; {a} and {b} share no other factor, so the HCF is {g}.', 'Highest common factor')
+
+
+def fpm_lcm(r):
+    while True:
+        a, b = r.sample(range(4, 21), 2)
+        if a % b and b % a and lcm(a, b) <= 180: break
+    L = lcm(a, b)
+    return Q(f'What is the lowest common multiple of {a} and {b}?', L, f'Multiples of {max(a, b)}: {", ".join(str(max(a, b) * i) for i in range(1, L // max(a, b) + 1))}. The first one that {min(a, b)} divides into is {L}.', 'Lowest common multiple')
+
+
+def fpm_buses(r):
+    while True:
+        a, b, c = r.sample([4, 5, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30], 3); L = lcm(lcm(a, b), c)
+        if 30 <= L <= 240 and L not in (a, b, c): break
+    st = 60 * r.randint(6, 10) + r.choice([0, 0, 15, 30]); th = r.choice(['buses leave the bus station', 'lighthouses flash together', 'bells ring together', 'trams leave the depot'])
+    return Q(f'Three {th} at {t12(st)}. After that, the first repeats every {a} minutes, the second every {b} minutes and the third every {c} minutes. At what time will all three next happen together?', t12(st + L),
+             f'The lowest common multiple of {a}, {b} and {c} is {L} minutes ({dur(L)}). {t12(st)} + {dur(L)} = {t12(st + L)}.', 'Common multiples in time')
+
+
+def fpm_range(r):
+    while True:
+        s = r.randint(8, 95); xs = list(range(s, s + r.choice([5, 6, 7]))); ps = [x for x in xs if x in primes_upto(110)]
+        if 1 <= len(ps) <= 2: break
+    return Q(f'Write down the prime number{"s" if len(ps) > 1 else ""} in this list: {", ".join(map(str, xs))}', ' and '.join(map(str, ps)),
+             'The others can be divided exactly: ' + ', '.join(f'{x} = {pfactors(x)[0]} × {x // pfactors(x)[0]}' for x in xs if x not in ps) + '.', 'Prime numbers')
+
+
+def fpm_pf(r):
+    while True:
+        N = r.randint(12, 400); pf = sorted(set(pfactors(N)))
+        if 2 <= len(pf) <= 3 and max(pf) <= 13 and len(pfactors(N)) >= 3: break
+    return Q(f'What are the prime factors of {N}?', ', '.join(map(str, pf)), f'{N} = {" × ".join(map(str, pfactors(N)))}, so the different prime factors are {", ".join(map(str, pf))}.', 'Prime factors')
+
+
+def fpm_product(r):
+    while True:
+        N = r.randint(24, 500); pf = pfactors(N)
+        if 3 <= len(pf) <= 5 and max(pf) <= 13: break
+    return Q(f'Write {N} as a product of its prime factors.', ' × '.join(map(str, pf)), f'Keep dividing by the smallest prime that works: {N} = {" × ".join(map(str, pf))}.', 'Prime factors')
+
+
+def fpm_parity(r):
+    xs = [r.randint(12, 1999) for _ in range(r.choice([2, 2, 3]))]; ev = any(x % 2 == 0 for x in xs)
+    return Q(f'Without working it out, is {" × ".join(map(str, xs))} an odd number or an even number?', 'even' if ev else 'odd',
+             'A product is even if at least one of the numbers is even. ' + (f'{[x for x in xs if x % 2 == 0][0]} is even, so the product is even.' if ev else 'All the numbers are odd, so the product is odd.'), 'Odd and even')
+
+
+def fpm_third(r):
+    a, b, c = r.choice([25, 11, 15, 9, 12, 8, 14]), r.choice([11, 7, 13, 5, 9]), r.randint(3, 19)
+    return Q(f'Three whole numbers multiplied together make {n(a * b * c)}. Two of the numbers are {a} and {b}. What is the third number?', c, f'{a} × {b} = {a * b}. {n(a * b * c)} ÷ {a * b} = {c}.', 'Missing factor')
+
+
+# ---------- 14 Squares, cubes and powers ----------
+def pow_index(r):
+    a = r.choice([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1]); k = r.randint(2, 6)
+    return Q(f'5 × 5 can be written as 5². Write {" × ".join([str(a)] * k)} in the same way.', sup(a, k), f'{a} is multiplied by itself {k} times, so it is {sup(a, k)}.', 'Index notation')
+
+
+def pow_eval(r):
+    a, k = r.choice([(2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 3), (3, 4), (4, 3), (5, 3), (10, 4), (10, 5), (6, 3), (1, 9), (3, 5), (11, 2), (12, 2), (13, 2), (15, 2), (20, 2), (9, 3), (10, 6), (7, 3), (2, 10), (14, 2), (25, 2)])
+    return Q(f'What is the value of {sup(a, k)}?', n(a ** k), f'{" × ".join([str(a)] * k)} = {n(a ** k)}.', 'Evaluating powers')
+
+
+def pow_diff(r):
+    if r.random() < .5:
+        a = r.randint(4, 15); b = r.randint(2, a - 1); return Q(f'{sup(a, 2)} − {sup(b, 2)} = ____', a * a - b * b, f'{a * a} − {b * b} = {a * a - b * b}.', 'Calculating with powers')
+    a, b = r.choice([(2, 2), (3, 2), (3, 4), (3, 5), (4, 5), (4, 7), (5, 10), (5, 11), (2, 1), (4, 6), (3, 3), (5, 8)])
+    return Q(f'{sup(a, 3)} − {sup(b, 2)} = ____', a ** 3 - b * b, f'{sup(a, 3)} = {a ** 3} and {sup(b, 2)} = {b * b}. {a ** 3} − {b * b} = {a ** 3 - b * b}.', 'Calculating with powers')
+
+
+def pow_self(r):
+    a = r.randint(4, 25)
+    return Q(f'A number multiplied by itself is {a * a}. What is the number?', a, f'{a} × {a} = {a * a}.', 'Square roots')
+
+
+def pow_double(r):
+    a = r.randint(3, 15); k, w = r.choice([(2, 'doubled'), (3, 'multiplied by 3'), (2, 'doubled'), (10, 'multiplied by 10')])
+    return Q(f'A number is multiplied by itself and the answer is then {w}. The result is {n(a * a * k)}. What is the number?', a, f'{n(a * a * k)} ÷ {k} = {a * a}, and {a} × {a} = {a * a}.', 'Square roots')
+
+
+def pow_missing(r):
+    a, k = r.choice([(2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (3, 3), (3, 4), (3, 5), (4, 3), (4, 4), (5, 3), (5, 4), (10, 5), (10, 6), (6, 3), (7, 3), (2, 9), (3, 6)])
+    return Q(f'Fill in the box: {a}^□ = {n(a ** k)}   (the box is the power of {a})', k, ', '.join(f'{sup(a, i)} = {n(a ** i)}' for i in range(1, k + 1)) + '.', 'Missing powers')
+
+
+def pow_compare(r):
+    a, b = r.choice([(2, 3), (2, 5), (2, 6), (3, 4), (3, 5), (2, 7), (4, 3), (5, 3), (2, 8), (5, 2), (6, 2), (3, 2), (4, 5), (10, 2)])
+    x, y = a ** b, b ** a
+    return Q(f'Which is larger, {sup(a, b)} or {sup(b, a)}, and by how much?', f'{sup(a, b) if x > y else sup(b, a)}, by {abs(x - y)}', f'{sup(a, b)} = {x} and {sup(b, a)} = {y}. The difference is {abs(x - y)}.', 'Comparing powers')
+
+
+def pow_between(r):
+    lo = r.randint(5, 150); hi = lo + r.randint(40, 110); cube = r.random() < .3
+    xs = [i ** 3 for i in range(1, 12) if lo < i ** 3 < hi] if cube else [i * i for i in range(1, 20) if lo < i * i < hi]
+    if not xs: return pow_between(r)
+    return Q(f'Write down all the {"cube" if cube else "square"} numbers between {lo} and {hi}.', ', '.join(map(str, xs)), ', '.join(f'{round(x ** (1 / 3)) if cube else int(x ** .5)}{"³" if cube else "²"} = {x}' for x in xs) + '.', 'Square and cube numbers')
+
+
+def pow_cube(r):
+    a = r.randint(2, 10)
+    return Q(f'A number is multiplied by itself, and the answer is multiplied by the number again. The result is {n(a ** 3)}. What is the number?', a, f'{a} × {a} × {a} = {n(a ** 3)}.', 'Cube roots')
+
+
+# ---------- 15 Algebra ----------
+LET = 'abcxyzmnpt'
+
+
+def alg_add(r):
+    v = r.choice(LET); a = r.randint(3, 60); x = r.randint(2, 60)
+    return Q(r.choice([f'{a} + {v} = {a + x}', f'{v} + {a} = {a + x}']) + f'. Find the value of {v}.', x, f'{v} = {a + x} − {a} = {x}.', 'One-step equations')
+
+
+def alg_sub(r):
+    v = r.choice(LET); a = r.randint(3, 40); x = r.randint(2, 60)
+    if r.random() < .6: return Q(f'{v} − {a} = {x}. Find the value of {v}.', x + a, f'{v} = {x} + {a} = {x + a}.', 'One-step equations')
+    return Q(f'{a + x} − {v} = {a}. Find the value of {v}.', x, f'{v} = {a + x} − {a} = {x}.', 'One-step equations')
+
+
+def alg_mul(r):
+    v = r.choice(LET); k = r.randint(2, 9); x = r.randint(2, 12); c = r.randint(1, 20)
+    rhs = r.choice([f'{k * x + c} − {c}', f'{k * x - c} + {c}']) if k * x > c else f'{k * x + c} − {c}'
+    return Q(f'{k}{v} = {rhs}. Find the value of {v}.', x, f'{k}{v} = {k * x}, so {v} = {k * x} ÷ {k} = {x}.', 'Equations with a multiple')
+
+
+def alg_collect(r):
+    v = r.choice(LET); a = r.randint(2, 7); b = r.randint(1, 5); x = r.randint(2, 12); plus = r.random() < .5 or a <= b
+    k = a + b if plus else a - b; bs = '' if b == 1 else str(b)
+    return Q(f'{a}{v} {"+" if plus else "−"} {bs}{v} = {k * x}. Find the value of {v}.', x, f'{a}{v} {"+" if plus else "−"} {bs}{v} = {k if k > 1 else ""}{v}, so {v} = {k * x} ÷ {k} = {x}.', 'Collecting like terms')
+
+
+def alg_div(r):
+    v = r.choice(LET); a = r.randint(3, 12); b = r.randint(3, 12); t = r.randint(0, 2)
+    if t == 0: return Q(f'{a * b}/{v} = {b}. Find the value of {v}.', a, f'{a * b} ÷ {v} = {b}, so {v} = {a * b} ÷ {b} = {a}.', 'Equations with division')
+    if t == 1: return Q(f'{v}/{a} = {b}. Find the value of {v}.', a * b, f'{v} ÷ {a} = {b}, so {v} = {b} × {a} = {a * b}.', 'Equations with division')
+    return Q(f'{a * b}/{a} = {v}. Find the value of {v}.', b, f'{a * b} ÷ {a} = {b}.', 'Equations with division')
+
+
+def alg_subst(r):
+    a, b = r.randint(2, 9), r.randint(2, 9); p, q = r.randint(2, 6), r.randint(2, 5); t = r.randint(0, 3)
+    if t == 0 and p * a > q * b: e, v = f'{p}a − {q}b', p * a - q * b
+    elif t == 1: e, v = f'{p}a + {q}b', p * a + q * b
+    elif t == 2: e, v = f'ab + {p}', a * b + p
+    else: e, v = f'a² + {q}b', a * a + q * b
+    return Q(f'If a = {a} and b = {b}, find the value of {e}.', v, f'Replace a with {a} and b with {b}: the value is {v}.', 'Substitution')
+
+
+def alg_substfrac(r):
+    x, y = r.randint(2, 9), r.randint(2, 9); p, q = r.randint(2, 6), r.randint(2, 6)
+    return Q(f'If x = {x} and y = {y}, find the value of {p}x/{q}y (that is, {p}x divided by {q}y). Give your answer in its simplest form.', fr(F(p * x, q * y)),
+             f'{p}x = {p * x} and {q}y = {q * y}. {p * x}/{q * y} = {fr(F(p * x, q * y))}.', 'Substitution')
+
+
+def alg_symbol(r):
+    s = r.choice(['★', '▲', '◆', '●']); d = r.randint(3, 9); q = r.randint(3, 9); x = r.randint(2, 20); t = r.randint(0, 2)
+    if t == 0: return Q(f'What number does {s} stand for?   {q + x} − {s} = {d * q} ÷ {d}', x, f'{d * q} ÷ {d} = {q}. {q + x} − {s} = {q}, so {s} = {x}.', 'Symbol equations')
+    if t == 1: return Q(f'What number does {s} stand for?   {x} + {s} = {d * q} − {d}', d * q - d - x if d * q - d > x else 0, f'{d * q} − {d} = {d * q - d}. {s} = {d * q - d} − {x} = {d * q - d - x}.', 'Symbol equations') if d * q - d > x else alg_symbol(r)
+    return Q(f'What number does {s} stand for?   {s} × {d} = {d * q + d * x} − {d * x}', q, f'{d * q + d * x} − {d * x} = {d * q}. {s} = {d * q} ÷ {d} = {q}.', 'Symbol equations')
+
+
+def alg_twostep(r):
+    v = r.choice(LET); k = r.randint(2, 9); x = r.randint(2, 12); c = r.randint(1, 15); plus = r.random() < .5 or k * x <= c
+    return Q(f'{k}{v} {"+" if plus else "−"} {c} = {k * x + (c if plus else -c)}. Find the value of {v}.', x,
+             f'{k}{v} = {k * x + (c if plus else -c)} {"−" if plus else "+"} {c} = {k * x}, so {v} = {x}.', 'Two-step equations')
+
+
+def alg_think(r):
+    k = r.randint(2, 9); x = r.randint(3, 15); c = r.randint(2, 20); plus = r.random() < .5 or k * x <= c
+    return Q(f'I think of a number, multiply it by {k} and then {"add" if plus else "subtract"} {c}. My answer is {k * x + (c if plus else -c)}. What number did I think of?', x,
+             f'Work backwards: {k * x + (c if plus else -c)} {"−" if plus else "+"} {c} = {k * x}, then {k * x} ÷ {k} = {x}.', 'Think of a number')
+
+
+# ---------- 16 Sequences ----------
+def _seq(xs, f=str): return ', '.join(f(x) for x in xs) + ', ____, ____'
+
+
+def seq_arith(r):
+    a = r.randint(2, 150); d = r.choice([3, 4, 6, 7, 8, 9, 11, 12, 15, 25, -3, -4, -6, -7, -9, -11]); xs = [a + d * i if d > 0 else a + 60 + d * i for i in range(6)]
+    return Q('Write the next two numbers: ' + _seq(xs[:4]), f'{xs[4]}, {xs[5]}', f'The rule is {"add" if d > 0 else "subtract"} {abs(d)}.', 'Next two numbers')
+
+
+def seq_grow(r):
+    a = r.randint(1, 40); d0 = r.randint(1, 6); dd = r.choice([1, 2, 3]); xs = [a]; d = d0
+    for i in range(6): xs.append(xs[-1] + d); d += dd
+    return Q('Write the next two numbers: ' + _seq(xs[:5]), f'{xs[5]}, {xs[6]}', f'The gaps grow by {dd} each time: +{d0}, +{d0 + dd}, +{d0 + 2 * dd}, +{d0 + 3 * dd}, then +{d0 + 4 * dd} and +{d0 + 5 * dd}.', 'Growing gaps')
+
+
+def seq_shrink(r):
+    d0 = r.randint(8, 14); a = r.randint(90, 160); xs = [a]; d = d0
+    for i in range(6): xs.append(xs[-1] - d); d -= 1
+    return Q('Write the next two numbers: ' + _seq(xs[:4]), f'{xs[4]}, {xs[5]}', f'The numbers go down by {d0}, then {d0 - 1}, then {d0 - 2}, so next subtract {d0 - 3} and then {d0 - 4}.', 'Shrinking gaps')
+
+
+def seq_geo(r):
+    if r.random() < .5:
+        a = r.randint(1, 7); k = r.choice([2, 3, 2, 5]); xs = [a * k ** i for i in range(6)]
+        return Q('Write the next two numbers: ' + _seq(xs[:4], n), f'{n(xs[4])}, {n(xs[5])}', f'Each number is {k} times the one before.', 'Multiplying sequences')
+    a = D(r.choice([3000, 5000, 7000, 200, 60000, 450])); up = r.random() < .3
+    xs = [a / D(10) ** i for i in range(6)]
+    if up: xs = [D(r.choice([3, 7, 12, 45])) / 1000 * D(10) ** i for i in range(6)]
+    return Q('Write the next two numbers: ' + _seq(xs[:4], dec), f'{dec(xs[4])}, {dec(xs[5])}', f'Each number is the one before {"multiplied" if up else "divided"} by 10.', 'Multiplying sequences')
+
+
+def seq_frac(r):
+    d = r.choice([F(1, 4), F(3, 4), F(1, 8), F(3, 8), F(1, 2), F(2, 3), F(1, 3), F(5, 8), F(1, 6)]); a = F(r.randint(0, 5)) + r.choice([F(0), F(1, 2), F(1, 4), F(1, 8), F(1, 3)])
+    if a == 0: a = d
+    xs = [a + d * i for i in range(6)]
+    return Q('Write the next two numbers: ' + _seq(xs[:4], fr), f'{fr(xs[4])}, {fr(xs[5])}', f'The rule is add {fr(d)}.', 'Fraction sequences')
+
+
+def seq_dec(r):
+    if r.random() < .5:
+        d = D(r.choice(['0.125', '0.25', '0.3', '0.15', '0.05', '0.7', '1.1', '0.02'])); a = D(r.randint(0, 30)) / 10 + d; xs = [a + d * i for i in range(6)]
+        return Q('Write the next two numbers: ' + _seq(xs[:4], dec), f'{dec(xs[4])}, {dec(xs[5])}', f'The rule is add {dec(d)}.', 'Decimal sequences')
+    a = D(r.randint(11, 90)) / 10; xs = [a]
+    for i in range(1, 7): xs.append(xs[-1] + D(i) / 10)
+    return Q('Write the next two numbers: ' + _seq(xs[:4], dec), f'{dec(xs[4])}, {dec(xs[5])}', 'The gaps grow: +0.1, +0.2, +0.3, then +0.4 and +0.5.', 'Decimal sequences')
+
+
+def seq_square(r):
+    p, q = r.choice([4, -4, 18, 5, -6, 7, 12, -9, 25]), r.choice([-4, 4, 18, 3, 6, -5, 11, -8, 15]); base = r.randint(40, 120)
+    i, j = r.randint(0, 2), r.randint(0, 2)
+    g = [[base + p * a + q * b for b in range(3)] for a in range(3)]; ans = g[i][j]
+    tab = [[('x' if (a, b) == (i, j) else str(g[a][b])) for b in range(3)] for a in range(3)]
+    return Q('What is the missing number x in this number square?', ans, f'Going across, the numbers {"go up" if q > 0 else "go down"} by {abs(q)}; going down, they {"go up" if p > 0 else "go down"} by {abs(p)}. So x = {ans}.', 'Number squares', table=tab)
+
+
+def seq_dots(r):
+    k = r.randint(5, 30); t = r.randint(0, 1)
+    if t == 0:
+        return Q(f'A pattern of triangles is made from dots. The 1st has 1 row and 1 dot, the 2nd has 2 rows and 4 dots, the 3rd has 3 rows and 9 dots. How many dots are there in the triangle with {k} rows?', k * k,
+                 f'The number of dots is the number of rows squared: {k} × {k} = {k * k}.', 'Dot patterns')
+    return Q(f'Dots are arranged in staircase patterns: 1 dot, then 3 dots, then 6 dots, then 10 dots (each pattern adds one more row than the last). How many dots are in pattern number {min(k, 15)}?', min(k, 15) * (min(k, 15) + 1) // 2,
+             f'Add 1 + 2 + 3 + … + {min(k, 15)} = {min(k, 15) * (min(k, 15) + 1) // 2}.', 'Dot patterns')
+
+
+def seq_missing(r):
+    a = r.randint(2, 90); d = r.randint(3, 19); xs = [a + d * i for i in range(6)]; i = r.randint(1, 4)
+    return Q('Fill in the missing number in this sequence: ' + ', '.join('____' if j == i else str(x) for j, x in enumerate(xs)), xs[i], f'The numbers go up by {d} each time.', 'Missing term')
+
+
+def seq_nth(r):
+    a = r.randint(2, 12); d = r.randint(2, 9); k = r.choice([10, 12, 15, 20, 25, 30, 50, 100]); xs = [a + d * i for i in range(4)]
+    return Q(f'A sequence starts {", ".join(map(str, xs))} and carries on in the same way. What is the {k}th number in the sequence?', a + d * (k - 1),
+             f'It goes up by {d} each time. To reach the {k}th number, add {d} a total of {k - 1} times: {a} + {k - 1} × {d} = {a + d * (k - 1)}.', 'Finding a later term')
+
+
+# ---------- 17 Function machines ----------
+def _mach(r):
+    k = r.randint(2, 9); c = r.randint(1, 12); plus = r.random() < .6
+    return k, c, plus, f'× {k}, then {"+" if plus else "−"} {c}'
+
+
+def fun_out(r):
+    k, c, plus, d = _mach(r); x = r.randint(6, 60)
+    return Q(f'A number machine works like this: IN → {d} → OUT. What comes out when {x} goes in?', k * x + (c if plus else -c), f'{x} × {k} = {k * x}. {k * x} {"+" if plus else "−"} {c} = {k * x + (c if plus else -c)}.', 'Finding the output')
+
+
+def fun_in(r):
+    k, c, plus, d = _mach(r); x = r.randint(4, 40); y = k * x + (c if plus else -c)
+    return Q(f'A number machine works like this: IN → {d} → OUT. The number {y} comes out. What number went in?', x, f'Work backwards: {y} {"−" if plus else "+"} {c} = {k * x}, then {k * x} ÷ {k} = {x}.', 'Finding the input')
+
+
+def fun_table(r):
+    k = r.randint(2, 12); c = r.randint(0, 9); xs = sorted(r.sample(range(2, 15), 4)); i = r.randint(0, 3)
+    rule = f'{k} × ▽' + (f' + {c}' if c else '')
+    tab = [['▽'] + [str(x) for x in xs], [rule] + ['x' if j == i else str(k * x + c) for j, x in enumerate(xs)]]
+    return Q('What is the missing number x in this table?', k * xs[i] + c, f'{k} × {xs[i]}' + (f' + {c}' if c else '') + f' = {k * xs[i] + c}.', 'Tables of values', table=tab)
+
+
+def fun_rule(r):
+    if r.random() < .5:
+        k = r.randint(3, 12); a, b = r.sample(range(3, 13), 2)
+        return Q(f'A one-step number machine changes {a} into {a * k} and {b} into {b * k}. What does the machine do?', f'multiplies by {k}', f'{a * k} ÷ {a} = {k} and {b * k} ÷ {b} = {k}.', 'Finding the rule')
+    k = r.randint(2, 9); a, b = r.sample(range(2, 12), 2); c = r.randint(1, 9)
+    return Q(f'A machine multiplies by a number and then adds {c}. It changes {a} into {a * k + c} and {b} into {b * k + c}. What number does it multiply by?', k, f'{a * k + c} − {c} = {a * k}, and {a * k} ÷ {a} = {k}. Check: {b} × {k} + {c} = {b * k + c}.', 'Finding the rule')
+
+
+def fun_fixed(r):
+    k = r.randint(3, 7); x = r.randint(2, 15); c = (k - 1) * x
+    return Q(f'A number machine works like this: IN → × {k}, then − {c} → OUT. Which number comes out the same as it went in?', x, f'Try {x}: {x} × {k} = {k * x}, and {k * x} − {c} = {x}. (The machine adds {k - 1} lots of the number and takes away {c}, so {k - 1} lots must equal {c}.)', 'Number that stays the same')
+
+
+def fun_order(r):
+    k = r.randint(2, 9); c = r.randint(2, 12); x = r.randint(c + 2, 40); plus = r.random() < .5
+    y = (x + c) * k if plus else (x - c) * k
+    if r.random() < .5:
+        return Q(f'A number machine works like this: IN → {"+" if plus else "−"} {c}, then × {k} → OUT. What comes out when {x} goes in?', y, f'{x} {"+" if plus else "−"} {c} = {x + c if plus else x - c}. Then × {k} = {y}.', 'Finding the output')
+    return Q(f'A number machine works like this: IN → {"+" if plus else "−"} {c}, then × {k} → OUT. The number {y} comes out. What number went in?', x, f'Work backwards: {y} ÷ {k} = {y // k}, then {y // k} {"−" if plus else "+"} {c} = {x}.', 'Finding the input')
+
+
+def fun_twice(r):
+    k = r.randint(2, 4); c = r.randint(1, 9); x = r.randint(2, 12); y1 = k * x + c; y2 = k * y1 + c
+    return Q(f'A machine multiplies by {k} and then adds {c}. {x} goes in, and the number that comes out is put through the machine again. What comes out the second time?', y2, f'First time: {x} × {k} + {c} = {y1}. Second time: {y1} × {k} + {c} = {y2}.', 'Using a machine twice')
+
+
+# ---------- 18 Comparing and inserting signs ----------
+def _cmp(a, b): return '<' if a < b else '>' if a > b else '='
+
+
+def _sg(l, r_, a, b, why): return Q(f'Write <, > or = in the gap:   {l} ____ {r_}', _cmp(a, b), why, 'Using <, > and =')
+
+
+def sgn_products(r):
+    a, b, c, d = [r.randint(3, 12) for _ in range(4)]
+    if r.random() < .35: c, d = (a * b // 6, 6) if (a * b) % 6 == 0 else (a, b + 1)
+    return _sg(f'{a} × {b}', f'{c} × {d}', a * b, c * d, f'{a} × {b} = {a * b} and {c} × {d} = {c * d}.')
+
+
+def sgn_sums(r):
+    a, b, c = [r.randint(5, 30) for _ in range(3)]; d = r.randint(30, 90); e = d - (a + b + c) + r.choice([-2, 0, 0, 1, 3])
+    if e <= 0: e = 1
+    return _sg(f'{a} + {b} + {c}', f'{d} − {e}', a + b + c, d - e, f'{a} + {b} + {c} = {a + b + c} and {d} − {e} = {d - e}.')
+
+
+def sgn_units(r):
+    U, u, f = r.choice([('m', 'cm', 100), ('km', 'm', 1000), ('kg', 'g', 1000), ('litres', 'ml', 1000), ('cm', 'mm', 10)])
+    x = D(r.randint(1, 49)) / 10; y = int(x * f) + r.choice([0, 0, -f // 20, f // 20, f // 2, -f // 10])
+    if y <= 0: y = int(x * f)
+    return _sg(f'{dec(x)} {U}', f'{n(y)} {u}', x * f, y, f'{dec(x)} {U} = {n(int(x * f))} {u}.')
+
+
+def sgn_powers(r):
+    a, b = r.choice([(2, 3), (3, 2), (2, 4), (4, 2), (2, 5), (5, 2), (3, 3), (10, 2), (12, 2), (2, 6), (4, 3), (9, 2), (3, 4)]); v = a ** b
+    o = r.choice([v, v, v + 1, v - 2, a * b, 2 * v // 2 + 5])
+    return _sg(sup(a, b), str(o), v, o, f'{sup(a, b)} = {" × ".join([str(a)] * b)} = {v}.')
+
+
+def sgn_time(r):
+    den, nm = r.choice([(4, '1/4'), (2, '1/2'), (4, '3/4'), (3, '1/3'), (3, '2/3'), (10, '1/10'), (5, '2/5'), (6, '5/6')]); num = int(nm.split('/')[0]); v = 60 * num // den
+    m = v + r.choice([0, 0, 5, -5, 10, -10, -2])
+    if m <= 0: m = v
+    return _sg(f'{m} minutes', f'{nm} of an hour', m, v, f'{nm} of an hour = {v} minutes.')
+
+
+def sgn_fracdec(r):
+    b = r.choice([2, 4, 5, 8, 10, 20, 25]); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); v = D(a) / D(b); o = v + D(r.choice([0, 0, 1, -1, 5, -5, 2])) / 100
+    if o <= 0: o = v
+    return _sg(f'{a}/{b}', dec(o), v, o, f'{a}/{b} = {dec(v)}.')
+
+
+OPS = {'+': lambda a, b: a + b, '−': lambda a, b: a - b, '×': lambda a, b: a * b, '÷': lambda a, b: F(a, b)}
+
+
+def sgn_ops2(r):
+    while True:
+        a, b, c = r.randint(2, 12), r.randint(2, 9), r.randint(2, 9); o1, o2 = r.choice('+−×÷'), r.choice('+−×÷')
+        v = OPS[o2](OPS[o1](F(a), F(b)), F(c))
+        if v.denominator != 1 or v < 0: continue
+        sols = [(p, q) for p, q in iprod('+−×÷', repeat=2) if OPS[q](OPS[p](F(a), F(b)), F(c)) == v]
+        if len(sols) == 1: break
+    return Q(f'Put +, −, × or ÷ in each gap to make this correct:   ({a} ____ {b}) ____ {c} = {v}', f'{o1} and {o2}', f'({a} {o1} {b}) {o2} {c} = {OPS[o1](F(a), F(b))} {o2} {c} = {v}.', 'Inserting signs')
+
+
+def sgn_eq(r):
+    while True:
+        a, b, c, d = [r.randint(2, 12) for _ in range(4)]
+        sols = [(p, q) for p, q in iprod('+−×÷', repeat=2) if OPS[p](F(a), F(b)) == OPS[q](F(c), F(d))]
+        if len(sols) == 1 and len({a, b, c, d}) >= 3 and sols[0][0] != sols[0][1]: break
+    p, q = sols[0]; v = OPS[p](F(a), F(b))
+    return Q(f'Put +, −, × or ÷ in each gap to make this correct:   {a} ____ {b} = {c} ____ {d}', f'{p} and {q}', f'{a} {p} {b} = {fr(v)} and {c} {q} {d} = {fr(v)}.', 'Inserting signs')
+
+
+# ---------- 19 Measures ----------
+def mea_mcm(r):
+    a, b = r.randint(2, 9), r.randint(1, 8); x, y = r.randint(1, 99), r.randint(1, 99); t = r.randint(0, 2)
+    f = lambda c: f'{c // 100} m {c % 100} cm'
+    A, B = a * 100 + x, b * 100 + y
+    if t == 0: return Q(f'{f(A)} + {f(B)} = ____', f(A + B), f'{x} cm + {y} cm = {x + y} cm' + (f' = 1 m {x + y - 100} cm' if x + y >= 100 else '') + f'. Total: {f(A + B)}.', 'Metres and centimetres')
+    if t == 1:
+        if A < B: A, B = B, A
+        if A == B: A += 137
+        return Q(f'{f(A)} − {f(B)} = ____', f(A - B), f'In centimetres: {A} − {B} = {A - B} cm = {f(A - B)}.', 'Metres and centimetres')
+    k = r.randint(3, 9)
+    return Q(f'{f(A)} × {k} = ____', f(A * k), f'In centimetres: {A} × {k} = {n(A * k)} cm = {f(A * k)}.', 'Metres and centimetres')
+
+
+def mea_conv(r):
+    U, u, f = r.choice([('m', 'cm', 100), ('km', 'm', 1000), ('kg', 'g', 1000), ('litres', 'ml', 1000), ('cm', 'mm', 10), ('tonnes', 'kg', 1000)])
+    v = r.randint(11, 13999) if f > 10 else r.randint(11, 999)
+    if r.random() < .55: return Q(f'Convert {n(v)} {u} to {U}.', f'{dec(D(v) / f)} {U}', f'There are {n(f)} {u} in 1 {U.rstrip("s") if U in ("litres", "tonnes") else U}, so divide by {n(f)}: {dec(D(v) / f)}.', 'Converting metric units')
+    x = D(r.randint(1, 9999)) / (10 if f == 10 else r.choice([10, 100, 1000]))
+    return Q(f'Convert {dec(x)} {U} to {u}.', f'{dec(x * f)} {u}', f'Multiply by {n(f)}: {dec(x)} × {n(f)} = {dec(x * f)}.', 'Converting metric units')
+
+
+def mea_make(r):
+    t = r.randint(0, 2)
+    if t == 0:
+        g = D(r.randint(1001, 9995)) / 10
+        return Q(f'What must be added to {dec(g)} g to make 1 kg?', f'{dec(1000 - g)} g', f'1 kg = 1,000 g. 1,000 − {dec(g)} = {dec(1000 - g)} g.', 'Making a total')
+    if t == 1:
+        a = D(r.randint(105, 395)) / 100; b = r.randint(int(a) + 2, 9)
+        return Q(f'How many metres must be added to {dec(a)} km to make {b} km?', f'{n(int((b - a) * 1000))} m', f'{b} − {dec(a)} = {dec(b - a)} km = {n(int((b - a) * 1000))} m.', 'Making a total')
+    ml = 5 * r.randint(21, 390); L = ml // 1000 + 1
+    return Q(f'How many millilitres must be added to {n(ml)} ml to make {L} litre{"s" if L > 1 else ""}?', f'{n(L * 1000 - ml)} ml', f'{L} litre{"s" if L > 1 else ""} = {n(L * 1000)} ml. {n(L * 1000)} − {n(ml)} = {n(L * 1000 - ml)} ml.', 'Making a total')
+
+
+def mea_packets(r):
+    g = r.choice([125, 150, 200, 250, 75, 40, 80, 375]); kg = r.choice([x for x in (1.5, 2, 3, 4.5, 6, 7.5, 9, 12) if (x * 1000) % g == 0])
+    th = r.choice([('packets', 'case', 'g', 'kg'), ('cups', 'urn', 'ml', 'litres'), ('bags', 'sack', 'g', 'kg')])
+    return Q(f'How many {th[0]}, each holding {g} {th[2]}, can be filled from a {th[1]} holding {dec(kg)} {th[3]}?', int(kg * 1000 // g), f'{dec(kg)} {th[3]} = {n(int(kg * 1000))} {th[2]}. {n(int(kg * 1000))} ÷ {g} = {int(kg * 1000 // g)}.', 'Dividing a measure')
+
+
+def mea_tonnes(r):
+    U, u, f = r.choice([('tonnes', 'kg', 1000), ('km', 'm', 1000), ('litres', 'ml', 1000), ('kg', 'g', 1000), ('m', 'cm', 100)])
+    a = D(r.randint(105, 995)) / 1000 if f == 1000 else D(r.randint(105, 995)) / 100; b = r.randint(20, int(a * f) - 5)
+    return Q(f'What is the difference between {dec(a)} {U} and {b} {u}? Give your answer in {u}.', f'{int(a * f) - b} {u}', f'{dec(a)} {U} = {int(a * f)} {u}. {int(a * f)} − {b} = {int(a * f) - b} {u}.', 'Mixed units')
+
+
+UNITQ = [('the distance from London to New York', 'kilometres', 'miles'), ('the amount of petrol in a car', 'litres', 'gallons'), ('the weight of a lorry', 'tonnes', 'tons'),
+         ('the thickness of a book', 'millimetres', 'inches'), ('the amount of water in a jug', 'millilitres (or litres)', 'pints'), ('the weight of a pencil', 'grams', 'ounces'),
+         ('the height of a door', 'metres (or centimetres)', 'feet'), ('the length of a football pitch', 'metres', 'yards'), ('the weight of a bag of potatoes', 'kilograms', 'pounds'),
+         ('the amount of medicine on a spoon', 'millilitres', 'fluid ounces'), ('the width of a fingernail', 'millimetres', 'inches'), ('the weight of a newborn baby', 'kilograms', 'pounds'),
+         ('the length of a marathon', 'kilometres', 'miles'), ('the amount of water in a bath', 'litres', 'gallons')]
+
+
+def mea_unit(r):
+    q, m, i = r.choice(UNITQ); imp = r.random() < .4
+    return Q(f'Which {"imperial" if imp else "metric"} unit would be best for measuring {q}?', i if imp else m, f'{(i if imp else m).capitalize()} suit the size of the thing being measured.', 'Choosing units')
+
+
+IMP = [('10 lb of carrots', '10 kg of carrots', 1, 'heavier', '1 kg is about 2.2 lb, so 10 kg is about 22 lb.'), ('14 km', '10 miles', 0, 'shorter', '10 miles is about 16 km, so 14 km is shorter.'),
+       ('2 litres', '2 pints', 0, 'more', '1 litre is about 1¾ pints, so 2 litres is more than 2 pints.'), ('1 metre', '1 yard', 0, 'longer', 'A metre is about 39 inches and a yard is 36 inches.'),
+       ('5 miles', '5 km', 0, 'further', '5 miles is about 8 km.'), ('1 inch', '1 cm', 0, 'longer', '1 inch is about 2.5 cm.'), ('100 g', '1 ounce', 0, 'heavier', '1 ounce is about 28 g.'),
+       ('1 gallon', '3 litres', 0, 'more', '1 gallon is about 4.5 litres.'), ('6 feet', '2 metres', 1, 'longer', '6 feet is about 1.8 m.'), ('30 cm', '1 foot', 1, 'longer', '1 foot is about 30.5 cm, so it is slightly longer.'),
+       ('1 tonne', '500 kg', 0, 'heavier', '1 tonne = 1,000 kg.'), ('8 km', '4 miles', 0, 'further', '4 miles is about 6.4 km.')]
+
+
+def mea_imp(r):
+    a, b, w, adj, why = r.choice(IMP)
+    if r.random() < .5: return Q(f'Which is {adj}: {a} or {b}?', [a, b][w], why, 'Imperial and metric')
+    return Q(f'Which is {adj}: {b} or {a}?', [a, b][w], why, 'Imperial and metric')
+
+
+def mea_approx(r):
+    I, M, f, pl = r.choice([('oz', 'g', D(25), 'ounce'), ('inches', 'cm', D('2.5'), 'inch'), ('miles', 'km', D('1.6'), 'mile'), ('gallons', 'litres', D('4.5'), 'gallon'), ('lb', 'g', D(450), 'pound'), ('feet', 'cm', D(30), 'foot')])
+    k = r.randint(2, 40) * (2 if f in (D('2.5'), D('4.5')) else 1)
+    if r.random() < .7: return Q(f'Use the approximation 1 {pl} = {dec(f)} {M}. Convert {k} {I} to {M}.', f'{dec(k * f)} {M}', f'{k} × {dec(f)} = {dec(k * f)}.', 'Imperial to metric')
+    return Q(f'Use the approximation 1 {pl} = {dec(f)} {M}. Convert {dec(k * f)} {M} to {I}.', f'{k} {I}', f'{dec(k * f)} ÷ {dec(f)} = {k}.', 'Metric to imperial')
+
+
+# ---------- 20 Time ----------
+def tim_24to12(r):
+    m = r.choice([r.randint(0, 59), r.randint(720, 779), r.randint(60, 1439)])
+    return Q(f'Change {t24(m)} into a 12-hour time using a.m. or p.m.', t12(m), ('Times from 13:00 onwards are p.m.: subtract 12 from the hours.' if m >= 780 else '00:00 to 00:59 is 12-something a.m.' if m < 60 else '12:00 to 12:59 is p.m.' if m >= 720 else 'Times before 12:00 are a.m.'), '24-hour to 12-hour')
+
+
+def tim_12to24(r):
+    m = r.choice([r.randint(0, 59), r.randint(720, 779), r.randint(60, 1439)])
+    return Q(f'Change {t12(m)} into a 24-hour time.', t24(m), ('For p.m. times after 12:59, add 12 to the hours.' if m >= 780 else '12-something a.m. is 00-something.' if m < 60 else '12-something p.m. stays as 12.' if m >= 720 else 'a.m. times keep the same hour; write two digits for the hour.'), '12-hour to 24-hour')
+
+
+DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+
+def tim_between(r):
+    a = r.randint(20 * 60, 23 * 60 + 55); b = r.randint(5, 5 * 60); i = r.randint(0, 5); d = 1440 - a + b
+    return Q(f'How many minutes are there from {t12(a)} on {DAYS[i]} to {t12(b)} on {DAYS[i + 1]}?', f'{d} minutes', f'To midnight: {1440 - a} minutes. After midnight: {b} minutes. {1440 - a} + {b} = {d}.', 'Time intervals')
+
+
+def tim_walk(r):
+    a = r.randint(7 * 60, 17 * 60); d = r.randint(13, 58)
+    while (a % 60) + d < 60: d += 7
+    return Q(f'It takes me {d} minutes to walk home. If I leave at {t12(a)}, at what time will I get home?', t12(a + d), f'{60 - a % 60} minutes takes me to {t12(a + 60 - a % 60)}, then {d - (60 - a % 60)} more minutes: {t12(a + d)}.', 'Finishing times')
+
+
+def tim_wait(r):
+    a = r.randint(7 * 60, 18 * 60); late = r.randint(3, 14); gap = r.randint(25, 55); A = r.choice(['Mrs Late', 'Mr Rush', 'Miss Hurry', 'Dr Dash'])
+    return Q(f'{A} arrives {late} minutes late for the {t24(a)} train. How long will {A} have to wait for the next train at {t24(a + gap)}?', f'{gap - late} minutes',
+             f'{A} arrives at {t24(a + late)}. From {t24(a + late)} to {t24(a + gap)} is {gap - late} minutes.', 'Waiting times')
+
+
+def tim_watch(r):
+    per, nm = r.choice([(15, 'a quarter of a minute'), (30, 'half a minute'), (20, 'one third of a minute'), (120, '2 minutes'), (90, '1½ minutes')]); st = r.choice([8, 9, 10, 12]) * 60; h = r.choice([4, 6, 8, 10, 12]); w = r.choice(['loses', 'gains'])
+    tot = per * h
+    if tot % 60: h = 8 if (per * 8) % 60 == 0 else 12; tot = per * h
+    sh = st + h * 60 + (tot // 60 if w == 'gains' else -tot // 60)
+    return Q(f'My watch {w} {nm} every hour. I put it right at {t12(st)}. What time will my watch show when the real time is {t12(st + h * 60)}?', t12(sh),
+             f'{h} hours pass, so it {w} {h} × {nm} = {tot // 60} minute{"s" if tot != 60 else ""}. It shows {t12(sh)}.', 'Fast and slow clocks')
+
+
+def tim_show(r):
+    st = 60 * r.randint(13, 19) + r.choice([0, 15, 30, 45]); a = r.randint(50, 105); b = r.randint(8, 25)
+    return Q(f'A show starts at {t12(st)}. The first half lasts {dur(a).replace(" h", " hour").replace(" min", " minutes")}, then there is an interval of {b} minutes. At what time does the second half begin?', t12(st + a + b),
+             f'{dur(a)} + {b} min = {dur(a + b)}. {t12(st)} + {dur(a + b)} = {t12(st + a + b)}.', 'Finishing times')
+
+
+def tim_lessons(r):
+    k = r.choice([4, 5, 6]); L = r.choice([30, 35, 40, 45, 50]); B = r.choice([15, 20, 25]); j = r.randint(1, k - 1); end = 60 * r.randint(12, 15) + r.choice([0, 10, 20, 25, 30, 50])
+    start = end - k * L - B; t = r.randint(0, 2); o = ['1st', '2nd', '3rd', '4th', '5th', '6th']
+    stem = f'A school has {k} lessons, each {L} minutes long, with a break of {B} minutes after the {o[j - 1]} lesson. The {o[k - 1]} lesson ends at {t24(end)}. '
+    if t == 0: return Q(stem + 'At what time does the 1st lesson begin?', t24(start), f'Total time: {k} × {L} + {B} = {k * L + B} minutes = {dur(k * L + B)}. {t24(end)} − {dur(k * L + B)} = {t24(start)}.', 'Timetables')
+    if t == 1: return Q(stem + 'At what time does the break begin?', t24(start + j * L), f'The 1st lesson begins at {t24(start)}. The break begins after {j} lesson{"s" if j > 1 else ""}: {t24(start)} + {dur(j * L)} = {t24(start + j * L)}.', 'Timetables')
+    return Q(stem + f'At what time does the {o[k - 1]} lesson begin?', t24(end - L), f'{t24(end)} − {L} minutes = {t24(end - L)}.', 'Timetables')
+
+
+STN = ['Ashby', 'Brookfield', 'Carlow', 'Denton', 'Elmwood', 'Fairholt', 'Greyford', 'Hartwell', 'Inglemere', 'Kelby', 'Linton', 'Marsham']
+
+
+def _trains(r, nt=2):
+    st = r.sample(STN, 5); cols = []
+    for t in range(nt):
+        m = 60 * r.randint(6, 18) + r.randint(0, 59); ts = [m]
+        for _ in range(4): ts.append(ts[-1] + r.randint(6, 24))
+        cols.append(ts)
+    tab = [['Station'] + [f'Train {"ABCD"[t]}' for t in range(nt)]] + [[st[i]] + [t24(c[i]) for c in cols] for i in range(5)]
+    return st, cols, tab
+
+
+def tim_train(r):
+    st, cols, tab = _trains(r); t = r.randint(0, 2)
+    if t == 0:
+        c = r.randint(0, 1); i, j = sorted(r.sample(range(5), 2)); d = cols[c][j] - cols[c][i]
+        return Q(f'Look at the train timetable. How long does Train {"AB"[c]} take to travel from {st[i]} to {st[j]}?', f'{dur(d)}', f'{t24(cols[c][i])} to {t24(cols[c][j])} is {dur(d)}.', 'Train timetables', table=tab)
+    if t == 1:
+        da, db = cols[0][4] - cols[0][0], cols[1][4] - cols[1][0]
+        if da == db: return tim_train(r)
+        return Q(f'Look at the train timetable. Which train is faster for the whole journey from {st[0]} to {st[4]}, and by how many minutes?', f'Train {"A" if da < db else "B"}, by {abs(da - db)} minutes',
+                 f'Train A takes {dur(da)} and Train B takes {dur(db)}.', 'Train timetables', table=tab)
+    c = r.randint(0, 1); i = r.randint(0, 2); walk = r.randint(8, 25)
+    return Q(f'Look at the train timetable. I walk for {walk} minutes to reach {st[i]} station and want to catch Train {"AB"[c]}. What is the latest time I can leave home?', t24(cols[c][i] - walk),
+             f'Train {"AB"[c]} leaves {st[i]} at {t24(cols[c][i])}. {t24(cols[c][i])} − {walk} minutes = {t24(cols[c][i] - walk)}.', 'Train timetables', table=tab)
+
+
+ZONES = [('Paris', 1), ('Athens', 2), ('Nairobi', 3), ('Dubai', 4), ('Karachi', 5), ('Dhaka', 6), ('Bangkok', 7), ('Beijing', 8), ('Tokyo', 9), ('Sydney', 10), ('New York', -5), ('Chicago', -6), ('Denver', -7), ('Los Angeles', -8), ('Rio de Janeiro', -3)]
+
+
+def tim_zones(r):
+    zs = r.sample(ZONES, 4); tab = [['City', 'Time compared with London']] + [[c, f'{abs(h)} hour{"s" if abs(h) > 1 else ""} {"ahead" if h > 0 else "behind"}'] for c, h in zs]
+    m = 60 * r.randint(6, 20) + r.choice([0, 15, 30, 45]); t = r.randint(0, 2); (c1, h1), (c2, h2) = zs[0], zs[1]
+    dd = lambda x: t12(x) + (' the day before' if x < 0 else ' the next day' if x >= 1440 else '')
+    if t == 0: return Q(f'Use the time chart. When it is {t12(m)} in London, what time is it in {c1}?', dd(m + 60 * h1), f'{c1} is {abs(h1)} hour{"s" if abs(h1) > 1 else ""} {"ahead" if h1 > 0 else "behind"}: {t12(m + 60 * h1)}.', 'Time zones', table=tab)
+    if t == 1: return Q(f'Use the time chart. When it is {t12(m)} in {c1}, what time is it in London?', dd(m - 60 * h1), f'London is {abs(h1)} hour{"s" if abs(h1) > 1 else ""} {"behind" if h1 > 0 else "ahead of"} {c1}: {t12(m - 60 * h1)}.', 'Time zones', table=tab)
+    return Q(f'Use the time chart. When it is {t12(m)} in {c1}, what time is it in {c2}?', dd(m - 60 * h1 + 60 * h2), f'London time is {t12(m - 60 * h1)}. {c2} is {abs(h2)} hour{"s" if abs(h2) > 1 else ""} {"ahead" if h2 > 0 else "behind"}: {t12(m - 60 * h1 + 60 * h2)}.', 'Time zones', table=tab)
+
+
+def tim_cook(r):
+    per = r.choice([40, 45, 50, 55, 60, 35]); ex = r.choice([15, 20, 25, 30]); w = D(r.choice(['1.5', '2', '2.5', '3', '3.5', '4', '4.5'])); fd = r.choice(['Roast chicken', 'A joint of beef', 'A nut roast', 'A turkey crown'])
+    tot = int(per * w) + ex
+    if (per * w) % 1: return tim_cook(r)
+    return Q(f'{fd} must be cooked for {per} minutes per kg and then for an extra {ex} minutes. What is the cooking time for one that weighs {dec(w)} kg? Give your answer in hours and minutes.', dur(tot),
+             f'{dec(w)} × {per} = {int(per * w)} minutes. {int(per * w)} + {ex} = {tot} minutes = {dur(tot)}.', 'Cooking times')
+
+
+def tim_clock(r):
+    h = r.randint(1, 11); ang = 30 * h if h <= 6 else 360 - 30 * h
+    return Q(f'What is the size of the smaller angle between the hands of a clock at {h} o\'clock?', f'{ang}°', f'Each hour is 360° ÷ 12 = 30°. The hands are {h if h <= 6 else 12 - h} hour space{"s" if (h if h <= 6 else 12 - h) > 1 else ""} apart: {ang}°.', 'Clock angles')
+
+
+TOPICS2 = [
+    ('RND', 'Rounding and estimating', [rnd_near, rnd_whole, rnd_pound, rnd_big, rnd_dp, rnd_estimate, rnd_bounds]),
+    ('ARI', 'Number problems and written arithmetic', [ari_subtimes, ari_product, ari_same, ari_rem, ari_wrong, ari_digits, ari_halfway, ari_words, ari_related, ari_sum4, ari_div, ari_lines, ari_adddiv]),
+    ('FPM', 'Factors, multiples and primes', [fpm_factors, fpm_common, fpm_hcf, fpm_lcm, fpm_buses, fpm_range, fpm_pf, fpm_product, fpm_parity, fpm_third]),
+    ('POW', 'Squares, cubes and powers', [pow_index, pow_eval, pow_diff, pow_self, pow_double, pow_missing, pow_compare, pow_between, pow_cube]),
+    ('ALG', 'Algebra: equations and substitution', [alg_add, alg_sub, alg_mul, alg_collect, alg_div, alg_subst, alg_substfrac, alg_symbol, alg_twostep, alg_think]),
+    ('SEQ', 'Sequences and number patterns', [seq_arith, seq_grow, seq_shrink, seq_geo, seq_frac, seq_dec, seq_square, seq_dots, seq_missing, seq_nth]),
+    ('FUN', 'Function machines', [fun_out, fun_in, fun_table, fun_rule, fun_fixed, fun_order, fun_twice]),
+    ('SGN', 'Comparing and inserting signs', [sgn_products, sgn_sums, sgn_units, sgn_powers, sgn_time, sgn_fracdec, sgn_ops2, sgn_eq]),
+    ('MEA', 'Measures and units', [mea_mcm, mea_conv, mea_make, mea_packets, mea_tonnes, mea_unit, mea_imp, mea_approx]),
+    ('TIM', 'Time and timetables', [tim_24to12, tim_12to24, tim_between, tim_walk, tim_wait, tim_watch, tim_show, tim_lessons, tim_train, tim_zones, tim_cook, tim_clock]),
+]

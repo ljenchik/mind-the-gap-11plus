@@ -1,0 +1,179 @@
+import re
+from docx import Document
+from docx.shared import Pt, Cm, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+from common import render_fig
+
+FIGW = {'tri': None, 'lshape': 6.5, 'numline': 14.5, 'pie': 7.0, 'bar': 10.5, 'venn': 9.0, 'pts': 8.0, 'travel': 11.5, 'angles': 7.5}
+
+
+def new_doc(footer):
+    d = Document()
+    s = d.sections[0]
+    s.page_width, s.page_height = Cm(21), Cm(29.7)
+    s.left_margin = s.right_margin = Cm(2); s.top_margin = Cm(1.8); s.bottom_margin = Cm(1.8)
+    st = d.styles['Normal']; st.font.name = 'Arial'; st.font.size = Pt(12)
+    st.element.rPr.rFonts.set(qn('w:eastAsia'), 'Arial')
+    st.paragraph_format.space_after = Pt(4); st.paragraph_format.space_before = Pt(0)
+    p = s.footer.paragraphs[0]; p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p.add_run(footer + '   ·   Page '); r.font.size = Pt(9); r.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
+    r2 = p.add_run(); r2.font.size = Pt(9)
+    for tag, txt in (('begin', None), (None, 'PAGE'), ('end', None)):
+        if tag:
+            el = OxmlElement('w:fldChar'); el.set(qn('w:fldCharType'), tag)
+        else:
+            el = OxmlElement('w:instrText'); el.set(qn('xml:space'), 'preserve'); el.text = txt
+        r2._r.append(el)
+    return d
+
+
+def runs(p, text, bold=False, size=None):
+    """adds text; '^□' becomes a superscript box"""
+    for i, chunk in enumerate(re.split(r'(\^□)', text)):
+        if not chunk: continue
+        r = p.add_run('□' if chunk == '^□' else chunk)
+        r.bold = bold
+        if size: r.font.size = Pt(size)
+        if chunk == '^□': r.font.superscript = True; r.font.size = Pt((size or 12) + 5)
+    return p
+
+
+def para(d, text='', bold=False, size=None, align=None, after=None, before=None, indent=None, hang=None, keep=False):
+    p = d.add_paragraph(); runs(p, text, bold, size)
+    pf = p.paragraph_format
+    if align == 'c': p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    if align == 'r': p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    if after is not None: pf.space_after = Pt(after)
+    if before is not None: pf.space_before = Pt(before)
+    if indent is not None: pf.left_indent = Cm(indent)
+    if hang is not None: pf.first_line_indent = Cm(-hang)
+    if keep: pf.keep_with_next = True
+    return p
+
+
+def shade(cell, hexcol):
+    tcPr = cell._tc.get_or_add_tcPr(); sh = OxmlElement('w:shd')
+    sh.set(qn('w:val'), 'clear'); sh.set(qn('w:color'), 'auto'); sh.set(qn('w:fill'), hexcol); tcPr.append(sh)
+
+
+def table(d, rows, widths=None, header=True, size=11, align_center=True, indent=None):
+    t = d.add_table(rows=len(rows), cols=max(len(r) for r in rows)); t.style = 'Table Grid'
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER if align_center else WD_TABLE_ALIGNMENT.LEFT
+    t.autofit = widths is None
+    for i, row in enumerate(rows):
+        for j, val in enumerate(row):
+            c = t.cell(i, j); c.text = ''
+            p = c.paragraphs[0]; runs(p, str(val), bold=(header and i == 0), size=size)
+            p.paragraph_format.space_after = Pt(2); p.paragraph_format.space_before = Pt(2)
+            if header and i == 0: shade(c, 'E3E8F0')
+            if widths: c.width = Cm(widths[j])
+    if widths:
+        for j, w in enumerate(widths): t.columns[j].width = Cm(w)
+        tblPr = t._tbl.tblPr; lay = OxmlElement('w:tblLayout'); lay.set(qn('w:type'), 'fixed'); tblPr.append(lay)
+    return t
+
+
+def figure(d, spec, indent=1.0):
+    path = render_fig(spec); p = d.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    w = FIGW.get(spec[0])
+    if spec[0] == 'tri': w = min(9.0, spec[2] * 0.95)
+    p.add_run().add_picture(path, width=Cm(w)); p.paragraph_format.keep_with_next = True
+    return p
+
+
+def page_break(d): d.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+
+
+def answer_line(d, marks=None, lead='Answer'):
+    p = d.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    r = p.add_run(f'{lead}: ______________________' + (f'   [{marks}]' if marks else '')); r.font.size = Pt(11)
+    return p
+
+
+# ---------------- topic practice ----------------
+def topic_doc(path, code, title, qs, num, total):
+    d = new_doc(f'11+ Maths topic practice · {title}')
+    para(d, '11+ Maths Topic Practice', bold=True, size=20, after=2)
+    para(d, f'Topic {num} of {total}: {title}', bold=True, size=15, after=6)
+    para(d, 'Name: ______________________________      Date: ________________      Score: ______ / 50', size=11, after=8)
+    para(d, '50 questions, 1 mark each. No calculator. Show your working in the space beside each question. '
+            'Give fractions in their simplest form. Diagrams are not drawn to scale unless the question says they are. '
+            'Answers with worked solutions are at the back.', size=10.5, after=10)
+    for i, q in enumerate(qs, 1):
+        p = para(d, f'{i}.\t{q["text"]}', indent=1.0, hang=1.0, keep=True, before=6)
+        p.paragraph_format.tab_stops.add_tab_stop(Cm(1.0))
+        if q['table']:
+            table(d, q['table'], header=not (len(q['table']) == 3 and len(q['table'][0]) == 3 and q['type'] == 'Number squares'))
+            para(d, '', size=4, after=0, keep=True)
+        if q['fig']: figure(d, q['fig'])
+        answer_line(d).paragraph_format.space_after = Pt(10)
+    page_break(d)
+    para(d, f'Answers and worked solutions: {title}', bold=True, size=15, after=8)
+    rows = [['No.', 'Answer', 'Working', 'Question type']] + [[str(i), q['ans'], q['sol'], q['type']] for i, q in enumerate(qs, 1)]
+    table(d, rows, widths=[1.1, 4.0, 8.6, 3.3], size=9.5)
+    d.save(path)
+
+
+# ---------------- exam papers ----------------
+INFO = ['Answer every question. Calculators are not allowed.', 'Write each answer on the answer line. Use the space around each question for your working.',
+        'Give fractions in their simplest form unless the question says otherwise.', 'Diagrams are not drawn to scale unless the question says they are.',
+        'The number of marks for each part is shown in square brackets. If you are stuck, move on and come back later.']
+
+
+def paper_doc(path, label, qs):
+    total = sum(len(q['parts']) for q in qs)
+    d = new_doc(f'11+ Maths practice paper (CSSE style) · {label}')
+    para(d, '11+ Maths Practice Paper', bold=True, size=24, align='c', before=30, after=4)
+    para(d, 'CSSE style  ·  Years 5–6', size=15, align='c', after=4)
+    para(d, label, bold=True, size=18, align='c', after=24)
+    para(d, f'Time allowed: 60 minutes          Total marks: {total}', bold=True, size=13, align='c', after=24)
+    para(d, 'Name: ______________________________________', size=13, after=12)
+    para(d, 'Date: ___________________          Score: _______ / ' + str(total), size=13, after=24)
+    para(d, 'Instructions', bold=True, size=13, after=6)
+    for s in INFO: d.add_paragraph(s, style='List Bullet')
+    para(d, 'This is an original practice paper written in the style of the CSSE 11+ maths test. It is not an official CSSE paper.', size=9.5, before=30)
+    page_break(d)
+    for k, q in enumerate(qs, 1):
+        intro = [x for x in q['intro'] if x]
+        first = intro[0] if intro else ''
+        if first:
+            p = para(d, '', indent=1.0, hang=1.0, keep=True, before=10, after=4)
+            p.paragraph_format.tab_stops.add_tab_stop(Cm(1.0))
+            r0 = p.add_run(f'{k}.'); r0.bold = True; runs(p, '\t' + first)
+        for line in intro[1:]:
+            para(d, line, indent=1.0, keep=True, after=4, align='c' if '      ' in line else None, bold='      ' in line)
+        if q['table']:
+            table(d, q['table']); para(d, '', size=4, after=0, keep=True)
+        if q['fig']: figure(d, q['fig'])
+        for j, (text, ans, sol) in enumerate(q['parts']):
+            if j == 0 and not first:
+                p = para(d, '', indent=2.0, hang=2.0, keep=True, before=10, after=16)
+                p.paragraph_format.tab_stops.add_tab_stop(Cm(1.0)); p.paragraph_format.tab_stops.add_tab_stop(Cm(2.0))
+                r0 = p.add_run(f'{k}.'); r0.bold = True; runs(p, f'\t(a)\t{text}')
+            else:
+                p = para(d, f'({"abcde"[j]})\t{text}', indent=2.0, hang=1.0, keep=True, before=4, after=16)
+                p.paragraph_format.tab_stops.add_tab_stop(Cm(2.0))
+            answer_line(d, 1).paragraph_format.space_after = Pt(8)
+    para(d, f'End of paper  ·  Total: {total} marks', bold=True, align='c', before=18)
+    d.save(path)
+    return total
+
+
+def answers_doc(path, title, papers):
+    d = new_doc(title)
+    para(d, title, bold=True, size=18, after=4)
+    para(d, 'Each part is worth 1 mark. Accept any equivalent correct answer (for example 0.5 for 1/2) unless the question asks for a particular form. '
+            'The last column shows the skill, so you can see where marks were lost.', size=10.5, after=10)
+    for n_, (label, qs) in enumerate(papers):
+        if n_: page_break(d)
+        total = sum(len(q['parts']) for q in qs)
+        para(d, f'{label}  ·  {total} marks', bold=True, size=14, after=6)
+        rows = [['Q', 'Answer', 'Working', 'Skill']]
+        for k, q in enumerate(qs, 1):
+            for j, (text, ans, sol) in enumerate(q['parts']):
+                rows.append([f'{k}{"abcde"[j]}', ans, sol, q['skill'] if j == 0 else ''])
+        table(d, rows, widths=[1.1, 4.2, 8.4, 3.3], size=9)
+    d.save(path)

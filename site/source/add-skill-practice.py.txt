@@ -1,0 +1,17 @@
+"""Put the Year 5 skill practice into questions.json and tag the older Year 5 questions with a skill (safe to re-run)."""
+import json, sys
+path = sys.argv[1]
+Q = [q for q in json.load(open(path)) if not q["id"].startswith("SK-")]
+MAP = {"Column multiplication": "md", "Division with remainders": "md", "Multi-step": "as", "Negative numbers": "as", "Order of operations": "md",
+       "Remainder word problems": "md", "Comparing decimals": "order", "Comparing fractions": "order", "Ordering fractions": "order", "Factors and multiples": "puz1",
+       "Fraction of an amount": "frac", "Improper to mixed numbers": "frac", "Simplest form": "frac", "Measures": "units", "Percentages": "money",
+       "Shopping and change": "money", "Rounding decimals": "round", "Sequences": "seq", "× and ÷ by 10, 100, 1000, 0 and 1": "dec"}
+n = 0
+for q in Q:
+    if q.get("yr") == 5 and not q.get("paper"):
+        sk = MAP.get(q["t"]) or ("frac" if q["tab"] == "Fractions" else "dec" if q["tab"] == "Decimals" else None)
+        if not sk: raise SystemExit(f"no skill for {q['id']} {q['t']}")
+        q["skill"] = sk; q["set"] = q["id"]; n += 1
+SK = json.load(open("/home/claude/data/skill_practice.json"))
+json.dump(Q + SK, open(path, "w"), ensure_ascii=False)
+print(n, "older Year 5 questions tagged;", len(SK), "skill questions added; total", len(Q) + len(SK))

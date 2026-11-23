@@ -1,0 +1,129 @@
+"""Year 5 extra parts: Roman numerals, fraction/decimal/percentage word problems, counting and probability.
+Linked 3-part sets; every answer is computed; answers are phone-friendly (number, money, fraction, or Roman numerals as a choice)."""
+from fractions import Fraction as F
+from itertools import permutations, product
+from make_practice_tests import money, NAMES
+
+def roman(n):
+    out = ""
+    for v, r in [(1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"), (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")]:
+        while n >= v: out += r; n -= v
+    return out
+
+def fr(x):
+    x = F(x); w, r = divmod(x.numerator, x.denominator)
+    return str(x.numerator) + "/" + str(x.denominator) if w == 0 else (str(w) if r == 0 else f"{w} {r}/{x.denominator}")
+
+# ---------- Roman numerals ----------
+def roman_set(R):
+    a = R.choice([n for n in range(14, 100) if any(c in roman(n) for c in "IXL") and len(roman(n)) >= 3])
+    y = R.randint(1066, 2025); y2 = R.randint(y - 400, y - 30)
+    kind = R.random()
+    if kind < .5:
+        p3 = (f"A castle was built in {roman(y2)} and rebuilt in {roman(y)}. How many years apart were these?", str(y - y2),
+              f"{roman(y2)} = {y2} and {roman(y)} = {y}. {y} − {y2} = {y - y2} years.")
+    else:
+        b, c = R.randint(11, 60), R.randint(11, 39)
+        p3 = (f"Work out {roman(b)} + {roman(c)}. Give your answer as an ordinary number.", str(b + c), f"{roman(b)} = {b} and {roman(c)} = {c}. {b} + {c} = {b + c}.")
+    return ("Roman numerals. I = 1, V = 5, X = 10, L = 50, C = 100, D = 500, M = 1000.", [
+        (f"Write {a} in Roman numerals.", roman(a), f"{a} = " + " + ".join(str(v) for v in ([a // 10 * 10] if a >= 10 else []) + ([a % 10] if a % 10 else [])) + f", so {roman(a)}."),
+        (f"What year is {roman(y)}?", str(y), f"Split it up: " + " + ".join(_parts(y)) + f" = {y}."),
+        p3])
+
+def _parts(n):
+    out = []
+    for v, r in [(1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"), (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")]:
+        while n >= v: out.append(f"{r} ({v})"); n -= v
+    return out
+
+# ---------- fraction / decimal / percentage word problems ----------
+def fdp_class(R):
+    n = R.choice([20, 24, 28, 30, 32, 36, 40]); fa = R.choice([F(1, 4), F(3, 8), F(2, 5), F(1, 5), F(3, 10), F(1, 3), F(1, 6)])
+    while (n * fa).denominator != 1: fa = R.choice([F(1, 4), F(1, 5), F(3, 10), F(2, 5), F(1, 2)])
+    pc = R.choice([p for p in (10, 20, 25, 30, 40, 50) if n * p % 100 == 0 and n * fa + n * p // 100 < n] or [0])
+    if not pc: return fdp_class(R)
+    walk, car = int(n * fa), n * pc // 100; bus = n - walk - car
+    return (f"There are {n} children in a class. {fa.numerator}/{fa.denominator} of them walk to school, {pc}% come by car and the rest come by bus.", [
+        ("How many children walk?", str(walk), f"{n} ÷ {fa.denominator} × {fa.numerator} = {walk}."),
+        ("How many children come by bus?", str(bus), f"Car: {pc}% of {n} = {car}. Bus: {n} − {walk} − {car} = {bus}."),
+        ("What fraction of the class comes by bus? Give your answer in its simplest form.", fr(F(bus, n)), f"{bus} out of {n} = {bus}/{n} = {fr(F(bus, n))}.")])
+
+def fdp_pizza(R):
+    a = R.choice([F(1, 4), F(1, 5), F(1, 3), F(1, 8), F(3, 8)]); d = R.choice([0.2, 0.25, 0.3, 0.4, 0.5])
+    p = R.choice([10, 20, 25]); A, B, C = R.sample(NAMES, 3)
+    if a + F(str(d)) + F(p, 100) >= 1: return fdp_pizza(R)
+    left = 1 - a - F(str(d)) - F(p, 100)
+    return (f"{A}, {B} and {C} share a pizza. {A} eats {a.numerator}/{a.denominator} of it, {B} eats {d:g} of it and {C} eats {p}% of it.", [
+        (f"Write {B}'s share as a fraction in its simplest form.", fr(F(str(d))), f"{d:g} = {int(d * 100)}/100 = {fr(F(str(d)))}."),
+        ("Who eats the most?", max([(a, A), (F(str(d)), B), (F(p, 100), C)])[1],
+         f"As decimals: {A} {float(a):.3g}, {B} {d:g}, {C} {p / 100:g}. The largest is {max([(a, A), (F(str(d)), B), (F(p, 100), C)])[1]}'s.", [x for x in (A, B, C) if x != max([(a, A), (F(str(d)), B), (F(p, 100), C)])[1]]),
+        ("What fraction of the pizza is left? Give your answer in its simplest form.", fr(left), f"1 − {a.numerator}/{a.denominator} − {fr(F(str(d)))} − {fr(F(p, 100))} = {fr(left)}.")])
+
+def fdp_tank(R):
+    cap = R.choice([120, 160, 200, 240, 300, 400]); f0 = R.choice([F(3, 4), F(3, 5), F(2, 5), F(5, 8), F(7, 10)])
+    while (cap * f0).denominator != 1: f0 = R.choice([F(3, 4), F(1, 2), F(3, 5), F(2, 5)])
+    w = int(cap * f0); use = R.choice([p for p in (10, 20, 25, 50) if w * p % 100 == 0] or [50]); u = w * use // 100
+    return (f"A water tank holds {cap} litres when it is full. It is {f0.numerator}/{f0.denominator} full.", [
+        ("How many litres of water are in the tank?", f"{w} l", f"{cap} ÷ {f0.denominator} × {f0.numerator} = {w} litres."),
+        (f"{use}% of this water is used to water the garden. How many litres are used?", f"{u} l", f"{use}% of {w} = {u} litres."),
+        ("What fraction of the full tank is now filled with water? Give your answer in its simplest form.", fr(F(w - u, cap)), f"{w} − {u} = {w - u} litres. {w - u}/{cap} = {fr(F(w - u, cap))}.")])
+
+def fdp_survey(R):
+    n = R.choice([60, 120, 180, 240, 300]); p = R.choice([15, 20, 25, 30, 35, 40, 45]); fa = R.choice([F(1, 3), F(1, 4), F(1, 5), F(1, 6), F(2, 5)])
+    if (n * fa).denominator != 1 or n * p % 100 or F(p, 100) + fa >= 1: return fdp_survey(R)
+    a, b = n * p // 100, int(n * fa); c = n - a - b
+    if c * 100 % n: return fdp_survey(R)
+    sp = R.choice(["football", "netball", "cricket"]); sp2 = R.choice(["tennis", "rugby", "hockey"])
+    return (f"{n} children chose their favourite sport. {p}% chose {sp}, {fa.numerator}/{fa.denominator} chose {sp2} and the rest chose swimming.", [
+        (f"How many chose {sp}?", str(a), f"{p}% of {n}: 1% is {n / 100:g}, so {p}% is {a}."),
+        ("How many chose swimming?", str(c), f"{sp2.capitalize()}: {n} ÷ {fa.denominator} × {fa.numerator} = {b}. {n} − {a} − {b} = {c}."),
+        ("What percentage chose swimming?", f"{c * 100 // n}%", f"{c} out of {n} = {c}/{n} = {c * 100 // n}%.")])
+
+FDP = [fdp_class, fdp_pizza, fdp_tank, fdp_survey]
+def fdpwp(R): return R.choice(FDP)(R)
+
+# ---------- counting and probability ----------
+def count_cards(R):
+    ds = sorted(R.sample(range(1, 10), 4)); t = R.choice([30, 40, 50, 60]); k = R.choice([2, 3, 5])
+    two = [10 * a + b for a, b in permutations(ds, 2)]
+    if not (1 <= sum(1 for x in two if x > t) <= 11 and 1 <= sum(1 for x in two if x % k == 0) <= 11): return count_cards(R)
+    return (f"Four cards show the digits {', '.join(map(str, ds))}. Two of the cards are put side by side to make a 2-digit number.", [
+        ("How many different 2-digit numbers can be made?", str(len(two)), "4 choices for the tens digit, then 3 left for the ones: 4 × 3 = 12."),
+        (f"How many of these numbers are greater than {t}?", str(sum(1 for x in two if x > t)), f"List them and count the ones above {t}: {', '.join(str(x) for x in sorted(two) if x > t)}. That is {sum(1 for x in two if x > t)}."),
+        (f"How many of these numbers are multiples of {k}?", str(sum(1 for x in two if x % k == 0)), f"Check each number: {', '.join(str(x) for x in sorted(two) if x % k == 0)}. That is {sum(1 for x in two if x % k == 0)}.")])
+
+def count_outfits(R):
+    t, b, s = R.randint(2, 5), R.randint(2, 4), R.randint(2, 3); L = R.sample("ABCDEFGHJKLMNPRST", R.choice([3, 4])); who = R.choice(NAMES)
+    n = len(L); perms = 1
+    for i in range(2, n + 1): perms *= i
+    codes = R.choice([2, 3]); m = R.choice([3, 4])
+    return ("Counting the ways.", [
+        (f"{who} has {t} T-shirts, {b} pairs of shorts and {s} pairs of trainers. How many different outfits of one of each can {who} make?", str(t * b * s), f"{t} × {b} × {s} = {t * b * s}."),
+        (f"In how many different orders can the letters {', '.join(L)} be written, using each letter once?", str(perms), f"{n} choices for the first letter, {n - 1} for the next, and so on: " + " × ".join(str(i) for i in range(n, 0, -1)) + f" = {perms}."),
+        (f"A code is {m} letters long and each letter is A or B (for example {''.join(R.choice('AB') for _ in range(m))}). How many different codes are there?", str(2 ** m), " × ".join(["2"] * m) + f" = {2 ** m}.")])
+
+def prob_bag(R):
+    r, b, g = R.randint(2, 9), R.randint(2, 9), R.randint(1, 6); n = r + b + g
+    add = None
+    for k in range(1, 30):
+        if F(r, n + k) == F(1, 3) or F(r, n + k) == F(1, 4): add = (k, F(r, n + k)); break
+    if not add or len({r, b, g}) < 3: return prob_bag(R)
+    return (f"A bag holds {r} red, {b} blue and {g} green counters. One counter is taken out without looking.", [
+        ("What is the probability that it is red? Give your answer as a fraction in its simplest form.", fr(F(r, n)), f"{r} red out of {n} counters: {r}/{n} = {fr(F(r, n))}."),
+        ("What is the probability that it is not blue? Give your answer as a fraction in its simplest form.", fr(F(r + g, n)), f"Not blue: {r} + {g} = {r + g} out of {n}: {fr(F(r + g, n))}."),
+        (f"How many blue counters must be added so that the probability of red becomes {add[1].numerator}/{add[1].denominator}?", str(add[0]),
+         f"Red stays {r}. For a probability of {add[1].numerator}/{add[1].denominator} there must be {r * add[1].denominator // add[1].numerator} counters. {r * add[1].denominator // add[1].numerator} − {n} = {add[0]}.")])
+
+def prob_spin(R):
+    n = R.choice([6, 8, 10, 12]); pr = [x for x in range(1, n + 1) if x > 1 and all(x % d for d in range(2, x))]
+    k = R.choice([3, 4]); mk = [x for x in range(1, n + 1) if x % k == 0]; t = R.choice([7, 8, 9])
+    pairs = sum(1 for a, b in product(range(1, 7), repeat=2) if a + b == t)
+    return (f"A fair spinner has {n} equal sections numbered 1 to {n}.", [
+        ("What is the probability of spinning a prime number? Give your answer as a fraction in its simplest form.", fr(F(len(pr), n)), f"Primes: {', '.join(map(str, pr))}. That is {len(pr)} out of {n} = {fr(F(len(pr), n))}."),
+        (f"What is the probability of spinning a multiple of {k}? Give your answer as a fraction in its simplest form.", fr(F(len(mk), n)), f"Multiples of {k}: {', '.join(map(str, mk))}. {len(mk)} out of {n} = {fr(F(len(mk), n))}."),
+        (f"Two ordinary dice are thrown. What is the probability that the total is {t}? Give your answer as a fraction in its simplest form.", fr(F(pairs, 36)), f"There are 6 × 6 = 36 results. {pairs} of them total {t}: {pairs}/36" + (f" = {fr(F(pairs, 36))}." if F(pairs, 36).denominator != 36 else "."))])
+
+COUNT = [count_cards, count_outfits, prob_bag, prob_spin]
+def count(R): return R.choice(COUNT)(R)
+
+FAMS = {"roman": roman_set, "fdpwp": fdpwp, "count": count}

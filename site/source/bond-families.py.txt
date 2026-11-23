@@ -1,0 +1,299 @@
+"""23 Nov: top-up families modelled on the Bond 10–11+ question types (signs, digit cards, known facts, remainders,
+machines used twice, tables of values, growing/shrinking gaps, decimal and fraction sequences, number squares,
+two purchases, three groups, coins, posts and gaps) plus Roman numerals and always/sometimes/never.
+Each family returns (stem, [(question, answer, solution[, options]) x3]); answers are computed."""
+from fractions import Fraction as F
+from make_practice_tests import money, NAMES
+
+def fr(x):
+    x = F(x); w, r = divmod(x.numerator, x.denominator)
+    return str(w) if r == 0 else (f"{w} {r}/{x.denominator}" if w else f"{r}/{x.denominator}")
+def dz(x): s = f"{x:.3f}".rstrip("0").rstrip("."); return s
+
+# ---------------- Roman numerals ----------------
+def roman(n):
+    out = ""
+    for v, s in [(1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"), (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")]:
+        while n >= v: out += s; n -= v
+    return out
+
+def rom_building(R):
+    y = R.randint(1650, 1990); place = R.choice(["a town hall", "a railway station", "a church", "a school", "a library"])
+    near = sorted({y + 10, y - 10, y + 100, y + 1} - {y})
+    return (f"The year {place} was built is carved over its door as {roman(y)}.", [
+        ("In what year was it built?", str(y), f"{roman(y)} = {' + '.join(str(v) for v in parts(y))} = {y}."),
+        ("How many years before 2026 was that?", str(2026 - y), f"2026 − {y} = {2026 - y}."),
+        (f"Which of these is {y + 100} in Roman numerals?", roman(y + 100), f"{y + 100} = {roman(y + 100)}.", [roman(y + 100), roman(y + 10), roman(y + 1), roman(y - 100)])])
+
+def parts(n):
+    out = []
+    for v in [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]:
+        while n >= v: out.append(v); n -= v
+    return out
+
+def rom_chapters(R):
+    n = R.randint(18, 39); a = R.randint(11, n - 3); b = R.randint(4, 15)
+    return (f"A book has chapters numbered from I to {roman(n)}.", [
+        ("How many chapters are there?", str(n), f"{roman(n)} = {n}."),
+        (f"Which chapter comes straight after chapter {roman(a)}?", roman(a + 1), f"{roman(a)} = {a}, so the next is {a + 1} = {roman(a + 1)}.", [roman(a + 1), roman(a - 1), roman(a + 10), roman(a + 2)]),
+        (f"Ben reads chapters {roman(b)} to {roman(b + 4)}. How many chapters is that?", "5", f"{roman(b)} = {b} and {roman(b + 4)} = {b + 4}. From {b} to {b + 4} is 5 chapters.")])
+
+def rom_sums(R):
+    a, b = R.sample(range(14, 99), 2); c = R.randint(101, 499)
+    big = max(a, b)
+    return ("Roman numerals.", [
+        (f"What is {roman(a)} + {roman(b)} as an ordinary number?", str(a + b), f"{roman(a)} = {a} and {roman(b)} = {b}. {a} + {b} = {a + b}."),
+        (f"Which is bigger, {roman(a)} or {roman(b)}?", roman(big), f"{roman(a)} = {a} and {roman(b)} = {b}, so {roman(big)} is bigger.", [roman(a), roman(b)]),
+        (f"What is {roman(c)} − {roman(big)}?", str(c - big), f"{roman(c)} = {c}. {c} − {big} = {c - big}.")])
+
+ROMAN = [rom_building, rom_chapters, rom_sums]
+
+# ---------------- Formula machines ----------------
+OPS = [("×", lambda x, n: x * n, lambda y, n: y / n), ("+", lambda x, n: x + n, lambda y, n: y - n), ("−", lambda x, n: x - n, lambda y, n: y + n)]
+
+def m_twice(R):
+    a = R.randint(2, 4); b = R.randint(2, 9); x = R.randint(2, 9)
+    f = lambda v: a * v + b
+    y1 = f(x); y2 = f(y1); fix = -b / (a - 1)
+    t = R.randint(30, 99) * a + b
+    return (f"A machine multiplies a number by {a} and then adds {b}.", [
+        (f"{x} goes in. What comes out?", str(y1), f"{x} × {a} = {a * x}. {a * x} + {b} = {y1}."),
+        ("That answer is put through the machine again. What comes out the second time?", str(y2), f"{y1} × {a} = {a * y1}. {a * y1} + {b} = {y2}."),
+        (f"{t} comes out. What number went in?", str((t - b) // a), f"Work backwards: {t} − {b} = {t - b}. {t - b} ÷ {a} = {(t - b) // a}.")])
+
+def m_table(R):
+    a = R.randint(3, 12); b = R.randint(2, 15); xs = sorted(R.sample(range(2, 20), 4))
+    ys = [a * x + b for x in xs]; miss = R.randint(1, 2)
+    row = " | ".join(str(x) for x in xs); out = " | ".join("?" if i == miss else str(y) for i, y in enumerate(ys))
+    big = R.randint(25, 60)
+    return (f"A machine multiplies by {a} and then adds {b}.\nIn:  {row}\nOut: {out}", [
+        ("What is the missing output?", str(ys[miss]), f"{xs[miss]} × {a} + {b} = {ys[miss]}."),
+        (f"What comes out when {big} goes in?", str(a * big + b), f"{big} × {a} = {a * big}. {a * big} + {b} = {a * big + b}."),
+        (f"What goes in to give {a * (big + 7) + b}?", str(big + 7), f"({a * (big + 7) + b} − {b}) ÷ {a} = {big + 7}.")])
+
+def m_rule(R):
+    k = R.randint(3, 15); x1, x2 = R.sample(range(3, 13), 2); kind = R.choice(["×", "+"])
+    if kind == "×": y1, y2 = x1 * k, x2 * k; rule = f"Multiplies by {k}"; opts = [rule, f"Adds {y1 - x1}", f"Multiplies by {k + 1}", f"Adds {k}"]
+    else: y1, y2 = x1 + k * 4, x2 + k * 4; rule = f"Adds {k * 4}"; opts = [rule, f"Multiplies by {y1 // x1 if y1 % x1 == 0 else 2}", f"Adds {k * 4 + 1}", f"Adds {k * 2}"]
+    opts = list(dict.fromkeys(opts))
+    z = R.randint(20, 40); out = z * k if kind == "×" else z + k * 4
+    return (f"A one-step number machine changes {x1} into {y1} and {x2} into {y2}.", [
+        ("What does the machine do?", rule, f"{x1} → {y1} and {x2} → {y2}. Only '{rule.lower()}' works for both. So: {rule}.", opts),
+        (f"What comes out when {z} goes in?", str(out), f"{rule.lower()}: {z} → {out}."),
+        (f"{out + (k if kind == '×' else 1) * 10} comes out. What went in?", str((out + k * 10) // k if kind == "×" else out + 10 - k * 4),
+         f"Undo the rule: " + (f"{out + k * 10} ÷ {k} = {(out + k * 10) // k}." if kind == "×" else f"{out + 10} − {k * 4} = {out + 10 - k * 4}."))])
+
+def m_same(R):
+    a = R.randint(3, 8); x = R.randint(3, 12); b = (a - 1) * x
+    t = R.randint(3, 9)
+    return (f"A machine multiplies a number by {a} and then takes away {b}.", [
+        (f"What comes out when {x + t} goes in?", str(a * (x + t) - b), f"{x + t} × {a} = {a * (x + t)}. {a * (x + t)} − {b} = {a * (x + t) - b}."),
+        (f"{a * (x + 2 * t) - b} comes out. What went in?", str(x + 2 * t), f"({a * (x + 2 * t) - b} + {b}) ÷ {a} = {x + 2 * t}."),
+        ("Which number comes out the same as it went in?", str(x), f"Try {x}: {x} × {a} = {a * x}, {a * x} − {b} = {x}. So {x}.")])
+
+MACH = [m_twice, m_table, m_rule, m_same]
+
+# ---------------- Sequences ----------------
+def s_growing(R):
+    a = R.randint(3, 40); g = R.randint(2, 6); d = R.choice([1, 2])
+    seq = [a]
+    for i in range(7): seq.append(seq[-1] + g + d * i)
+    return (f"The gaps in this sequence grow by {d} each time: {', '.join(map(str, seq[:5]))}, …", [
+        ("What is the next number?", str(seq[5]), f"The gaps are {', '.join(str(seq[i + 1] - seq[i]) for i in range(4))}. The next gap is {seq[5] - seq[4]}: {seq[4]} + {seq[5] - seq[4]} = {seq[5]}."),
+        ("What is the number after that?", str(seq[6]), f"Next gap {seq[6] - seq[5]}: {seq[5]} + {seq[6] - seq[5]} = {seq[6]}."),
+        ("What is the 8th number in the sequence?", str(seq[7]), f"Next gap {seq[7] - seq[6]}: {seq[6]} + {seq[7] - seq[6]} = {seq[7]}.")])
+
+def s_shrinking(R):
+    g = R.randint(9, 14); a = R.randint(100, 200); seq = [a]
+    for i in range(6): seq.append(seq[-1] - (g - i))
+    return (f"Look at this sequence: {', '.join(map(str, seq[:4]))}, …", [
+        ("What is the next number?", str(seq[4]), f"The numbers go down by {g}, {g - 1}, {g - 2}, so next by {g - 3}: {seq[3]} − {g - 3} = {seq[4]}."),
+        ("What is the number after that?", str(seq[5]), f"{seq[4]} − {g - 4} = {seq[5]}."),
+        ("What is the 7th number?", str(seq[6]), f"{seq[5]} − {g - 5} = {seq[6]}.")])
+
+def s_decimal(R):
+    a = R.randint(10, 300) / 100; d = R.choice([0.15, 0.25, 0.3, 0.35, 0.45, 0.6]); seq = [round(a + d * i, 2) for i in range(12)]
+    lim = round(a + d * 9.5, 1); first = next(i for i, v in enumerate(seq) if v > lim) + 1
+    return (f"A sequence goes up by the same amount each time: {', '.join(dz(v) for v in seq[:4])}, …", [
+        ("What is the next number?", dz(seq[4]), f"It goes up by {dz(d)}. {dz(seq[3])} + {dz(d)} = {dz(seq[4])}."),
+        ("What is the 10th number?", dz(seq[9]), f"{dz(seq[0])} + 9 × {dz(d)} = {dz(seq[9])}."),
+        (f"Which number in the sequence (1st, 2nd, …) is the first one bigger than {dz(lim)}?", str(first), f"The 10th is {dz(seq[9])} and the 11th is {dz(seq[10])}. The first bigger than {dz(lim)} is number {first}.")])
+
+def s_fraction(R):
+    den = R.choice([4, 6, 8]); a = F(R.randint(1, 4)) + F(R.randint(1, den - 1), den); d = F(1, den); seq = [a + d * i for i in range(12)]
+    w = next(i for i, v in enumerate(seq) if v.denominator == 1 and i > 0)
+    return (f"A sequence goes up by {fr(d)} each time: {', '.join(fr(v) for v in seq[:4])}, …", [
+        ("What is the next number?", fr(seq[4]), f"{fr(seq[3])} + {fr(d)} = {fr(seq[4])}."),
+        ("What is the 8th number?", fr(seq[7]), f"{fr(seq[0])} + 7 × {fr(d)} = {fr(seq[7])}."),
+        ("Which number in the sequence (1st, 2nd, …) is the first whole number?", str(w + 1), f"Keep adding {fr(d)}: number {w + 1} is {fr(seq[w])}, a whole number.")])
+
+def s_times(R):
+    a = R.randint(2, 7); m = R.choice([2, 3]); seq = [a * m ** i for i in range(12)]
+    first = next(i for i, v in enumerate(seq) if v > 1000) + 1
+    return (f"Each number in this sequence is {'double' if m == 2 else 'three times'} the one before: {', '.join(map(str, seq[:4]))}, …", [
+        ("What is the next number?", str(seq[4]), f"{seq[3]} × {m} = {seq[4]}."),
+        ("What is the 7th number?", str(seq[6]), f"{seq[4]} × {m} = {seq[5]}, {seq[5]} × {m} = {seq[6]}."),
+        ("Which number in the sequence (1st, 2nd, …) is the first one over 1000?", str(first), f"The numbers are {', '.join(map(str, seq[:first]))}. The first over 1000 is number {first}.")])
+
+def s_square(R):
+    a = R.randint(60, 99); across = R.choice([2, 3, 4]); down = R.choice([5, 6, 7, 8])
+    g = [[a - across * c - down * r for c in range(3)] for r in range(3)]
+    x, y = g[2][1], g[1][2]
+    show = [[str(v) for v in row] for row in g]; show[2][1] = "x"; show[1][2] = "y"
+    return ("In this number square the numbers go down by the same amount along each row, and by the same amount down each column.\n" + "\n".join("   ".join(r) for r in show), [
+        ("What is x?", str(x), f"Along a row they go down by {across}; down a column by {down}. x = {g[2][0]} − {across} = {x}."),
+        ("What is y?", str(y), f"y = {g[1][1]} − {across} = {y}."),
+        ("What is the total of the bottom row?", str(sum(g[2])), f"{g[2][0]} + {g[2][1]} + {g[2][2]} = {sum(g[2])}.")])
+
+SEQ = [s_growing, s_shrinking, s_decimal, s_fraction, s_times, s_square]
+
+# ---------------- Add and subtract ----------------
+WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen",
+         14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty", 30: "thirty", 40: "forty", 50: "fifty",
+         60: "sixty", 70: "seventy", 80: "eighty", 90: "ninety"}
+def w2(n): return WORDS[n] if n in WORDS else f"{WORDS[n // 10 * 10]}-{WORDS[n % 10]}"
+def words(n):
+    out = []
+    if n >= 1000: out.append(f"{w2(n // 1000)} thousand"); n %= 1000
+    if n >= 100: out.append(f"{WORDS[n // 100]} hundred"); n %= 100
+    if n: out.append(("and " if out else "") + w2(n))
+    return " ".join(out)
+
+def a_known(R):
+    a = R.randint(1200, 8999); b = R.randint(300, 999); s = a + b; k = R.choice([1000, 100, 2000])
+    return (f"You are told that {a} + {b} = {s}.", [
+        (f"What is {a + k} + {b}?", str(s + k), f"{a + k} is {k} more than {a}, so the answer is {k} more: {s + k}."),
+        (f"What is {s} − {b}?", str(a), f"Subtraction undoes addition: {s} − {b} = {a}."),
+        (f"What is {a + 10} + {b - 1}?", str(s + 9), f"10 more and 1 less is 9 more: {s} + 9 = {s + 9}.")])
+
+def a_words(R):
+    big = R.choice([10000, 20000, 50000, 100000]); d = R.randint(11, 99); n = R.randint(2001, 9999)
+    bw = {10000: "ten thousand", 20000: "twenty thousand", 50000: "fifty thousand", 100000: "a hundred thousand"}[big]
+    return ("Numbers in words and figures.", [
+        (f"Write in figures the number that is {w2(d)} less than {bw}.", str(big - d), f"{big} − {d} = {big - d}."),
+        (f"Write in figures: {words(n)}.", str(n), f"{words(n)} = {n}."),
+        (f"What is the difference between {words(n)} and {bw}?", str(big - n), f"{big} − {n} = {big - n}.")])
+
+def a_halfway(R):
+    a = R.randint(10, 80) * 10; b = a + R.randint(3, 40) * 10; c = R.randint(1000, 4000); d = c + R.randint(2, 30) * 100
+    m = R.randint(150, 900)
+    return ("Halfway numbers.", [
+        (f"What number is halfway between {a} and {b}?", str((a + b) // 2), f"({a} + {b}) ÷ 2 = {(a + b) // 2}."),
+        (f"What number is halfway between {c} and {d}?", str((c + d) // 2), f"({c} + {d}) ÷ 2 = {(c + d) // 2}."),
+        (f"{m} is halfway between {m - 137} and another number. What is the other number?", str(m + 137), f"{m} − {m - 137} = 137, so the other number is {m} + 137 = {m + 137}.")])
+
+def a_digits(R):
+    ds = R.sample(range(1, 10), 4); big = int("".join(map(str, sorted(ds, reverse=True)))); small = int("".join(map(str, sorted(ds))))
+    ev = [d for d in ds if d % 2 == 0]
+    if not ev: return a_digits(R)
+    e = min(ev); rest = sorted([d for d in ds if d != e], reverse=True); bigev = int("".join(map(str, rest)) + str(e))
+    return (f"Four digit cards show {', '.join(map(str, ds))}. Each card is used once to make a 4-digit number.", [
+        ("What is the largest number you can make?", str(big), f"Put the digits in order from largest: {big}."),
+        ("What is the largest number take away the smallest number?", str(big - small), f"Smallest is {small}. {big} − {small} = {big - small}."),
+        ("What is the largest even number you can make?", str(bigev), f"It must end in an even digit. Use the smallest even digit, {e}, at the end: {bigev}.")])
+
+ADDSUB = [a_known, a_words, a_halfway, a_digits]
+
+# ---------------- Number puzzles ----------------
+def p_signs(R):
+    a, b = R.sample(range(3, 10), 2); c = R.randint(2, 6)
+    ops = {"+": a + b, "−": a - b, "×": a * b}
+    op = R.choice(list(ops)); val = ops[op]
+    x = R.randint(2, 5); sq = x * x; y = R.randint(2, 4); cu = y ** 3
+    cmp = "=" if sq == cu else ("<" if sq < cu else ">")
+    return ("Signs puzzles.", [
+        (f"Which sign goes in the gap? {a} ___ {b} = {val}", op, f"{a} {op} {b} = {val}. So: {op}.", ["+", "−", "×", "÷"]),
+        (f"Which sign goes in the gap? {x}² ___ {y}³", cmp, f"{x}² = {sq} and {y}³ = {cu}. So: {cmp}.", ["<", ">", "="]),
+        (f"What number goes in the box? {a} × □ = {a * c} + {a}", str(c + 1), f"{a * c} + {a} = {a * c + a}. {a * c + a} ÷ {a} = {c + 1}.")])
+
+def p_mistake(R):
+    n = R.choice(NAMES); k = R.randint(3, 9); x = R.randint(12, 60) * k; wrong = x * k
+    m = R.randint(4, 9); y = R.randint(20, 90)
+    return (f"{n} made some mistakes.", [
+        (f"{n} multiplied a number by {k} instead of dividing it by {k}, and got {wrong}. What was the number?", str(x), f"{wrong} ÷ {k} = {x}."),
+        ("What should the answer have been?", str(x // k), f"{x} ÷ {k} = {x // k}."),
+        (f"{n} added {m} to a number instead of taking {m} away, and got {y + m}. What should the answer have been?", str(y - m), f"The number was {y + m} − {m} = {y}. {y} − {m} = {y - m}.")])
+
+def p_remainders(R):
+    d = R.randint(7, 19); q = R.randint(12, 40); r = R.randint(1, d - 1); lines = R.randint(24, 40); L = R.randint(300, 900)
+    return ("Remainders.", [
+        (f"What number, when divided by {d}, gives {q} remainder {r}?", str(d * q + r), f"{d} × {q} = {d * q}. {d * q} + {r} = {d * q + r}."),
+        (f"A book has {lines} lines on every page. On which page is line {L}?", str(-(-L // lines)), f"{L} ÷ {lines} = {L // lines} remainder {L % lines}, so line {L} is on page {-(-L // lines)}." if L % lines else f"{L} ÷ {lines} = {L // lines} exactly, so page {L // lines}."),
+        (f"How many times can {d} be taken away from {d * q + r}?", str(q), f"{d * q + r} ÷ {d} = {q} remainder {r}, so {q} times.")])
+
+def p_products(R):
+    a, b = R.randint(12, 48), R.choice([15, 25, 35, 45]); m = R.choice([d for d in (10, 20, 30, 50, 60) if a * b % d == 0] or [None])
+    if m is None: return p_products(R)
+    p = R.randint(8, 25) * 12; f1 = R.choice([12, 24, 16, 8]) if p % 24 == 0 else 12
+    return ("Products.", [
+        (f"Which number, multiplied by {m}, gives the same answer as {a} × {b}?", str(a * b // m), f"{a} × {b} = {a * b}. {a * b} ÷ {m} = {a * b // m}."),
+        (f"The product of two numbers is {p}. One of them is {f1}. What is the other?", str(p // f1), f"{p} ÷ {f1} = {p // f1}."),
+        (f"{a} × {b} = {a * b}. What is {a} × {b * 2}?", str(a * b * 2), f"Doubling one number doubles the answer: {a * b} × 2 = {a * b * 2}.")])
+
+PUZ1 = [p_signs, p_mistake, p_remainders, p_products]
+
+# ---------------- Logic puzzles (reasoning) ----------------
+def l_ages(R):
+    c = R.randint(4, 12); kb = R.randint(2, 3); ka = R.randint(2, 3); b = kb * c; a = ka * b; tot = a + b + c
+    nA, nB, nC = R.sample(["Grandma", "Dad", "Aunt Jo", "Uncle Sam", "Mum"], 1)[0], R.choice(["Leo", "Mia", "Ava", "Kai"]), R.choice(["Tom", "Zoe", "Eli", "Ivy"])
+    return (f"The ages of {nA}, {nB} and {nC} add up to {tot}. {nA} is {ka} times as old as {nB}, and {nB} is {kb} times as old as {nC}.", [
+        (f"How old is {nC}?", str(c), f"If {nC} is 1 part, {nB} is {kb} parts and {nA} is {ka * kb} parts: {1 + kb + ka * kb} parts = {tot}, so 1 part = {c}."),
+        (f"How old is {nA}?", str(a), f"{ka * kb} × {c} = {a}."),
+        ("What will their ages add up to in 5 years' time?", str(tot + 15), f"Each person is 5 years older: {tot} + 15 = {tot + 15}.")])
+
+def l_purchases(R):
+    x = R.choice(range(25, 120, 5)); y = R.choice(range(30, 150, 5)); n = R.randint(3, 6); m1, m2 = R.sample(range(2, 8), 2)
+    if m1 < m2: m1, m2 = m2, m1
+    A = n * x + m1 * y; B = n * x + m2 * y
+    item1, item2 = R.choice([("rubbers", "rulers"), ("pencils", "notebooks"), ("apples", "melons"), ("stamps", "envelopes")])
+    return (f"{n} {item1} and {m1} {item2} cost {money(A)}. {n} {item1} and {m2} {item2} cost {money(B)}.", [
+        (f"What is the cost of one of the {item2}?", money(y), f"The difference is {m1 - m2} {item2}: {money(A)} − {money(B)} = {money(A - B)}. {money(A - B)} ÷ {m1 - m2} = {money(y)}."),
+        (f"What is the cost of one of the {item1}?", money(x), f"{m2} {item2} cost {money(m2 * y)}. {money(B)} − {money(m2 * y)} = {money(n * x)}. ÷ {n} = {money(x)}."),
+        (f"How much do 2 {item1} and 2 {item2} cost?", money(2 * (x + y)), f"2 × ({money(x)} + {money(y)}) = {money(2 * (x + y))}.")])
+
+def l_groups(R):
+    t = R.randint(15, 40); g = R.randint(150, 320); b = R.randint(150, 320)
+    return (f"A school has {g + b + t} pupils and teachers altogether. The girls and the teachers together number {g + t}. The boys and the teachers together number {b + t}.", [
+        ("How many teachers are there?", str(t), f"({g + t} + {b + t}) counts everyone once and the teachers twice: {g + b + 2 * t} − {g + b + t} = {t}."),
+        ("How many girls are there?", str(g), f"{g + t} − {t} = {g}."),
+        ("How many more girls than boys are there?" if g > b else "How many more boys than girls are there?", str(abs(g - b)), f"Boys = {b + t} − {t} = {b}. Difference = {abs(g - b)}.")]) if g != b else l_groups(R)
+
+def l_coins(R):
+    n5 = R.randint(4, 20); n10 = 2 * n5; n20 = 2 * n10; tot = 5 * n5 + 10 * n10 + 20 * n20
+    return (f"A money box holds {money(tot)} in 20p, 10p and 5p coins. There are twice as many 20p coins as 10p coins, and twice as many 10p coins as 5p coins.", [
+        ("How many 5p coins are there?", str(n5), f"For each 5p coin there are 2 × 10p and 4 × 20p: 5 + 20 + 80 = 105p. {tot}p ÷ 105p = {n5}."),
+        ("How many coins are there altogether?", str(n5 + n10 + n20), f"{n5} + {n10} + {n20} = {n5 + n10 + n20}."),
+        ("How much money is in 20p coins?", money(20 * n20), f"{n20} × 20p = {money(20 * n20)}.")])
+
+def l_posts(R):
+    n = R.randint(11, 41); gap = R.choice([5, 8, 10, 12, 15, 20, 25]); L = (n - 1) * gap
+    return (f"{n} posts stand in a straight line along a path, one at each end and the rest evenly spaced. The path is {L} m long.", [
+        ("How many gaps are there between the posts?", str(n - 1), f"{n} posts make {n - 1} gaps."),
+        ("How far apart are the posts?", f"{gap} m", f"{L} ÷ {n - 1} = {gap} m."),
+        (f"The posts are moved so they are {gap * 2} m apart, still with one at each end. How many posts are needed?", str(L // (gap * 2) + 1), f"{L} ÷ {gap * 2} = {L // (gap * 2)} gaps, so {L // (gap * 2) + 1} posts.")]) if (n - 1) % 2 == 0 else l_posts(R)
+
+PUZ2 = [l_ages, l_purchases, l_groups, l_coins, l_posts]
+
+# ---------------- Picture equations (fruit puzzles) ----------------
+FRUITS = ["apple", "banana", "cherry", "lemon"]
+def pl(f): return "cherries" if f == "cherry" else f + "s"
+def e_fruit(R):
+    A, Bf, C = R.sample(FRUITS, 3); a, b, c = R.sample(range(2, 16), 3); kind = R.randint(0, 2)
+    if kind == 0:     # one fruit alone first, then build up
+        n = R.choice([2, 3]); rows = [([A] * n, n * a), ([A, Bf, Bf], a + 2 * b), ([Bf, C, C], b + 2 * c)]
+        sol = [f"{n} {pl(A)} make {n * a}, so one {A} is {n * a} ÷ {n} = {a}.", f"{a} + 2 {pl(Bf)} = {a + 2 * b}, so 2 {pl(Bf)} = {2 * b} and one {Bf} is {b}.", f"{b} + 2 {pl(C)} = {b + 2 * c}, so 2 {pl(C)} = {2 * c} and one {C} is {c}."]
+    elif kind == 1:   # two lines that differ by one fruit
+        rows = [([A, Bf], a + b), ([A, A, Bf], 2 * a + b), ([C, C, Bf], 2 * c + b)]
+        sol = [f"The second line has one more {A} than the first: {2 * a + b} − {a + b} = {a}.", f"{A} + {Bf} = {a + b}, so {Bf} = {a + b} − {a} = {b}.", f"2 {pl(C)} + {b} = {2 * c + b}, so 2 {pl(C)} = {2 * c} and one {C} is {c}."]
+    else:             # same fruits, different amounts
+        rows = [([A, A, A], 3 * a), ([A, Bf, Bf, Bf], a + 3 * b), ([Bf, C], b + c)]
+        sol = [f"3 {pl(A)} make {3 * a}, so one {A} is {a}.", f"{a} + 3 {pl(Bf)} = {a + 3 * b}, so 3 {pl(Bf)} = {3 * b} and one {Bf} is {b}.", f"{b} + {C} = {b + c}, so {C} = {c}."]
+    pic = "fruit " + ";".join("+".join(fs) + "=" + str(t) for fs, t in rows)
+    vals = {A: a, Bf: b, C: c}; last = R.sample([A, Bf, C], 2); tot = vals[last[0]] * 2 + vals[last[1]]
+    qs = [(f"What is one {A} worth?", str(a), sol[0]), (f"What is one {Bf} worth?", str(b), sol[1]),
+          (R.choice([f"What is one {C} worth?", None]) or f"What are 2 {pl(last[0])} and 1 {last[1]} worth altogether?",) ]
+    if qs[2][0].startswith("What is one"): qs[2] = (qs[2][0], str(c), sol[2])
+    else: qs[2] = (qs[2][0], str(tot), sol[2] + f" 2 × {vals[last[0]]} + {vals[last[1]]} = {tot}.")
+    return ("In the picture, the same fruit always has the same value.", qs, pic)
+
+ALG = [e_fruit]

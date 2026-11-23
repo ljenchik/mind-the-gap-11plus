@@ -1,0 +1,65 @@
+"""Year 5 written arithmetic, split into Add and subtract / Multiply and divide. Linked 3-part sets; every answer is computed."""
+from decimal import Decimal as D
+
+def c(n): return f"{n:,}"
+def dz(x): return format(D(x).normalize(), "f")
+
+def addsub(R):
+    k = R.random()
+    if k < .5:
+        a, b = R.randint(1200, 8999), R.randint(150, 2999)
+        x, y = R.randint(3000, 9999), R.randint(1100, 2999)
+        while (x % 10) >= (y % 10) or (x // 10 % 10) >= (y // 10 % 10): x, y = R.randint(3000, 9999), R.randint(1100, 2999)
+        t = R.choice([1000, 5000, 10000]); s = R.randint(t // 10 + 13, t - 7)
+        return ("Work these out.", [
+            (f"Calculate {c(a)} + {c(b)}.", c(a + b), f"Line up the columns and add, carrying where a column makes 10 or more: {c(a + b)}."),
+            (f"Calculate {c(x)} − {c(y)}.", c(x - y), f"Line up the columns. Exchange from the next column when the top digit is smaller: {c(x - y)}."),
+            (f"What must be added to {c(s)} to make {c(t)}?", c(t - s), f"{c(t)} − {c(s)} = {c(t - s)}. Check: {c(s)} + {c(t - s)} = {c(t)}.")])
+    elif k < .8:
+        a = D(R.randint(105, 999)) / 10; b = D(R.randint(105, 999)) / 100
+        x = R.randint(3, 20); y = D(R.randint(101, 299 if x > 3 else 299)) / 100
+        if y >= x: y = D(R.randint(101, 199)) / 100
+        n1, n2, n3 = R.randint(-15, -2), R.randint(4, 15), R.randint(3, 12)
+        return ("Decimals and negative numbers.", [
+            (f"Calculate {dz(a)} + {dz(b)}.", dz(a + b), f"Line up the decimal points (write {dz(a)} as {a:.2f}): {dz(a + b)}."),
+            (f"Calculate {x} − {dz(y)}.", dz(x - y), f"Write {x} as {x}.00 and line up the decimal points: {dz(x - y)}."),
+            (f"The temperature is {n1}°C. It rises by {n2}°C and then falls by {n3}°C. What is the temperature now?".replace("-", "−"), f"{n1 + n2 - n3}°C".replace("-", "−"),
+             f"{n1} + {n2} = {n1 + n2}. {n1 + n2} − {n3} = {n1 + n2 - n3}°C.".replace("-", "−").replace("− ", "− ").replace(" −", " −"))])
+    else:
+        s1, s2 = R.randint(300, 1500), R.randint(200, 1200); g = R.randint(80, 400)
+        start = s1 + s2 + g + R.randint(50, 900); p = (start - s1 - s2 - g) // 100 * 100 + R.choice([500, 1000])
+        return (f"A school raised £{c(start)} for a trip. The coach cost £{c(s1)} and tickets cost £{c(s2)}.", [
+            ("How much did the coach and tickets cost altogether?", f"£{c(s1 + s2)}", f"£{c(s1)} + £{c(s2)} = £{c(s1 + s2)}."),
+            ("How much money was left?", f"£{c(start - s1 - s2)}", f"£{c(start)} − £{c(s1 + s2)} = £{c(start - s1 - s2)}."),
+            (f"Lunch then cost £{c(g)}. How much more would the school need to have £{c(p)} left?", f"£{c(p - (start - s1 - s2 - g))}" if p > start - s1 - s2 - g else None,
+             f"Left after lunch: £{c(start - s1 - s2)} − £{c(g)} = £{c(start - s1 - s2 - g)}. £{c(p)} − £{c(start - s1 - s2 - g)} = £{c(p - (start - s1 - s2 - g))}.")])
+
+def muldiv(R):
+    k = R.random()
+    if k < .55:
+        a, m = R.randint(124, 987), R.randint(3, 9)
+        x, y = R.randint(23, 89), R.randint(14, 68)
+        d = R.randint(3, 9); q = R.randint(112, 1999); n = d * q
+        return ("Work these out.", [
+            (f"Calculate {a} × {m}.", c(a * m), f"Multiply each digit by {m}, carrying into the next column: {c(a * m)}."),
+            (f"Calculate {x} × {y}.", c(x * y), f"{x} × {y // 10 * 10} = {c(x * (y // 10 * 10))} and {x} × {y % 10} = {x * (y % 10)}. Add: {c(x * y)}."),
+            (f"Calculate {c(n)} ÷ {d}.", c(q), f"Short division: divide each digit by {d}, carrying the remainder to the next digit: {c(q)}.")])
+    elif k < .8:
+        per = R.randint(12, 48); boxes = R.randint(13, 45); n = R.randint(150, 900); cap = R.randint(6, 9)
+        rem = n % cap
+        if rem == 0: n += 1; rem = 1
+        th = R.choice(["eggs", "pencils", "cakes", "bulbs"])
+        return ("Problems.", [
+            (f"There are {per} {th} in a box. How many {th} are there in {boxes} boxes?", c(per * boxes), f"{per} × {boxes} = {c(per * boxes)}."),
+            (f"{n} children go on a trip. Each minibus holds {cap} children. How many minibuses are needed?", str(n // cap + 1),
+             f"{n} ÷ {cap} = {n // cap} remainder {rem}. The {rem} left over still need a minibus, so {n // cap + 1}."),
+            (f"{n} sweets are shared equally into bags of {cap}. How many sweets are left over?", str(rem), f"{n} ÷ {cap} = {n // cap} remainder {rem}.")])
+    else:
+        a = D(R.randint(12, 99)) / 10; m = R.randint(3, 9); b = D(R.randint(21, 96)) / 100 * 4
+        e = R.randint(2, 9); f = R.randint(2, 9); g = R.randint(2, 6); h = e * f + R.randint(3, 30)
+        return ("Decimals and order of operations.", [
+            (f"Calculate {dz(a)} × {m}.", dz(a * m), f"{dz(a * 10)} × {m} = {dz(a * 10 * m)}, then ÷ 10: {dz(a * m)}."),
+            (f"Calculate {dz(b)} ÷ 4.", dz(b / 4), f"Divide as for whole numbers and keep the decimal point in line: {dz(b / 4)}."),
+            (f"Calculate {h} − {e} × {f} + {g}.", str(h - e * f + g), f"Multiply first: {e} × {f} = {e * f}. Then left to right: {h} − {e * f} + {g} = {h - e * f + g}.".replace("-", "−"))])
+
+FAMS = {"as": addsub, "md": muldiv}

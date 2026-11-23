@@ -1,0 +1,57 @@
+"""Year 5 reflections and symmetry: linked 3-part sets in the CSSE style. Coordinates stay positive. Every answer is computed."""
+
+def P(x, y): return f"({x}, {y})"
+
+def mirror_point(R):
+    k = R.randint(4, 8); a, b = R.randint(0, k - 1), R.randint(1, 9)
+    j = R.randint(4, 8); c, d = R.randint(1, 9), R.randint(0, j - 1)
+    e, f = R.randint(1, 5), R.randint(1, 5)
+    return ("Reflections on a coordinate grid.", [
+        (f"Point A is at {P(a, b)}. It is reflected in the mirror line x = {k}. Where is its image?", P(2 * k - a, b),
+         f"A is {k - a} to the left of the line x = {k}, so its image is {k - a} to the right: x = {k} + {k - a} = {2 * k - a}. The y stays at {b}, so the image is {P(2 * k - a, b)}.",
+         [P(a, 2 * k - b) if 2 * k - b >= 0 else P(b, a), P(k, b), P(2 * k - a + 1, b)]),
+        (f"Point B is at {P(c, d)}. It is reflected in the mirror line y = {j}. Where is its image?", P(c, 2 * j - d),
+         f"B is {j - d} below the line y = {j}, so its image is {j - d} above: y = {j} + {j - d} = {2 * j - d}. The x stays at {c}, so the image is {P(c, 2 * j - d)}.",
+         [P(2 * j - c, d) if 2 * j - c >= 0 else P(d, c), P(c, j), P(c, 2 * j - d - 1)]),
+        (f"Point C is at {P(e, f)}. It is reflected in the line y = x. Where is its image?" if e != f else f"Point C is at {P(e, f + 3)}. It is reflected in the line y = x. Where is its image?",
+         P(f, e) if e != f else P(f + 3, e), f"Reflecting in the line y = x swaps the two coordinates: {P(f, e) if e != f else P(f + 3, e)}.",
+         [P(e, f) if e != f else P(e, f + 3)])])
+
+def mirror_shape(R):
+    k = R.randint(6, 9); x1 = R.randint(1, k - 3); x2 = R.randint(x1 + 1, k - 1); y1 = R.randint(1, 4); y2 = y1 + R.randint(2, 5)
+    return (f"A triangle has corners at {P(x1, y1)}, {P(x2, y1)} and {P(x1, y2)}. It is reflected in the mirror line x = {k}.", [
+        (f"Where does the corner {P(x1, y1)} go?", P(2 * k - x1, y1), f"{P(x1, y1)} is {k - x1} left of x = {k}. Its image is {k - x1} right of it: {P(2 * k - x1, y1)}.", [P(x1, 2 * k - y1), P(k + x1, y1)]),
+        (f"Where does the corner {P(x2, y1)} go?", P(2 * k - x2, y1), f"{P(x2, y1)} is {k - x2} left of x = {k}. Its image is {k - x2} right of it: {P(2 * k - x2, y1)}.", [P(k + x2, y1), P(2 * k - x2, y2)]),
+        (f"How far is the corner {P(x2, y1)} from its image?", f"{2 * (k - x2)} units", f"It is {k - x2} from the mirror line, and so is its image: {k - x2} + {k - x2} = {2 * (k - x2)} units.")])
+
+SHAPES = [("a square", 4), ("a rectangle that is not a square", 2), ("an equilateral triangle", 3), ("a regular hexagon", 6), ("a regular pentagon", 5),
+          ("an isosceles triangle", 1), ("a parallelogram that is not a rectangle", 0), ("a kite", 1), ("a regular octagon", 8), ("a circle", "infinitely many"),
+          ("a scalene triangle", 0), ("a rhombus that is not a square", 2)]
+COUNTABLE = [s for s in SHAPES if s[1] != "infinitely many"]
+
+def symmetry(R):
+    (s1, n1), (s2, n2) = R.sample(COUNTABLE, 2)
+    one = [s for s, n in COUNTABLE if n == 1]; notone = [s for s, n in COUNTABLE if n != 1]
+    ans = R.choice(one); wrong = R.sample(notone, 3)
+    cap = lambda s: s[0].upper() + s[1:]
+    return ("Lines of symmetry.", [
+        (f"How many lines of symmetry does {s1} have?", str(n1), f"Fold {s1} in your head along each possible line: {n1} fold{'s' if n1 != 1 else ''} give matching halves."),
+        (f"How many lines of symmetry does {s2} have?", str(n2), f"{cap(s2)} has {n2} line{'s' if n2 != 1 else ''} of symmetry."),
+        ("Which of these shapes has exactly one line of symmetry?", cap(ans), f"{cap(ans)} can only be folded one way to make matching halves.", [cap(w) for w in wrong])])
+
+LETTERS = {"A": 1, "B": 1, "C": 1, "D": 1, "E": 1, "H": 2, "I": 2, "M": 1, "T": 1, "U": 1, "V": 1, "W": 1, "X": 2, "Y": 1,
+           "F": 0, "G": 0, "J": 0, "L": 0, "N": 0, "P": 0, "R": 0, "S": 0, "Z": 0}
+
+def letters(R):
+    a, b = R.sample([k for k in LETTERS if LETTERS[k] > 0], 2); none = R.choice([k for k in LETTERS if LETTERS[k] == 0])
+    word = R.choice(["MUM", "TOT", "WAX", "HIDE", "BOX", "AXE", "CHIT"])
+    return ("Symmetry in capital letters (written in plain capitals: A B C D E …).", [
+        (f"How many lines of symmetry does the letter {a} have?", str(LETTERS[a]), f"{a} has {LETTERS[a]} line{'s' if LETTERS[a] != 1 else ''} of symmetry."),
+        (f"How many lines of symmetry does the letter {b} have?", str(LETTERS[b]), f"{b} has {LETTERS[b]} line{'s' if LETTERS[b] != 1 else ''} of symmetry."),
+        ("Which of these letters has no line of symmetry?", none, f"{none} cannot be folded to make matching halves. The others can.",
+         R.sample([k for k in LETTERS if LETTERS[k] > 0], 3))])
+
+FAMS = [mirror_point, mirror_shape, symmetry, letters]
+
+def refl(R):
+    return R.choice(FAMS)(R)

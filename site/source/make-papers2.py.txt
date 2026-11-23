@@ -1,0 +1,73 @@
+"""Exam-like papers PT11-PT30: 20 questions x 3 parts = 60 marks, in CSSE order, with story-based questions mixed in.
+Never repeats an opening part already in the question bank. Each question is tagged with its exam skill so paper
+results feed the heat map. Writes /home/claude/data/pt11_30.json."""
+import json, random, sys
+sys.path.insert(0, "/home/claude/scripts")
+import make_practice_tests as m, skill_families as SF, ratio_families as RF, algebra_families as AF
+import arith_families as XF, geom_families as GF, creative_families as C
+from make_skill_practice import fam_order, fam_round
+
+SKILLS = {s["id"]: s["name"] for s in json.load(open("/home/claude/live3/source/starter-data.json"))["sk56"]}
+PLAIN = {"Work these out.", "Fractions.", "Place value.", "Measures.", "Percentages.", "Sharing.", "Time.", "Averages.", "Angles.", "Decimals."}
+
+def pt_fam(i):
+    return lambda R: m.test(R.randint(10 ** 6, 10 ** 7))[i][:2]
+
+# slot: list of (generator, skill id, blueprint); creative slots rotate through their families
+CREATIVE_TIME = [("calendar", "time"), ("clock", "time")]
+CREATIVE_MONEY = [("bake", "money"), ("shop", "money"), ("cinema", "md")]
+CREATIVE_PUZ = [("dice", "puz1"), ("riddle", "puz1"), ("magic", "puz2"), ("code", "puz1")]
+CREATIVE_LOGIC = [("league", "puz2"), ("zoo", "md"), ("space", "as")]
+SLOTS = [
+    [(XF.addsub, "as")], [(XF.muldiv, "md")], [(pt_fam(1), "frac")], [(SF.pow_, "pow"), (fam_order, "order"), (fam_round, "round")],
+    [(SF.units, "units")], [(SF.money_, "money")], [(RF.ratio, "ratio")], "time", [(SF.time_, "time")], "money",
+    [(SF.mean, "mean"), (C.sports_mean, "mean")], [(SF.ang, "ang")], [(GF.refl, "refl"), (C.treasure, "coord")], [(AF.pattern, "seq")],
+    [(AF.eq, "eq")], [(SF.rect, "rect"), (C.patio, "rect")], "puz", "logic", [(SF.mach, "mach")], "puz",
+]
+BLUE = {"as": "Addition and subtraction", "md": "Multiplication and division", "frac": "Fractions", "pow": "Powers", "order": "Ordering numbers",
+        "round": "Rounding", "units": "Measures", "money": "Money and percentages", "ratio": "Ratio and proportion", "time": "Time",
+        "mean": "Averages", "ang": "Angles", "refl": "Reflections and symmetry", "coord": "Coordinates", "seq": "Sequences and patterns",
+        "eq": "Equations", "rect": "Perimeter and area", "puz1": "Number puzzles", "puz2": "Logic puzzles", "mach": "Formula machines"}
+
+def text_of(stem, q, lab):
+    return q if stem in PLAIN else f"{stem}\n{lab}) {q}"
+
+def main():
+    bank = json.load(open("/home/claude/live3/source/questions.json"))
+    new = lambda q: str(q.get("paper", "")).startswith("PT") and int(q["paper"][2:]) > 10
+    seen = {q["q"] for q in bank if not new(q)}   # safe to re-run: ignores papers 11-30 already in the bank
+    R = random.Random("papers-11-30"); out = []; rot = {"time": 0, "money": 0, "puz": 0, "logic": 0}
+    pools = {"time": CREATIVE_TIME, "money": CREATIVE_MONEY, "puz": CREATIVE_PUZ, "logic": CREATIVE_LOGIC}
+    for pn in range(11, 31):
+        code = f"PT{pn}"; qn = 0; used_creative = set()
+        for slot in SLOTS:
+            if isinstance(slot, str):
+                pool = pools[slot]
+                while True:
+                    name, sk = pool[rot[slot] % len(pool)]; rot[slot] += 1
+                    if name not in used_creative: break
+                used_creative.add(name); choices = [(C.FAMS[name], sk)] + [(C.FAMS[n2], s2) for n2, s2 in pool if n2 != name]
+            else:
+                choices = [slot[(pn + len(out)) % len(slot)]] + slot
+            for tries in range(500):
+                gen, sk = choices[0] if tries < 200 else R.choice(choices)
+                res = gen(R); stem, parts = res[0], res[1]; pic = res[2] if len(res) > 2 else None
+                if len(parts) != 3 or any(not p[1] or "-" in p[1] for p in parts): continue
+                texts = [text_of(stem, p[0], "abc"[j]) for j, p in enumerate(parts)]
+                if texts[0] in seen: continue
+                seen.update(texts); break
+            else:
+                raise SystemExit(f"no unique question for {code} slot {qn + 1}")
+            qn += 1
+            for j, p in enumerate(parts):
+                d = dict(id=f"{code}-{qn:02d}{'abc'[j]}", q=texts[j], a=p[1], s=p[2], k=SKILLS[sk], t=SKILLS[sk], tab=SKILLS[sk], m=1, wp=False,
+                         lv="Challenge", yr=6, skill=sk, src=f"Original CSSE-style practice test {pn}, written for this app", bp=BLUE[sk], paper=code, pq=f"{qn}{'abc'[j]}")
+                if pic: d["pic"] = pic
+                if len(p) > 3 and p[3]: d["wrong"] = [w for w in p[3] if w != p[1]][:3]
+                out.append(d)
+        assert qn == 20 and sum(1 for q in out if q["paper"] == code) == 60, code
+    json.dump(out, open("/home/claude/data/pt11_30.json", "w"), ensure_ascii=False)
+    print(len(out), "questions in", len({q["paper"] for q in out}), "papers")
+
+if __name__ == "__main__":
+    main()

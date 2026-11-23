@@ -1,0 +1,177 @@
+"""Year 5 ratio and proportion: linked 3-part sets in the CSSE style. Every answer is computed."""
+from fractions import Fraction as F
+from math import gcd
+from make_practice_tests import money, NAMES
+
+def simp(a, b, c=None):
+    g = gcd(a, b) if c is None else gcd(gcd(a, b), c)
+    return f"{a // g} : {b // g}" if c is None else f"{a // g} : {b // g} : {c // g}"
+
+def fr(n, d):
+    f = F(n, d); return f"{f.numerator}/{f.denominator}"
+
+PAINTS = [("orange", "red", "yellow"), ("green", "blue", "yellow"), ("purple", "red", "blue"), ("pink", "white", "red"),
+          ("grey", "white", "black"), ("brown", "red", "green"), ("sky blue", "white", "blue"), ("peach", "white", "orange")]
+RATIOS = [(1, 2), (2, 3), (3, 4), (3, 5), (2, 5), (4, 5), (1, 3), (5, 7), (3, 7), (4, 7), (2, 9), (5, 8), (3, 8), (1, 4)]
+
+def paint(R):
+    col, c1, c2 = R.choice(PAINTS); a, b = R.choice(RATIOS); nm = R.choice(NAMES)
+    unit = R.choice(["litres", "tins", "cups"]); k = R.randint(2, 9)
+    stem = f"To make {col} paint, {nm} mixes {c1} paint and {c2} paint in the ratio {a} : {b}."
+    p1 = (f"{nm} uses {a * k} {unit} of {c1} paint. How many {unit} of {c2} paint are needed?", f"{b * k} {unit}",
+          f"{a * k} ÷ {a} = {k}, so the ratio has been multiplied by {k}. {b} × {k} = {b * k} {unit}.")
+    t = R.randint(2, 12); tot = (a + b) * t
+    p2 = (f"{nm} wants to make {tot} {unit} of {col} paint. How many {unit} of {c1} paint are needed?", f"{a * t} {unit}",
+          f"{a} + {b} = {a + b} parts. {tot} ÷ {a + b} = {t} {unit} a part. {a} × {t} = {a * t} {unit}.")
+    if R.random() < .5:
+        p3 = (f"What fraction of the {col} paint is {c2} paint?", fr(b, a + b),
+              f"{b} parts out of {a + b} parts altogether, so {fr(b, a + b)}.", [fr(b, a), fr(a, a + b), fr(a, b)])
+    else:
+        have_b = b * R.randint(3, 8)
+        need_a = have_b // b * a
+        extra = R.randint(1, need_a - 1)
+        p3 = (f"{nm} has {have_b} {unit} of {c2} paint and only {need_a - extra} {unit} of {c1} paint. How many more {unit} of {c1} paint does {nm} need to use all the {c2} paint?",
+              f"{extra} {unit}", f"{have_b} ÷ {b} = {have_b // b}, so {c1} needed = {a} × {have_b // b} = {need_a}. {need_a} − {need_a - extra} = {extra} {unit}.")
+    return (stem, [p1, p2, p3])
+
+ITEMS = [("pens", 35, 95), ("pencils", 15, 45), ("stickers", 8, 30), ("rulers", 40, 120), ("apples", 20, 60), ("cupcakes", 45, 150),
+         ("bus tickets", 120, 250), ("notebooks", 75, 220), ("bottles of water", 50, 110), ("packets of seeds", 85, 190)]
+
+def prices(R):
+    item, lo, hi = R.choice(ITEMS); n = R.randint(3, 8); each = R.randrange(lo, hi + 1, 5); m_ = R.choice([x for x in range(2, 15) if x != n])
+    stem = f"{n} {item} cost {money(n * each)}."
+    p1 = (f"How much do {m_} {item} cost?", money(m_ * each), f"1 costs {money(n * each)} ÷ {n} = {money(each)}. {m_} × {money(each)} = {money(m_ * each)}.")
+    budget = each * R.randint(6, 25) + R.randint(0, each - 1)
+    p2 = (f"What is the greatest number of {item} you can buy with {money(budget)}?", str(budget // each),
+          f"{money(budget)} ÷ {money(each)} = {budget / each:.2f}… You can only buy whole ones, so {budget // each}.")
+    # best buy: pack A vs pack B
+    a_n, b_n = R.sample([4, 5, 6, 8, 10, 12], 2)
+    a_each, b_each = each - R.choice([5, 10]), each - R.choice([0, 15])
+    if a_each == b_each: b_each += 5
+    pa, pb = a_n * a_each, b_n * b_each
+    best = "Pack A" if a_each < b_each else "Pack B"
+    p3 = (f"Pack A has {a_n} {item} for {money(pa)}. Pack B has {b_n} {item} for {money(pb)}. Which pack is better value?", best,
+          f"Pack A: {money(pa)} ÷ {a_n} = {money(a_each)} each. Pack B: {money(pb)} ÷ {b_n} = {money(b_each)} each. {best} is cheaper for each one.",
+          ["Pack A" if best == "Pack B" else "Pack B", "They are the same value"])
+    return (stem, [p1, p2, p3])
+
+FOODS = [("flour", "g", 25), ("sugar", "g", 15), ("butter", "g", 10), ("milk", "ml", 25), ("oats", "g", 20), ("rice", "g", 30), ("cheese", "g", 15)]
+
+DISHES = [("pancakes", ["flour", "milk", "sugar"]), ("a crumble", ["flour", "butter", "sugar", "oats"]), ("flapjacks", ["oats", "butter", "sugar"]),
+          ("a cake", ["flour", "sugar", "butter", "milk"]), ("biscuits", ["flour", "butter", "sugar"]), ("a risotto", ["rice", "cheese", "butter"])]
+
+def recipe(R):
+    dish, names = R.choice(DISHES); fd = {f[0]: f for f in FOODS}
+    ppl = R.choice([2, 3, 4, 5, 6, 8]); f1, f2 = [fd[n] for n in R.sample(names, 2)]; e = R.choice([1, 2, 3])
+    a1 = f1[2] * R.randint(2, 6); a2 = f2[2] * R.randint(1, 5)
+    stem = f"A recipe for {dish} for {ppl} people uses {a1 * ppl} {f1[1]} of {f1[0]}, {a2 * ppl} {f2[1]} of {f2[0]} and {e * ppl} eggs."
+    q1 = R.choice([n for n in range(2, 16) if n != ppl])
+    p1 = (f"How much {f1[0]} is needed for {q1} people?", f"{a1 * q1} {f1[1]}",
+          f"For 1 person: {a1 * ppl} ÷ {ppl} = {a1} {f1[1]}. For {q1}: {a1} × {q1} = {a1 * q1} {f1[1]}.")
+    q2 = R.choice([n for n in range(3, 21) if n not in (ppl, q1)])
+    p2 = (f"How much {f2[0]} is needed for {q2} people?", f"{a2 * q2} {f2[1]}",
+          f"For 1 person: {a2 * ppl} ÷ {ppl} = {a2} {f2[1]}. For {q2}: {a2} × {q2} = {a2 * q2} {f2[1]}.")
+    have = a1 * R.randint(5, 20) + R.randint(0, a1 - 1)
+    p3 = (f"Sam has {have} {f1[1]} of {f1[0]} and plenty of everything else. What is the greatest number of people Sam can make {dish} for?",
+          str(have // a1), f"Each person needs {a1} {f1[1]}. {have} ÷ {a1} = {have // a1} remainder {have % a1}, so {have // a1} people.")
+    return (stem, [p1, p2, p3])
+
+def share2(R):
+    a, b = R.choice(RATIOS); x, y = R.sample(NAMES, 2); part = R.randint(3, 30); tot = (a + b) * part
+    thing = R.choice([("£", ""), ("", " sweets"), ("", " stickers"), ("", " marbles")])
+    v = lambda n: f"{thing[0]}{n}{thing[1]}"
+    stem = f"{x} and {y} share {v(tot)} in the ratio {a} : {b}."
+    p1 = (f"How much does {x} get?", v(a * part), f"{a + b} parts. {tot} ÷ {a + b} = {part} a part. {a} × {part} = {v(a * part)}.")
+    p2 = (f"How many more does {y} get than {x}?", v((b - a) * part), f"{y} gets {b - a} more part{'' if b - a == 1 else 's'}. {b - a} × {part} = {v((b - a) * part)}.")
+    k = R.randint(2, 9)
+    p3 = (f"Next week they share some more in the same ratio, and {y} gets {v(b * k)}. How much was shared altogether?", v((a + b) * k),
+          f"{b * k} ÷ {b} = {k} a part. {a + b} parts × {k} = {v((a + b) * k)}.")
+    return (stem, [p1, p2, p3])
+
+R3 = [(1, 2, 3), (2, 3, 5), (1, 3, 4), (2, 2, 3), (3, 4, 5), (1, 2, 5), (2, 3, 4), (1, 4, 5)]
+
+def share3(R):
+    a, b, c = R.choice(R3); x, y, z = R.sample(NAMES, 3); part = R.randint(2, 15); tot = (a + b + c) * part
+    stem = f"{tot} cards are shared between {x}, {y} and {z} in the ratio {a} : {b} : {c}."
+    p1 = (f"How many cards does {z} get?", str(c * part), f"{a} + {b} + {c} = {a + b + c} parts. {tot} ÷ {a + b + c} = {part}. {c} × {part} = {c * part}.")
+    p2 = (f"What fraction of the cards does {x} get?", fr(a, a + b + c), f"{a} parts out of {a + b + c}, so {fr(a, a + b + c)}.",
+          [fr(a, b + c), fr(c, a + b + c), fr(1, a + b + c) if a != 1 else fr(a, a + b)])
+    k = R.randint(2, 12)
+    p3 = (f"Another time they share some cards in the same ratio and {y} gets {b * k}. How many cards does {z} get?", str(c * k),
+          f"{b * k} ÷ {b} = {k} a part. {c} × {k} = {c * k}.")
+    return (stem, [p1, p2, p3])
+
+def class_(R):
+    a, b = R.choice([(1, 2), (2, 3), (3, 4), (3, 5), (4, 5), (5, 6), (5, 7)]); g = R.choice(["boys", "girls"]); h = "girls" if g == "boys" else "boys"
+    part = R.randint(3, 6); tot = (a + b) * part; place = R.choice(["class", "swimming club", "choir", "chess club"])
+    stem = f"In a {place} there are {a} {g} for every {b} {h}. There are {tot} children altogether."
+    p1 = (f"How many {g} are there?", str(a * part), f"{a} + {b} = {a + b}. {tot} ÷ {a + b} = {part}. {a} × {part} = {a * part}.")
+    p2 = (f"What fraction of the children are {h}?", fr(b, a + b), f"{b} out of every {a + b} children, so {fr(b, a + b)}.", [fr(b, a), fr(a, a + b), fr(a, b)])
+    j = R.randint(1, 5); na = a * part + j
+    nb = b * part; sm = simp(na, nb); raw = f"{na} : {nb}"
+    why = f"Now {na} {g} and {nb} {h}. " + (f"Divide both by {gcd(na, nb)}: {raw} = {sm}." if sm != raw else f"{na} and {nb} have no common factor, so {raw} is already in its simplest form.")
+    wrong = [w for w in dict.fromkeys([raw, simp(nb, na), f"{a} : {b}", f"{a + j} : {b}"]) if w != sm][:3]
+    p3 = (f"{j} more {g} join. Write the ratio of {g} to {h} now, in its simplest form.", sm, why, wrong)
+    return (stem, [p1, p2, p3])
+
+def scale(R):
+    k = R.choice([2, 3, 4, 5, 10, 20, 25]); d = R.randint(3, 15); nm = R.choice(["map", "plan of a park", "map of an island"])
+    stem = f"On a {nm}, 1 cm stands for {k} km."
+    p1 = (f"Two towns are {d} cm apart on the {nm.split(' of')[0]}. How far apart are they really?", f"{d * k} km", f"{d} × {k} = {d * k} km.")
+    e = R.randint(2, 12) * 2
+    p2 = (f"A road is {e * k // 2} km long. How long is it on the {nm.split(' of')[0]}?", f"{e / 2:g} cm", f"{e * k // 2} ÷ {k} = {e / 2:g} cm.")
+    s = R.choice([10000, 20000, 25000, 50000]); c = R.randint(2, 12)
+    p3 = (f"A different map has a scale of 1 : {s:,}. A path is {c} cm long on this map. How long is the real path in metres?", f"{c * s // 100:,} m",
+          f"{c} × {s:,} = {c * s:,} cm. {c * s:,} cm ÷ 100 = {c * s // 100:,} m.")
+    return (stem, [p1, p2, p3])
+
+def beads(R):
+    r, bl = R.randint(2, 9) * R.choice([2, 3, 4]), R.randint(2, 9) * R.choice([2, 3, 5])
+    while r == bl or gcd(r, bl) == 1: r, bl = R.randint(4, 36), R.randint(4, 45)
+    col = R.choice([("red", "blue"), ("green", "yellow"), ("black", "white"), ("gold", "silver")])
+    stem = f"A bag has {r} {col[0]} beads and {bl} {col[1]} beads."
+    p1 = (f"Write the ratio of {col[0]} beads to {col[1]} beads in its simplest form.", simp(r, bl), f"Divide both by {gcd(r, bl)}: {r} : {bl} = {simp(r, bl)}.",
+          [w for w in dict.fromkeys([f"{r} : {bl}", simp(bl, r), simp(r, r + bl)]) if w != simp(r, bl)])
+    p2 = (f"What fraction of the beads are {col[0]}?", fr(r, r + bl), f"{r} out of {r + bl} beads. {r}/{r + bl} = {fr(r, r + bl)}.", [fr(r, bl), fr(bl, r + bl)])
+    # how many of col0 to add so the ratio becomes 1 : 1 ... or 2 : 1
+    tgt = r // bl + R.choice([1, 2]); need = tgt * bl - r
+    p3 = (f"How many more {col[0]} beads must be added so that the ratio of {col[0]} to {col[1]} becomes {tgt} : 1?", str(need),
+          f"{tgt} : 1 means {tgt} × {bl} = {tgt * bl} {col[0]} beads. {tgt * bl} − {r} = {need}.")
+    return (stem, [p1, p2, p3])
+
+def exchange(R):
+    rate = R.choice([(F(6, 5), "€", "euros"), (F(5, 4), "$", "dollars"), (F(3, 2), "$", "dollars"), (F(11, 10), "€", "euros"), (F(13, 10), "$", "dollars")])
+    r, sym, word = rate; rs = f"{float(r):.2f}"
+    stem = f"The exchange rate is £1 = {sym}{rs}."
+    p = R.randint(2, 40) * 10 if r.denominator == 10 else R.randint(4, 60) * r.denominator
+    v1 = p * r
+    p1 = (f"Change £{p} into {word}.", f"{sym}{v1.numerator if v1.denominator == 1 else float(v1):g}" if v1.denominator == 1 else f"{sym}{float(v1):.2f}",
+          f"£{p} × {rs} = {sym}{float(v1):g}.")
+    q = R.randint(3, 30) * r.numerator; back = F(q) / r
+    p2 = (f"Change {sym}{q} into pounds.", money(int(back * 100)), f"{sym}{q} ÷ {rs} = {money(int(back * 100))}.")
+    pounds = R.randint(8, 40); other_p = int(pounds * r) + R.choice([-3, -2, 2, 3])
+    cheaper_here = F(other_p) / r < pounds
+    diff = abs(F(pounds) - F(other_p) / r)
+    if diff.denominator not in (1, 2, 4, 5, 10, 20, 25, 50, 100): return exchange(R)
+    p3 = (f"A game costs £{pounds} in the UK and {sym}{other_p} abroad. How much cheaper is it in the cheaper place, in pounds?", money(int(diff * 100)),
+          f"{sym}{other_p} ÷ {rs} = {money(int(F(other_p) / r * 100))}. Difference from £{pounds}: {money(int(diff * 100))}.")
+    if (F(other_p) / r * 100).denominator != 1 or (back * 100).denominator != 1: return exchange(R)
+    return (stem, [p1, p2, p3])
+
+def weight_price(R):
+    food = R.choice(["cheese", "grapes", "ham", "nuts", "coffee beans", "sweets"])
+    g = R.choice([100, 200, 250, 500]); per = R.choice([20, 25, 30, 40, 45, 60, 75, 80]) * g // 100  # pence for g grams
+    stem = f"{g} g of {food} costs {money(per)}."
+    kg = R.choice([1, 2, 3]) if g != 250 else R.choice([1, 2])
+    p1 = (f"How much does {kg} kg of {food} cost?", money(per * 1000 * kg // g), f"{kg} kg = {1000 * kg // g} × {g} g. {money(per)} × {1000 * kg // g} = {money(per * 1000 * kg // g)}.")
+    w = R.choice([50, 150, 300, 350, 600, 750]); cost = per * w / g
+    if cost != int(cost): w = 2 * g; cost = 2 * per
+    p2 = (f"How much does {w} g of {food} cost?", money(int(cost)), f"1 g costs {money(per)} ÷ {g}. {w} g: {money(per)} × {w}/{g} = {money(int(cost))}.")
+    k = R.randint(3, 9)
+    p3 = (f"Jo paid {money(per * k)} for some {food}. How many grams did Jo buy?", f"{g * k} g", f"{money(per * k)} ÷ {money(per)} = {k}. {k} × {g} g = {g * k} g.")
+    return (stem, [p1, p2, p3])
+
+FAMS = [paint, prices, recipe, share2, share3, class_, scale, beads, exchange, weight_price]
+
+def ratio(R):
+    return R.choice(FAMS)(R)

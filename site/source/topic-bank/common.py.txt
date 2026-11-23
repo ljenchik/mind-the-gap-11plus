@@ -1,0 +1,264 @@
+import random, math, os, hashlib
+from fractions import Fraction as F
+from decimal import Decimal as D
+
+NAMES = ['Aisha', 'Ben', 'Chloe', 'Dev', 'Ella', 'Finn', 'Grace', 'Hari', 'Isla', 'Jay', 'Kofi', 'Lena', 'Maya',
+         'Noah', 'Omar', 'Priya', 'Quinn', 'Rosa', 'Sam', 'Tara', 'Uma', 'Vik', 'Wren', 'Yusuf', 'Zara', 'Leo',
+         'Mei', 'Nina', 'Owen', 'Ruby']
+ITEMS = ['pencils', 'rulers', 'stickers', 'notebooks', 'bread rolls', 'badges', 'marbles', 'postcards', 'pens', 'erasers']
+
+
+def names(r, k): return r.sample(NAMES, k)
+
+
+def n(x): return f'{x:,}'
+
+
+def dec(x):
+    x = D(str(x))
+    s = format(x.normalize(), 'f')
+    if '.' in s:
+        a, b = s.split('.')
+        return f'{int(a):,}.{b}'
+    return f'{int(s):,}'
+
+
+def money(p):
+    p = int(p)
+    return f'£{p // 100:,}.{p % 100:02d}'
+
+
+def pm(p): return f'{p}p' if p < 100 else money(p)
+
+
+def fr(x):
+    x = F(x)
+    if x.denominator == 1: return str(x.numerator)
+    w = x.numerator // x.denominator
+    rem = x - w
+    return f'{w} {rem.numerator}/{rem.denominator}' if w else f'{x.numerator}/{x.denominator}'
+
+
+def raw(a, b): return f'{a}/{b}'
+
+
+def t12(m):
+    m %= 1440
+    h, mi = divmod(m, 60)
+    suf = 'a.m.' if h < 12 else 'p.m.'
+    h12 = h % 12 or 12
+    return f'{h12}:{mi:02d} {suf}'
+
+
+def t24(m):
+    m %= 1440
+    return f'{m // 60:02d}:{m % 60:02d}'
+
+
+def dur(m):
+    h, mi = divmod(m, 60)
+    if h and mi: return f'{h} h {mi} min'
+    return f'{h} h' if h else f'{mi} min'
+
+
+import re
+def fx(t): return re.sub(r'(?<![\w.])-(?=\d)', '−', t.replace('a.m..', 'a.m.').replace('p.m..', 'p.m.'))
+
+
+def Q(text, ans, sol, typ, fig=None, table=None, alt=None):
+    return dict(text=fx(text), ans=fx(str(ans)), sol=fx(sol), type=typ, fig=fig, table=table, alt=fx(alt) if alt else alt)
+
+
+def P(intro, parts, skill, fig=None, table=None):
+    """paper question: parts = [(text, ans, sol)]"""
+    return dict(intro=[fx(x) for x in (intro if isinstance(intro, list) else [intro])], parts=[(fx(a), fx(str(b)), fx(c)) for a, b, c in parts],
+                skill=skill, fig=fig, table=table)
+
+
+def primes_upto(k): return [p for p in range(2, k + 1) if all(p % q for q in range(2, int(p ** .5) + 1))]
+
+
+def factors(k): return [d for d in range(1, k + 1) if k % d == 0]
+
+
+def pfactors(k):
+    out, p = [], 2
+    while k > 1:
+        while k % p == 0: out.append(p); k //= p
+        p += 1
+    return out
+
+
+# ---------------- figures ----------------
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon, Circle, Wedge
+
+FIGDIR = '/home/claude/out3/figures'
+
+
+def _save(fig, path):
+    fig.savefig(path, dpi=150, bbox_inches='tight', pad_inches=0.08)
+    plt.close(fig)
+
+
+def fig_tri(path, pts, W, H):
+    fig, ax = plt.subplots(figsize=(W * .42, H * .42))
+    for x in range(W + 1): ax.plot([x, x], [0, H], color='#9aa', lw=.7)
+    for y in range(H + 1): ax.plot([0, W], [y, y], color='#9aa', lw=.7)
+    ax.add_patch(Polygon(pts, closed=True, fc='#cfd8e6', ec='black', lw=1.8))
+    ax.set_xlim(-.1, W + .1); ax.set_ylim(-.1, H + .1); ax.set_aspect('equal'); ax.axis('off')
+    _save(fig, path)
+
+
+def fig_lshape(path, a, b, c, d, unit):
+    fig, ax = plt.subplots(figsize=(3.4, 3.0))
+    pts = [(0, 0), (a, 0), (a, d), (c, d), (c, b), (0, b)]
+    ax.add_patch(Polygon(pts, closed=True, fc='#e6ecf5', ec='black', lw=1.8))
+    m = max(a, b)
+    ax.text(a / 2, -.07 * m, f'{a} {unit}', ha='center', va='top', fontsize=11)
+    ax.text(-.04 * m, b / 2, f'{b} {unit}', ha='right', va='center', fontsize=11)
+    ax.text(c / 2, b + .03 * m, f'{c} {unit}', ha='center', va='bottom', fontsize=11)
+    ax.text(a + .04 * m, d / 2, f'{d} {unit}', ha='left', va='center', fontsize=11)
+    ax.set_xlim(-.3 * m, a + .3 * m); ax.set_ylim(-.42 * m, b + .15 * m); ax.set_aspect('equal'); ax.axis('off')
+    ax.text(a / 2, -.38 * m, 'Not drawn to scale', ha='center', fontsize=8, style='italic')
+    _save(fig, path)
+
+
+def fig_numline(path, lo, step, nt, every, arrows):
+    """lo: start (float), step: gap between small ticks, nt: number of gaps, every: label every k ticks"""
+    fig, ax = plt.subplots(figsize=(6.2, 1.3))
+    hi = lo + step * nt
+    ax.plot([lo, hi], [0, 0], color='black', lw=1.5)
+    for i in range(nt + 1):
+        x = lo + i * step
+        big = i % every == 0
+        ax.plot([x, x], [0, .35 if big else .2], color='black', lw=1.2)
+        if big: ax.text(x, -.25, dec(round(x, 6)), ha='center', va='top', fontsize=10)
+    for lab, x in arrows.items():
+        ax.annotate(lab, xy=(x, .4), xytext=(x, 1.25), ha='center', fontsize=11, fontweight='bold',
+                    arrowprops=dict(arrowstyle='-|>', color='black', lw=1.3))
+    ax.set_xlim(lo - step, hi + step); ax.set_ylim(-.9, 1.7); ax.axis('off')
+    _save(fig, path)
+
+
+def fig_pie(path, labels, angles, show=True):
+    fig, ax = plt.subplots(figsize=(3.6, 3.6))
+    greys = ['#ffffff', '#d5dbe5', '#aab4c4', '#eef1f6', '#c2cad8', '#e0e4ec']
+    st = 90
+    for i, (lab, a) in enumerate(zip(labels, angles)):
+        ax.add_patch(Wedge((0, 0), 1, st - a, st, fc=greys[i % 6], ec='black', lw=1.4))
+        mid = math.radians(st - a / 2)
+        txt = f'{lab}\n{a}°' if show else lab
+        ax.text(.66 * math.cos(mid), .66 * math.sin(mid), txt, ha='center', va='center', fontsize=8.5)
+        st -= a
+    ax.set_xlim(-1.05, 1.05); ax.set_ylim(-1.05, 1.05); ax.set_aspect('equal'); ax.axis('off')
+    _save(fig, path)
+
+
+def fig_bar(path, labels, vals, ylabel, step):
+    fig, ax = plt.subplots(figsize=(5.2, 3.2))
+    ax.bar(labels, vals, color='#aab4c4', ec='black', width=.6)
+    top = (max(vals) // step + 1) * step
+    ax.set_yticks(range(0, top + 1, step)); ax.set_ylim(0, top)
+    ax.grid(axis='y', color='#888', lw=.5); ax.set_axisbelow(True)
+    ax.set_ylabel(ylabel, fontsize=10); ax.tick_params(labelsize=9)
+    _save(fig, path)
+
+
+def fig_venn(path, la, lb, oa, both, ob, nei):
+    fig, ax = plt.subplots(figsize=(4.6, 2.9))
+    ax.add_patch(plt.Rectangle((-2.3, -1.45), 4.6, 2.9, fc='white', ec='black', lw=1.4))
+    ax.add_patch(Circle((-.6, 0), 1.1, fc='none', ec='black', lw=1.6))
+    ax.add_patch(Circle((.6, 0), 1.1, fc='none', ec='black', lw=1.6))
+    ax.text(-1.1, 0, str(oa), ha='center', va='center', fontsize=13)
+    ax.text(0, 0, str(both), ha='center', va='center', fontsize=13)
+    ax.text(1.1, 0, str(ob), ha='center', va='center', fontsize=13)
+    ax.text(1.95, -1.2, str(nei), ha='center', va='center', fontsize=13)
+    ax.text(-1.2, 1.18, la, ha='center', fontsize=10, fontweight='bold')
+    ax.text(1.2, 1.18, lb, ha='center', fontsize=10, fontweight='bold')
+    ax.set_xlim(-2.4, 2.4); ax.set_ylim(-1.55, 1.55); ax.set_aspect('equal'); ax.axis('off')
+    _save(fig, path)
+
+
+def fig_pts(path, pts, lim=5, join=False):
+    fig, ax = plt.subplots(figsize=(3.9, 3.9))
+    for k in range(-lim, lim + 1):
+        ax.plot([k, k], [-lim, lim], color='#bbb', lw=.6); ax.plot([-lim, lim], [k, k], color='#bbb', lw=.6)
+        if k: ax.text(k, -.18, str(k), ha='center', va='top', fontsize=7); ax.text(-.15, k, str(k), ha='right', va='center', fontsize=7)
+    ax.annotate('', xy=(lim + .5, 0), xytext=(-lim - .5, 0), arrowprops=dict(arrowstyle='->', lw=1.2))
+    ax.annotate('', xy=(0, lim + .5), xytext=(0, -lim - .5), arrowprops=dict(arrowstyle='->', lw=1.2))
+    ax.text(lim + .55, -.1, 'x', fontsize=10, style='italic'); ax.text(.12, lim + .45, 'y', fontsize=10, style='italic')
+    ax.text(-.18, -.18, '0', ha='right', va='top', fontsize=7)
+    for lab, (x, y) in pts.items():
+        ax.plot(x, y, 'x', color='black', ms=8, mew=2)
+        ax.text(x + .2, y + .2, lab, fontsize=11, fontweight='bold')
+    ax.set_xlim(-lim - .7, lim + .9); ax.set_ylim(-lim - .7, lim + .9); ax.set_aspect('equal'); ax.axis('off')
+    _save(fig, path)
+
+
+def fig_travel(path, lines, t0, hours, dmax, dstep):
+    """lines: [(label, [(minutes_from_t0, km), ...])]; x axis in hours from t0 (minutes since midnight)"""
+    fig, ax = plt.subplots(figsize=(5.6, 3.5))
+    sty = ['-', '--']
+    for i, (lab, pts) in enumerate(lines):
+        ax.plot([p[0] for p in pts], [p[1] for p in pts], sty[i % 2], color='black', lw=1.8, label=lab)
+    ax.set_xticks(range(0, hours * 60 + 1, 30))
+    ax.set_xticklabels([t24(t0 + m) if m % 60 == 0 else '' for m in range(0, hours * 60 + 1, 30)], fontsize=8)
+    ax.set_yticks(range(0, dmax + 1, dstep)); ax.tick_params(labelsize=8)
+    ax.set_xlim(0, hours * 60); ax.set_ylim(0, dmax); ax.grid(color='#999', lw=.5)
+    ax.set_xlabel('Time', fontsize=9); ax.set_ylabel('Distance (km)', fontsize=9)
+    if len(lines) > 1 or lines[0][0]: ax.legend(fontsize=8, loc='upper left')
+    _save(fig, path)
+
+
+def fig_angles(path, kind, vals):
+    """kind 'line': angles on a straight line labelled vals; 'tri': triangle with three labels"""
+    fig, ax = plt.subplots(figsize=(3.8, 2.3))
+    if kind == 'line':
+        ax.plot([-2, 2], [0, 0], color='black', lw=1.8)
+        k = len(vals); degs = [180 * (i + 1) / k for i in range(k - 1)]
+        for dg in degs:
+            ax.plot([0, 1.8 * math.cos(math.radians(dg))], [0, 1.8 * math.sin(math.radians(dg))], color='black', lw=1.8)
+        for i, v in enumerate(vals):
+            mid = math.radians(180 * (i + .5) / k)
+            ax.text(.8 * math.cos(mid), .8 * math.sin(mid) * .9 + .05, v, ha='center', va='center', fontsize=11)
+        ax.set_xlim(-2.1, 2.1); ax.set_ylim(-.3, 1.9)
+    else:
+        pts = [(0, 0), (3.2, 0), (1.1, 1.9)]
+        ax.add_patch(Polygon(pts, closed=True, fc='none', ec='black', lw=1.8))
+        ax.text(.42, .22, vals[0], fontsize=10, ha='center'); ax.text(2.6, .14, vals[1], fontsize=10, ha='center')
+        ax.text(1.18, 1.38, vals[2], fontsize=10, ha='center')
+        ax.set_xlim(-.2, 3.4); ax.set_ylim(-.45, 2.05)
+    ax.text(sum(ax.get_xlim()) / 2, ax.get_ylim()[0] + .02, 'Not drawn to scale', ha='center', fontsize=8, style='italic')
+    ax.set_aspect('equal'); ax.axis('off')
+    _save(fig, path)
+
+
+FIGS = dict(tri=fig_tri, lshape=fig_lshape, numline=fig_numline, pie=fig_pie, bar=fig_bar, venn=fig_venn, pts=fig_pts,
+            travel=fig_travel, angles=fig_angles)
+
+
+def render_fig(spec):
+    os.makedirs(FIGDIR, exist_ok=True)
+    h = hashlib.md5(repr(spec).encode()).hexdigest()[:10]
+    path = f'{FIGDIR}/{spec[0]}_{h}.png'
+    if not os.path.exists(path): FIGS[spec[0]](path, *spec[1:])
+    return path
+
+
+SUP = str.maketrans('0123456789', '⁰¹²³⁴⁵⁶⁷⁸⁹')
+def sup(a, b): return f'{a}{str(b).translate(SUP)}'
+
+ONES = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split()
+TENS = '_ _ twenty thirty forty fifty sixty seventy eighty ninety'.split()
+def words(k):
+    if k < 20: return ONES[k]
+    if k < 100: return TENS[k // 10] + ('-' + ONES[k % 10] if k % 10 else '')
+    if k < 1000: return ONES[k // 100] + ' hundred' + (' and ' + words(k % 100) if k % 100 else '')
+    return words(k // 1000) + ' thousand' + ((' and ' if k % 1000 < 100 else ' ') + words(k % 1000) if k % 1000 else '')
+
+
+def inv(x):
+    x = F(x); return str(x.denominator) if x.numerator == 1 else f'{x.denominator}/{x.numerator}'

@@ -1,0 +1,136 @@
+"""23 Nov: percentage word problems – increase, decrease, reverse percentages, percentage change, offers.
+Each family returns (stem, [(question, answer, solution[, options]) x3]). Money is worked in pence so answers are exact."""
+from make_practice_tests import money, NAMES
+
+def pc(p, x):            # p% of x, exact integer or None
+    return p * x // 100 if p * x % 100 == 0 else None
+
+def pay_rise(R):
+    n = R.choice(NAMES); w = R.choice(range(4000, 12001, 500)); a = R.choice([5, 10, 15, 20, 25]); b = R.choice([10, 20, 25])
+    up = pc(a, w); w1 = w + up if up is not None else None
+    dn = pc(b, w1) if w1 else None
+    if dn is None: return pay_rise(R)
+    w2 = w1 - dn
+    return (f"{n} earns {money(w)} a week from a paper round.", [
+        (f"The pay goes up by {a}%. What is the new weekly pay?", money(w1), f"{a}% of {money(w)} = {money(up)}. {money(w)} + {money(up)} = {money(w1)}."),
+        (f"Later the new pay goes down by {b}%. What is the weekly pay now?", money(w2), f"{b}% of {money(w1)} = {money(dn)}. {money(w1)} − {money(dn)} = {money(w2)}."),
+        (f"How much {'more' if w2 >= w else 'less'} is this than the pay at the start?", money(abs(w2 - w)), f"{money(w2)} and {money(w)} differ by {money(abs(w2 - w))}.")])
+
+def population(R):
+    place = R.choice(["A village", "A town", "An island", "A school"]); n = R.choice(range(1200, 8001, 400)); a = R.choice([5, 10, 15, 20, 25]); b = R.choice([5, 10, 20])
+    up = pc(a, n); n1 = n + up if up is not None else None; dn = pc(b, n1) if n1 else None
+    if dn is None or dn == up: return population(R)
+    n2 = n1 - dn
+    return (f"{place} has {n:,} people.", [
+        (f"Over one year the number grows by {a}%. How many people are there now?", f"{n1:,}", f"{a}% of {n:,} = {up:,}. {n:,} + {up:,} = {n1:,}."),
+        (f"The next year it falls by {b}%. How many people are there then?", f"{n2:,}", f"{b}% of {n1:,} = {dn:,}. {n1:,} − {dn:,} = {n2:,}."),
+        (f"How many {'more' if n2 > n else 'fewer'} people are there now than at the start?", f"{abs(n2 - n):,}", f"{max(n2, n):,} − {min(n2, n):,} = {abs(n2 - n):,}.")]) if n2 != n else population(R)
+
+def double_discount(R):
+    item = R.choice(["A coat", "A games console", "A bike", "A tent", "A guitar"]); p = R.choice(range(4000, 20001, 2000)); a = R.choice([10, 20, 25, 50]); b = R.choice([10, 20])
+    d1 = pc(a, p); s1 = p - d1; d2 = pc(b, s1)
+    if d2 is None: return double_discount(R)
+    s2 = s1 - d2; one = p - pc(a + b, p)
+    return (f"{item} costs {money(p)}. In a sale it is {a}% off.", [
+        ("What is the sale price?", money(s1), f"{a}% of {money(p)} = {money(d1)}. {money(p)} − {money(d1)} = {money(s1)}."),
+        (f"On the last day there is a further {b}% off the sale price. What is the price now?", money(s2), f"{b}% of {money(s1)} = {money(d2)}. {money(s1)} − {money(d2)} = {money(s2)}."),
+        (f"How much more is this than if {a + b}% had been taken off the original price in one go?", money(s2 - one), f"{a + b}% off {money(p)} gives {money(one)}. {money(s2)} − {money(one)} = {money(s2 - one)}.")])
+
+def reverse_sale(R):
+    item = R.choice(["pair of trainers", "watch", "scooter", "lamp", "rucksack"]); a = R.choice([10, 20, 25, 40, 50]); orig = R.choice(range(1000, 12001, 500))
+    sale = orig - pc(a, orig) if pc(a, orig) is not None else None
+    if not sale or sale % 100: return reverse_sale(R)
+    b = R.choice([10, 20, 25, 50]); o2 = R.choice(range(2000, 10001, 1000)); n2 = o2 + pc(b, o2)
+    return (f"In a sale everything is {a}% off. A {item} now costs {money(sale)}.", [
+        (f"What was the price of the {item} before the sale?", money(orig), f"After {a}% off, {100 - a}% is left. {100 - a}% = {money(sale)}, so 1% = {money(sale // (100 - a)) if sale % (100 - a) == 0 else money(sale) + ' ÷ ' + str(100 - a)} and 100% = {money(orig)}."),
+        ("How much money does the sale save?", money(orig - sale), f"{money(orig)} − {money(sale)} = {money(orig - sale)}."),
+        (f"Another shop raised its prices by {b}%. A bag there now costs {money(n2)}. What did it cost before?", money(o2), f"{100 + b}% = {money(n2)}, so 100% = {money(n2)} ÷ {100 + b} × 100 = {money(o2)}.")])
+
+def pct_change(R):
+    a = R.choice(range(200, 2001, 100)); p = R.choice([5, 10, 15, 20, 25, 30, 40, 50, 75]); b = a + pc(p, a) if pc(p, a) is not None and pc(p, a) % 10 == 0 else None
+    c = R.choice(range(400, 4001, 200)); q = R.choice([10, 20, 25, 40, 50]); d = c - pc(q, c) if pc(q, c) is not None else None
+    if not b or not d: return pct_change(R)
+    t = R.choice([20, 40, 50]); g = R.choice([5, 10, 15]); tg = t * (100 + g) // 100 if t * g % 100 == 0 else None
+    if not tg: return pct_change(R)
+    return ("Prices at a café change.", [
+        (f"A sandwich went up from {money(a)} to {money(b)}. What was the percentage increase?", f"{p}%", f"Increase = {money(b - a)}. {money(b - a)} ÷ {money(a)} = {p}/100, so {p}%."),
+        (f"A cake went down from {money(c)} to {money(d)}. What was the percentage decrease?", f"{q}%", f"Decrease = {money(c - d)}. {money(c - d)} ÷ {money(c)} = {q}/100, so {q}%."),
+        (f"The café served {t} customers on Monday and {tg} on Tuesday. What was the percentage increase?", f"{g}%", f"Increase = {tg - t}. {tg - t} ÷ {t} = {g}/100, so {g}%.")])
+
+def compare_offers(R):
+    p = R.choice(range(3000, 12001, 1000)); a = R.choice([10, 15, 20, 25, 30]); off = R.choice(range(250, p * 2 // 5 + 1, 250)); b = R.choice([10, 20, 25])
+    A = p - pc(a, p); B = p - off
+    if A == B or pc(b, p) is None: return compare_offers(R)
+    win = "Shop A" if A < B else "Shop B"
+    C = p - pc(b, p) + 0; Cb = C + pc(10, C) if pc(10, C) is not None else None
+    if Cb is None: return compare_offers(R)
+    return (f"The same pair of headphones costs {money(p)} in two shops. Shop A has {a}% off. Shop B has {money(off)} off.", [
+        ("Which shop is cheaper?", win, f"Shop A: {money(p)} − {money(pc(a, p))} = {money(A)}. Shop B: {money(p)} − {money(off)} = {money(B)}. {win} is cheaper.", ["Shop A", "Shop B"]),
+        ("How much cheaper is it?", money(abs(A - B)), f"{money(max(A, B))} − {money(min(A, B))} = {money(abs(A - B))}."),
+        (f"Shop C takes {b}% off but then adds 10% for delivery. What do the headphones cost there?", money(Cb), f"{b}% off: {money(C)}. 10% of {money(C)} = {money(pc(10, C))}. {money(C)} + {money(pc(10, C))} = {money(Cb)}.")])
+
+def savings(R):
+    n = R.choice(NAMES); s = R.choice([10000, 20000, 40000, 50000, 80000]); r = R.choice([5, 10, 20])
+    y1 = s + pc(r, s); y2 = y1 + pc(r, y1) if pc(r, y1) is not None else None
+    if y2 is None: return savings(R)
+    return (f"{n} puts {money(s)} in a savings account. Each year {r}% of the amount in the account is added.", [
+        ("How much is in the account after 1 year?", money(y1), f"{r}% of {money(s)} = {money(pc(r, s))}. {money(s)} + {money(pc(r, s))} = {money(y1)}."),
+        ("How much is in the account after 2 years?", money(y2), f"{r}% of {money(y1)} = {money(y2 - y1)}. {money(y1)} + {money(y2 - y1)} = {money(y2)}."),
+        ("How much has been added altogether in the 2 years?", money(y2 - s), f"{money(y2)} − {money(s)} = {money(y2 - s)}.")])
+
+def bonus_pack(R):
+    item = R.choice(["cereal", "pasta", "washing powder", "dog food"]); g = R.choice([400, 500, 600, 750, 800]); e = R.choice([10, 20, 25, 50])
+    g2 = g + pc(e, g) if pc(e, g) is not None else None; pr = R.choice([150, 200, 240, 300])
+    if g2 is None or (pr * 100) % g: return bonus_pack(R)
+    return (f"{'An' if str(g)[0] == '8' else 'A'} {g} g box of {item} costs {money(pr)}. A special box has {e}% extra free.", [
+        ("How many grams are in the special box?", f"{g2} g", f"{e}% of {g} g = {g2 - g} g. {g} + {g2 - g} = {g2} g."),
+        ("How many grams are free?", f"{g2 - g} g", f"{e}% of {g} = {g2 - g} g."),
+        ("What does 100 g cost in the normal box?", money(pr * 100 // g), f"{money(pr)} ÷ {g // 100 if g % 100 == 0 else g / 100:g} = {money(pr * 100 // g)}.")])
+
+def car_value(R):
+    v = R.choice(range(8000, 24001, 2000)) * 100; a = R.choice([10, 20, 25])
+    v1 = v - pc(a, v); v2 = v1 - pc(a, v1)
+    return (f"A new car costs {money(v)}. Each year it loses {a}% of its value at the start of that year.", [
+        ("What is it worth after 1 year?", money(v1), f"{a}% of {money(v)} = {money(pc(a, v))}. {money(v)} − {money(pc(a, v))} = {money(v1)}."),
+        ("What is it worth after 2 years?", money(v2), f"{a}% of {money(v1)} = {money(pc(a, v1))}. {money(v1)} − {money(pc(a, v1))} = {money(v2)}."),
+        ("How much value has it lost in the 2 years?", money(v - v2), f"{money(v)} − {money(v2)} = {money(v - v2)}.")])
+
+def test_scores(R):
+    n = R.choice(NAMES); tot = R.choice([20, 25, 40, 50]); a = R.choice([p for p in range(40, 80, 5) if p * tot % 100 == 0]); b = R.choice([p for p in range(a + 10, 100, 5) if p * tot % 100 == 0] or [None])
+    if b is None: return test_scores(R)
+    return (f"{n} took two maths tests, each marked out of {tot}.", [
+        (f"In the first test {n} scored {a}%. How many marks was that?", str(a * tot // 100), f"{a}% of {tot} = {a * tot // 100}."),
+        (f"In the second test {n} scored {b * tot // 100} marks. What percentage was that?", f"{b}%", f"{b * tot // 100} out of {tot} = {b}%."),
+        (f"How many more marks did {n} get in the second test?", str((b - a) * tot // 100), f"{b * tot // 100} − {a * tot // 100} = {(b - a) * tot // 100}.")])
+
+def pocket_money(R):
+    n = R.choice(NAMES); m = R.choice(range(400, 1201, 100)); a = R.choice([10, 20, 25, 50]); s = R.choice([20, 25, 40, 60])
+    m1 = m + pc(a, m) if pc(a, m) is not None else None
+    if m1 is None or pc(s, m1) is None: return pocket_money(R)
+    left = m1 - pc(s, m1)
+    return (f"{n} gets {money(m)} pocket money a week. On a birthday it goes up by {a}%.", [
+        ("What is the new weekly pocket money?", money(m1), f"{a}% of {money(m)} = {money(pc(a, m))}. {money(m)} + {money(pc(a, m))} = {money(m1)}."),
+        (f"{n} spends {s}% of the new amount each week. How much is left each week?", money(left), f"{s}% of {money(m1)} = {money(pc(s, m1))}. {money(m1)} − {money(pc(s, m1))} = {money(left)}."),
+        ("How many weeks does it take to save at least £30 from what is left?", str(-(-3000 // left)), (f"£30 ÷ {money(left)} = {3000 // left}." if 3000 % left == 0 else f"£30 ÷ {money(left)} is between {3000 // left} and {3000 // left + 1}, so {-(-3000 // left)} weeks."))])
+
+def stadium(R):
+    cap = R.choice(range(20000, 60001, 4000)); a = R.choice([50, 60, 75, 80]); b = R.choice([5, 10, 15, 20])
+    c1 = pc(a, cap); c2 = c1 + pc(b, c1) if pc(b, c1) is not None else None
+    if c2 is None or c2 > cap: return stadium(R)
+    return (f"A football stadium holds {cap:,} people.", [
+        (f"At the first match it was {a}% full. How many people came?", f"{c1:,}", f"{a}% of {cap:,} = {c1:,}."),
+        (f"At the next match {b}% more people came than at the first. How many came?", f"{c2:,}", f"{b}% of {c1:,} = {c2 - c1:,}. {c1:,} + {c2 - c1:,} = {c2:,}."),
+        ("How many empty seats were there at the second match?", f"{cap - c2:,}", f"{cap:,} − {c2:,} = {cap - c2:,}.")])
+
+def fares(R):
+    f = R.choice(range(150, 501, 10)); a = R.choice([10, 20, 30, 50]); d = R.choice([5, 10])
+    f1 = f + pc(a, f) if pc(a, f) is not None else None
+    if f1 is None: return fares(R)
+    wk = 10 * f1; dk = pc(25, wk)
+    if dk is None: return fares(R)
+    return (f"A bus fare is {money(f)}. The fare goes up by {a}%.", [
+        ("What is the new fare?", money(f1), f"{a}% of {money(f)} = {money(f1 - f)}. {money(f)} + {money(f1 - f)} = {money(f1)}."),
+        ("Ali makes 10 journeys a week. How much more does that cost each week than before?", money(10 * (f1 - f)), f"10 × {money(f1 - f)} = {money(10 * (f1 - f))}."),
+        ("A weekly pass costs 25% less than 10 journeys at the new fare. What does the pass cost?", money(wk - dk), f"10 × {money(f1)} = {money(wk)}. 25% of that = {money(dk)}. {money(wk)} − {money(dk)} = {money(wk - dk)}.")])
+
+PCT = [pay_rise, population, double_discount, reverse_sale, pct_change, compare_offers, savings, bonus_pack, car_value, test_scores, pocket_money, stadium, fares]

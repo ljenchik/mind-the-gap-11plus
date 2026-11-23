@@ -1,0 +1,194 @@
+"""Adds the topic practice bank (30 topics x 50) as new skill-practice sets and the Set B papers as Practice tests 31-50.
+Safe to re-run: removes anything it added before (ids SK-*-B* and PT31..PT50) and adds it again."""
+import json, re, sys, pickle, random, collections
+sys.path.insert(0, '/home/claude/gen')
+from common import words, sup
+SRC, OUT = sys.argv[1], sys.argv[2]
+Q = json.load(open(SRC))
+Q = [q for q in Q if not re.match(r'SK-\w+-B\d', q['id']) and not re.match(r'PT(3[1-9]|4\d|50)-', q['id'])]
+bank = pickle.load(open('/home/claude/out3/bank.pkl', 'rb')); papers = pickle.load(open('/home/claude/out3/papers.pkl', 'rb'))
+TABOF = {}
+for q in Q:
+    if q['id'].startswith('SK-'): TABOF[q['skill']] = q['tab']
+TABOF['money'] = 'Percentages'
+TY = re.compile(r'^([−-]?£?\d[\d,]*(\.\d+)?(p|°C| ?(m|km|cm|mm|g|kg|ml|l)| minutes?| seconds| days| years| sheets| minibuses)?|\d+ \d+\/\d+|\d+\/\d+|\d{1,2}:\d{2}( [ap]m)?)$')
+
+def clean(t):
+    t = str(t)
+    while re.search(r'\d,\d{3}(?!\d)', t): t = re.sub(r'(\d),(\d{3})(?!\d)', r'\1\2', t)
+    t = re.sub(r'([ap])\.m\.(?= [A-Z][a-z]+ (?!o.clock))(?! (?:on )?(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun))', r'\1m.', t)
+    t = t.replace('a.m.', 'am').replace('p.m.', 'pm').replace('____', '___').replace('^□', ' to the power □')
+    t = re.sub(r'\b(\d+) h (\d+) min\b', lambda m: f'{m[1]} hour{"s" if m[1] != "1" else ""} {m[2]} minutes', t)
+    t = re.sub(r'\b(\d+) h\b', lambda m: f'{m[1]} hour{"s" if m[1] != "1" else ""}', t)
+    t = re.sub(r'\b(\d+) min\b', r'\1 minutes', t)
+    t = re.sub(r' {3,}', '  ', t)
+    return t.strip()
+def endp(t): return t if t[-1:] in '.?!:)°' or t.endswith('___') else t + '.'
+def opts(t, options): return t.rstrip() + ''.join('     ' + o for o in options)
+def table_text(tab, squares=False): return '\n'.join(('   ' if squares else ' | ').join(clean(c) or 'Name' for c in row) for row in tab)
+COMP = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+METRIC = ['millimetres', 'centimetres', 'metres', 'kilometres', 'grams', 'kilograms', 'tonnes', 'millilitres', 'litres']
+IMPERIAL = ['inches', 'feet', 'yards', 'miles', 'ounces', 'pounds', 'tons', 'pints', 'gallons', 'fluid ounces']
+
+def pic_of(fig):
+    if not fig: return None, None
+    k = fig[0]
+    if k == 'numline':
+        _, lo, step, nt, every, arrows = fig
+        from decimal import Decimal as D
+        f = lambda x: format(D(str(round(x, 6))).normalize(), 'f')
+        labs = [f(lo + step * i) if i % every == 0 else '' for i in range(nt + 1)]
+        mark = round((list(arrows.values())[0] - lo) / step)
+        return f'line {f(lo)} {f(lo + step * nt)} {nt} mark={mark} labels={",".join(labs)}', None
+    if k == 'bar':
+        _, labs, vals, yl, step = fig
+        return f'chart Number each day;{",".join(f"{a}={b}" for a, b in zip(labs, vals))};{step}', None
+    if k == 'pts': return 'cgrid ' + ' '.join(f'{l}:{x},{y}' for l, (x, y) in fig[1].items()), None
+    if k == 'pie': return None, 'The pie chart has these sectors: ' + ', '.join(f'{a} {b}°' for a, b in zip(fig[1], fig[2])) + '.'
+    if k == 'venn': return None, f'The Venn diagram has two circles. Only in "{fig[1]}": {fig[3]}. In both: {fig[4]}. Only in "{fig[2]}": {fig[5]}. In neither: {fig[6]}.'
+    if k == 'angles' and fig[1] == 'line': return None, 'The angles on the straight line are ' + ', '.join(fig[2][:-1]) + ' and ' + fig[2][-1] + '.'
+    if k == 'angles': return None, 'The angles of the triangle are ' + ', '.join(fig[2][:-1]) + ' and ' + fig[2][-1] + '.'
+    if k == 'travel':
+        from common import t24
+        _, lines, t0, hrs, dmax, dstep = fig
+        return None, ' '.join(f'{lab or "The traveller"} {"starts" if lab == "" else "sets off"} at {t24(t0 + p[0][0])} and has gone {p[1][1]} km by {t24(t0 + p[1][0])}.' for lab, p in lines) + (' Each travels at a steady speed.' if len(lines) > 1 else ' The speed is steady.')
+    return None, None
+
+def special(typ, text, ans, r, q=None, extra=None):
+    """returns (text, ans, wrong) for answers that cannot be typed"""
+    wrong = None
+    if typ == 'Using <, > and =':
+        text = opts(text.replace('Write <, > or = in the gap:', 'Choose the sign that goes in the gap:'), ['<', '>', '='])
+    elif typ == 'Inserting signs':
+        pool = [f'{a} and {b}' for a in '+−×÷' for b in '+−×÷' if f'{a} and {b}' != ans]; wrong = r.sample(pool, 3)
+    elif typ == 'Odd and even': text = opts(text, ['odd', 'even'])
+    elif typ == 'Comparing marks':
+        m = re.search(r'in (\w+) and \d+/\d+ in (\w+)', text); text = opts(text, [m[1], m[2]])
+    elif typ == 'Choosing units':
+        main = ans.split(' (or ')[0]; alt = ans.split(' (or ')[1].rstrip(')') if '(or' in ans else None
+        pool = [u for u in (METRIC if main in METRIC else IMPERIAL) if u not in (main, alt)]; ans = main; wrong = r.sample(pool, 3)
+    elif typ == 'Types of angle': text = opts(text, ['acute', 'right angle', 'obtuse', 'reflex'])
+    elif typ == 'Compass turns' or (ans in COMP): wrong = r.sample([c for c in COMP if c != ans], 3)
+    elif typ in ('Nets', 'Naming quadrilaterals'): wrong = r.sample([x for x in extra if x != ans], 3)
+    elif typ == 'Shape properties': text = opts(text.replace(' Answer YES or NO.', ''), ['YES', 'NO'])
+    elif typ == 'Best buys': text = opts(text, ['Pack A', 'Pack B', 'Pack C'])
+    elif typ in ('Price lists', 'Price puzzle') and ' and ' in ans and not re.search(r'\d', ans):
+        names = [row[0] for row in q['table'][1:]]; pairs = [' and '.join(sorted([a, b])) for i, a in enumerate(names) for b in names[i + 1:]]
+        wrong = r.sample([p for p in pairs if p != ans], 3)
+    elif typ == 'Words and figures' and not re.search(r'\d', ans):
+        nums = {v: k for k, v in ((k, words(k)) for k in range(1000, 3001))}; n0 = nums[ans]; wrong = [words(n0 + d) for d in r.sample([10, -10, 100, -100, 1, -1], 3)]
+    elif typ == 'Simplify a ratio':
+        a, b = map(int, ans.split(':')); wrong = list(dict.fromkeys(x for x in (f'{b}:{a}', f'{a + 1}:{b}', f'{a}:{b + 1}', f'{2 * a}:{b}') if x != ans))[:3]
+    elif typ == 'Value of a digit': ans = re.search(r'\((.*)\)', ans)[1]
+    elif typ == 'Index notation':
+        a, k = int(re.match(r'\d+', ans)[0]), None
+        m = re.search(r'Write ([\d ×]+) in the same way', text); k = m[1].count('×') + 1
+        wrong = list(dict.fromkeys(x for x in (sup(a, k + 1), sup(a, k - 1), sup(k, a), f'{a} × {k}', f'{k}{a}') if x != ans))[:3]
+    elif typ in ('Comparing powers', 'Powers') and ', by ' in ans:
+        m = re.search(r'larger, (\S+) or (\S+?),', text); big, n0 = ans.split(', by '); other = m[2] if big == m[1] else m[1]; n0 = int(n0)
+        wrong = [f'{other}, by {n0}', f'{big}, by {n0 + r.choice([1, 2, 10])}', f'{other}, by {n0 + r.choice([3, 5])}']
+    elif re.match(r'Train [AB], by \d+ minutes', ans):
+        t, n0 = ans[6], int(re.search(r'\d+', ans)[0]); o = 'B' if t == 'A' else 'A'
+        wrong = [f'Train {o}, by {n0} minutes', f'Train {t}, by {n0 + r.choice([2, 5, 10])} minutes', f'Train {o}, by {n0 + r.choice([1, 3, 4])} minutes']
+    elif typ == 'Comparing shares':
+        names = re.findall(r'(\w+) has \d+ sweets', text); who, n0 = ans.split(', '); n0 = int(n0.split()[0]); o = [x for x in names if x != who][0]
+        wrong = [f'{o}, {n0} more', f'{who}, {n0 + r.choice([1, 2, 3])} more', f'{o}, {n0 + r.choice([4, 5, 6])} more']
+    elif ans in ('Always', 'Sometimes', 'Never'): text = opts('Always, sometimes or never true? ' + text, ['Always', 'Sometimes', 'Never'])
+    return text, ans, wrong
+
+# ---------- 1. topic bank -> skill practice sets ----------
+SKILL = dict(RAT='ratio', PRO='ratio', PCT='money', PCM='money', FDP='dec', FRC='frac', FRO='order', FOA='frac', DEC='dec', P10='dec', RND='round', ARI='md', FPM='puz1', POW='pow', ALG='eq', SEQ='seq',
+             FUN='mach', SGN='order', MEA='units', TIM='time', MON='money', PAR='rect', TRI='rect', ANG='ang', SHP='refl', COO='coord', AVG='mean', DAT='chart', PRB='count', WRD='puz2')
+BYTYPE = {'Finding the whole first': 'fdpwp', 'Fraction of a group': 'fdpwp', 'Working backwards': 'fdpwp', 'Digit cards': 'as', 'Halfway between': 'as', 'Words and figures': 'as', 'Using a known fact': 'as',
+          'Column addition': 'as', 'Inserting signs': 'puz2', 'Percentage of a group': 'fdpwp', 'Reverse percentage': 'fdpwp'}
+r = random.Random(2026)
+new = collections.defaultdict(list)
+for code, title, qs in bank:
+    pools = collections.defaultdict(set)
+    for q in qs: pools[q['type']].add(q['ans'])
+    for q in qs:
+        sk = BYTYPE.get(q['type'], SKILL[code]) if not (code == 'FRO' and q['type'] == 'Halfway between') else 'order'
+        text, ans = clean(q['text']), clean(q['ans'])
+        pic, alt = pic_of(q['fig'])
+        if q['table']: text += '\n' + table_text(q['table'], q['type'] == 'Number squares')
+        if alt and q['type'] != 'x and 2x': text += '\n' + clean(alt)
+        elif q['fig'] and not pic and q['alt'] and q['type'] != 'x and 2x': text += '\n' + clean(q['alt']).strip('[]')
+        text, ans, wrong = special(q['type'], text, ans, r, q, sorted(pools[q['type']]))
+        ans = ans.replace(', ', ' and ') if re.fullmatch(r'[^,]+, [^,]+', ans) and q['type'] in ('Next two numbers', 'Growing gaps', 'Shrinking gaps', 'Multiplying sequences', 'Fraction sequences', 'Decimal sequences') else ans
+        rec = {'q': text, 'a': ans, 's': clean(q['sol']), 'm': 1, 'wp': False, 'yr': 5, 'skill': sk, 'src': f'Written for this app in the 10–11+ practice style ({title}: {q["type"]})', '_d': len(q['sol']) + len(q['text']) / 2}
+        if wrong: rec['wrong'] = wrong
+        if pic: rec['pic'] = pic
+        new[sk].append(rec)
+added = []
+LV = ['Easy', 'Hard', 'Challenge']
+for sk, items in new.items():
+    tab = TABOF[sk]; items.sort(key=lambda x: x['_d']); n3 = len(items) // 3
+    tiers = [items[:n3], items[n3:2 * n3], items[2 * n3:]]
+    for t in tiers: r.shuffle(t)
+    nsets = max(len(t) for t in tiers); k = 0
+    for i in range(nsets):
+        k += 1
+        for j, t in enumerate(tiers):
+            if i < len(t):
+                x = t[i]; x.pop('_d'); lv = LV[j]
+                x.update(id=f'SK-{sk}-B{k:03d}{"abc"[j]}', k=tab, t=tab, tab=tab, lv=lv, set=f'{sk}-B{k:03d}'); added.append(x)
+
+# ---------- 2. Set B papers -> Practice tests 31-50 ----------
+SLOT = [('as', 'Add and subtract'), ('frac', 'Fractions'), ('pow', 'Powers'), ('order', 'Ordering numbers'), ('dec', 'Decimals'), ('units', 'Units and measures'), ('money', 'Money and percentages'), ('ratio', 'Ratio and proportion'),
+        ('puz2', 'Logic puzzles'), ('seq', 'Sequences and patterns'), ('mach', 'Formula machines'), ('ang', 'Angles'), ('coord', 'Coordinates'), ('round', 'Rounding numbers'), ('chart', 'Charts and graphs'), ('time', 'Time and timetables'),
+        ('mean', 'Averages'), ('asn', 'Always, sometimes, never'), ('rect', 'Perimeter and area'), ('puz1', 'Number puzzles')]
+padd = []
+for pi, (label, qs) in enumerate(papers):
+    code = f'PT{31 + pi}'; total = sum(len(q['parts']) for q in qs)
+    for k, q in enumerate(qs):
+        parts = list(q['parts'])
+        if len(parts) == 4 and k in (13, 14) and total > 60: parts = parts[:3]; total -= 1
+        sk, tab = SLOT[k]
+        if k == 8 and q['skill'] == 'Counting puzzle': sk, tab = 'count', 'Counting and probability'
+        intro = [clean(x) for x in q['intro'] if x]
+        pic, alt = pic_of(q['fig'])
+        if q['fig'] and q['fig'][0] == 'angles': intro = [x for x in intro if 'diagram shows' not in x and 'The triangle is for' not in x]
+        tri_alt = clean(alt) if (alt and q['fig'][0] == 'angles' and q['fig'][1] == 'tri') else None
+        if alt and not tri_alt: intro.append(clean(alt))
+        if q['table']: intro.append(table_text(q['table']))
+        if k == 3: nums = re.split(r'\s{2,}', intro[1]); intro = ['Look at these five numbers: ' + ', '.join(nums) + '.']
+        for j, (text, ans, sol) in enumerate(parts):
+            text, ans = clean(text), clean(ans)
+            if tri_alt and j == len(parts) - 1: text = tri_alt + ' ' + text
+            text, ans, wrong = special(q['skill'] if k != 2 else 'Powers', text, ans, r, q)
+            if k == 3: text = opts(text, nums)
+            if k == 17: full = text
+            else: full = ('\n'.join(intro) + '\n' + f'{"abcd"[j]}) ' + text) if intro else text
+            if k == 0: full = text + ' ='
+            rec = {'id': f'{code}-{k + 1:02d}{"abcd"[j]}', 'q': full, 'a': ans, 's': clean(sol), 'k': tab, 't': tab, 'tab': tab, 'm': 1, 'wp': False, 'lv': 'Challenge', 'yr': 6,
+                   'src': f'Original CSSE-style practice test {31 + pi} (Set B), written for this app', 'bp': tab, 'skill': sk, 'paper': code, 'pq': f'{k + 1}{"abcd"[j]}'}
+            if wrong: rec['wrong'] = wrong
+            if pic: rec['pic'] = pic
+            padd.append(rec)
+
+# ---------- checks ----------
+bad = []
+old_text = {re.sub(r'\W+', ' ', q['q'].lower()).strip() for q in Q}
+ids = {q['id'] for q in Q}
+for x in added + padd:
+    assert x['id'] not in ids, x['id']; ids.add(x['id'])
+    if re.search(r'\d,\d{3}(?!\d)', x['q'] + ' ' + x['a']): bad.append(('comma', x['id'], x['a']))
+    parts = [s.strip() for s in re.split(r'\s{5,}', x['q']) if s.strip()]
+    if len(parts) >= 3:
+        if x['a'] not in parts[1:]: bad.append(('answer not in options', x['id'], x['a'], parts[1:]))
+    elif len(parts) == 2: bad.append(('only one option', x['id'], parts))
+    elif not TY.match(x['a']) and not re.search(r'\d', x['a']) and len(x.get('wrong', [])) < 2: bad.append(('word answer without options', x['id'], x['a'], x['q'][:80]))
+    if x.get('wrong') and x['a'] in x['wrong']: bad.append(('answer among wrong', x['id']))
+    if 'None' in x['q'] or '[' in x['q'] or '^' in x['q']: bad.append(('odd text', x['id'], x['q'][:90]))
+    if not x.get('paper') and re.sub(r'\W+', ' ', x['q'].lower()).strip() in old_text: x['_dup'] = 1
+for b in bad[:40]: print(b)
+print('issues', len(bad), '| skill questions added', len(added), '| paper parts added', len(padd), '| marks per paper', sorted(collections.Counter(x['paper'] for x in padd).values())[::19])
+print('per skill', dict(collections.Counter(x['skill'] for x in added)))
+seen_ = set(); keep_ = []
+for x in added:
+    key = re.sub(r'\W+', ' ', x['q'].lower()).strip()
+    if x.pop('_dup', 0) or key in seen_: continue
+    seen_.add(key); keep_.append(x)
+added = keep_
+json.dump(Q + added + padd, open(OUT, 'w'), ensure_ascii=False)
+print('total', len(Q) + len(added) + len(padd), 'new skill questions kept', len(added))

@@ -1,0 +1,722 @@
+from common import *
+from math import gcd
+from itertools import combinations
+
+
+# ---------- 21 Money ----------
+def mon_carpark(r):
+    base = r.choice([80, 100, 120, 150]); ch = [base, base * 7 // 4, base * 7 // 2, base * 21 // 4, base * 7]
+    ch = [c // 5 * 5 for c in ch]
+    bands = [(60, 'Up to 1 hour'), (120, 'Over 1 hour and up to 2 hours'), (240, 'Over 2 hours and up to 4 hours'), (360, 'Over 4 hours and up to 6 hours'), (480, 'Over 6 hours and up to 8 hours')]
+    tab = [['Time', 'Charge']] + [[b[1], money(c)] for b, c in zip(bands, ch)]
+    a = 60 * r.randint(8, 13) + r.choice([0, 15, 20, 30, 45, 50]); d = r.randint(35, 470); d = d // 5 * 5
+    i = next(k for k, b in enumerate(bands) if d <= b[0]); A = r.choice(['Miss Short', 'Mr Okoro', 'Mrs Patel', 'Dr Lane', 'Mr Davies', 'Ms Novak'])
+    return Q(f'Use the car park charges. {A} parks at {t12(a)} and leaves at {t12(a + d)}. How much is the charge?', money(ch[i]), f'{t12(a)} to {t12(a + d)} is {dur(d)}, which is in the band "{bands[i][1].lower()}": {money(ch[i])}.', 'Charge tables', table=tab)
+
+
+CUR = [('US dollars', '1.26'), ('euros', '1.15'), ('Kenyan shillings', '163'), ('Indian rupees', '104.5'), ('Canadian dollars', '1.72'), ('Danish kroner', '8.54'), ('Japanese yen', '188'), ('Swiss francs', '1.12'), ('Polish zloty', '5.08'), ('Australian dollars', '1.94')]
+
+
+def mon_exchange(r):
+    cs = r.sample(CUR, 3); tab = [['Exchange rates']] + [[f'£1 = {dec(D(v))} {c}'] for c, v in cs]
+    c, v = cs[0]; k = D(r.choice(['3', '5', '10', '13', '20', '50', '100', '1000', '1.50', '0.50', '2.50', '7', '25', '200']))
+    if r.random() < .75: return Q(f'Use the exchange rates. How many {c} do you get for {money(int(k * 100))}?', f'{dec(k * D(v))} {c}', f'{dec(k)} × {dec(D(v))} = {dec(k * D(v))}.', 'Exchange rates', table=tab)
+    k = D(r.choice(['2', '5', '10', '20', '50']))
+    return Q(f'Use the exchange rates. How many pounds do you get for {dec(k * D(v))} {c}?', f'£{dec(k)}', f'{dec(k * D(v))} ÷ {dec(D(v))} = {dec(k)}.', 'Exchange rates', table=tab)
+
+
+def mon_profit(r):
+    w = r.randint(60, 6500); p = r.randint(15, max(20, w // 4)); t = r.randint(0, 2)
+    if t == 0: return Q(f'A shopkeeper buys an item for {money(w)} (wholesale price) and sells it for {money(w + p)} (retail price). How much profit is made?', money(p), f'{money(w + p)} − {money(w)} = {money(p)}.', 'Profit')
+    if t == 1: return Q(f'An item is sold in a shop for {money(w + p)}. The shopkeeper makes a profit of {money(p)}. What was the wholesale price?', money(w), f'{money(w + p)} − {money(p)} = {money(w)}.', 'Profit')
+    return Q(f'The wholesale price of an item is {money(w)}. The shopkeeper wants a profit of {money(p)}. What should the retail price be?', money(w + p), f'{money(w)} + {money(p)} = {money(w + p)}.', 'Profit')
+
+
+def mon_totalprofit(r):
+    k = r.choice([6, 8, 12, 15, 20, 24, 36]); a = 5 * r.randint(9, 60); p = 5 * r.randint(3, 15); it = r.choice(['toys', 'mugs', 'plants', 'caps', 'kites'])
+    return Q(f'{k} {it} were bought for {money(a)} each and sold for {money(a + p)} each. What was the total profit?', money(k * p), f'Profit on each: {money(a + p)} − {money(a)} = {pm(p)}. {k} × {pm(p)} = {money(k * p)}.', 'Profit')
+
+
+def mon_change(r):
+    k = r.randint(3, 9); u = r.randint(115, 290); note = 2000 if k * u < 2000 else 5000; A = names(r, 1)[0]
+    return Q(f'{A} bought {k} metres of ribbon, paid with a £{note // 100} note and received {money(note - k * u)} change. What was the price of the ribbon per metre?', money(u),
+             f'Cost: £{note // 100}.00 − {money(note - k * u)} = {money(k * u)}. {money(k * u)} ÷ {k} = {money(u)}.', 'Change')
+
+
+def mon_rides(r):
+    while True:
+        ps = [5 * r.randint(22, 70) for _ in range(4)]
+        sums = [a + b for a, b in combinations(ps, 2)]
+        if len(set(sums)) == 6 and len(set(ps)) == 4: break
+    nm = r.sample(['Galaxy', 'Big Wheel', 'Laser', 'Rocket', 'Twister', 'Waltzer', 'Log Flume', 'Dodgems'], 4); tab = [['Ride', 'Cost']] + [[a, money(b)] for a, b in zip(nm, ps)]
+    t = r.randint(0, 2)
+    if t == 0:
+        i, j = r.sample(range(4), 2); A = names(r, 1)[0]
+        return Q(f'Look at the ride prices. {A} went on two different rides and had {money(1000 - ps[i] - ps[j])} change from £10. Which two rides did {A} go on?', ' and '.join(sorted([nm[i], nm[j]])),
+                 f'{A} spent £10.00 − {money(1000 - ps[i] - ps[j])} = {money(ps[i] + ps[j])}. {money(ps[i])} + {money(ps[j])} = {money(ps[i] + ps[j])}.', 'Price lists', table=tab)
+    if t == 1: return Q('Look at the ride prices. How much would it cost to go on all four rides once?', money(sum(ps)), ' + '.join(money(p) for p in ps) + f' = {money(sum(ps))}.', 'Price lists', table=tab)
+    if sum(ps) % 4: return mon_rides(r)
+    return Q('Look at the ride prices. What is the mean (average) price of a ride?', money(sum(ps) // 4), f'Total {money(sum(ps))} ÷ 4 = {money(sum(ps) // 4)}.', 'Price lists', table=tab)
+
+
+def mon_howmany(r):
+    u = 5 * r.randint(13, 79); T = 100 * r.choice([5, 10, 15, 20]); it = r.choice(['comics', 'pens', 'cakes', 'raffle tickets', 'bus tickets'])
+    if T % u == 0: u += 5
+    k = T // u
+    return Q(f'How many {it}, costing {money(u)} each, can be bought for {money(T)}?', k, f'{k} × {money(u)} = {money(k * u)}, but {k + 1} × {money(u)} = {money((k + 1) * u)} is too much. So {k}.', 'How many can I buy?')
+
+
+def mon_bestbuy(r):
+    while True:
+        sz = r.sample([100, 200, 250, 400, 500, 750, 1000, 300, 150], 3); per = [r.randint(18, 60) for _ in range(3)]
+        pr = [s * p // 100 for s, p in zip(sz, per)]
+        if len(set(per)) == 3 and all((s * p) % 100 == 0 for s, p in zip(sz, per)): break
+    th = r.choice(['coffee', 'washing powder', 'rice', 'cocoa', 'porridge oats'])
+    tab = [['Pack', 'Size', 'Price']] + [['ABC'[i], f'{n(sz[i])} g' if sz[i] < 1000 else '1 kg', money(pr[i])] for i in range(3)]
+    b = per.index(min(per))
+    return Q(f'Three packs of {th} are on sale. Which pack is the best value for money?', f'Pack {"ABC"[b]}', 'Cost of 100 g: ' + ', '.join(f'{"ABC"[i]} = {per[i]}p' for i in range(3)) + f'. Pack {"ABC"[b]} is cheapest for each 100 g.', 'Best buys', table=tab)
+
+
+def mon_half(r):
+    a = r.randint(1, 3); c = r.randint(1, 5); A = 20 * r.randint(15, 90); tot = a * A + c * A // 2
+    return Q(f'{a} adult{"s" if a > 1 else ""} and {c} child{"ren" if c > 1 else ""} travel by train. The tickets cost {money(tot)} altogether. Children travel at half price. How much is one adult ticket?', money(A),
+             f'{c} child ticket{"s" if c > 1 else ""} = {fr(F(c, 2))} adult ticket{"s" if c > 2 else ""}, so the total is {fr(F(2 * a + c, 2))} adult tickets. {money(tot)} ÷ {fr(F(2 * a + c, 2))} = {money(A)}.', 'Half-price tickets')
+
+
+# ---------- 22 Perimeter and area of rectangles ----------
+def par_width(r):
+    L, W = r.randint(7, 40), r.randint(2, 20); u = r.choice(['cm', 'm'])
+    if L <= W: L += W
+    return Q(f'A rectangle has a perimeter of {2 * (L + W)} {u} and a length of {L} {u}. What is its width?', f'{W} {u}', f'Half the perimeter is {L + W} {u}. {L + W} − {L} = {W} {u}.', 'Perimeter')
+
+
+def par_length(r):
+    W = D(r.choice(['2', '3', '4', '5', '1.5', '2.5', '3.5', '6', '8', '0.5'])); L = D(r.choice(['3', '4', '7', '9', '1.2', '2.4', '12', '6.5', '15', '4.5', '1.3'])); u = r.choice(['cm', 'm'])
+    if r.random() < .5: return Q(f'A rectangle has an area of {dec(L * W)} {u}² and a width of {dec(W)} {u}. What is its length?', f'{dec(L)} {u}', f'{dec(L * W)} ÷ {dec(W)} = {dec(L)}.', 'Area')
+    return Q(f'What is the area of a rectangle {dec(L)} {u} long and {dec(W)} {u} wide?', f'{dec(L * W)} {u}²', f'{dec(L)} × {dec(W)} = {dec(L * W)}.', 'Area')
+
+
+def par_square(r):
+    s = r.randint(3, 25); u = r.choice(['cm', 'm']); t = r.randint(0, 2)
+    if t == 0: return Q(f'A square has a perimeter of {4 * s} {u}. What is its area?', f'{s * s} {u}²', f'Each side is {4 * s} ÷ 4 = {s} {u}. {s} × {s} = {s * s} {u}².', 'Squares')
+    if t == 1: return Q(f'A square has an area of {s * s} {u}². What is its perimeter?', f'{4 * s} {u}', f'{s} × {s} = {s * s}, so each side is {s} {u}. 4 × {s} = {4 * s} {u}.', 'Squares')
+    L = r.randint(s + 1, 2 * s - 1); W = 2 * s - L
+    return Q(f'A square has the same perimeter as a rectangle {L} {u} long and {W} {u} wide. What is the length of one side of the square?', f'{s} {u}', f'Rectangle perimeter: 2 × ({L} + {W}) = {4 * s} {u}. {4 * s} ÷ 4 = {s} {u}.', 'Squares')
+
+
+def par_ktimes(r):
+    k = r.choice([2, 3, 4, 5]); W = r.choice([r.randint(2, 15), D(r.randint(3, 19)) / 2]); L = k * W; P = 2 * (L + W); u = r.choice(['cm', 'm']); t = r.randint(0, 2)
+    stem = f'The perimeter of a rectangle is {dec(P)} {u}. Its length is {k} times its width. '
+    why = f'Length + width is half the perimeter, {dec(P / 2)} {u}, and that is {k + 1} equal parts. One part (the width) is {dec(W)} {u}; the length is {dec(L)} {u}.'
+    if t == 0: return Q(stem + 'What is the length?', f'{dec(L)} {u}', why, 'Length is a multiple of the width')
+    if t == 1: return Q(stem + 'What is the width?', f'{dec(W)} {u}', why, 'Length is a multiple of the width')
+    return Q(stem + 'What is the area?', f'{dec(L * W)} {u}²', why + f' Area = {dec(L)} × {dec(W)} = {dec(L * W)} {u}².', 'Length is a multiple of the width')
+
+
+def par_path(r):
+    L, W = 5 * r.randint(3, 12), 5 * r.randint(1, 6); w = r.choice([1, 2, 3, 5, 10]); t = r.randint(0, 2)
+    if L <= W: L += W
+    th = r.choice(['swimming pool', 'lawn', 'flower bed', 'playground'])
+    stem = f'A rectangular {th} is {L} m long and {W} m wide. It has a path {w} m wide all the way round it. '
+    big = (L + 2 * w) * (W + 2 * w)
+    if t == 0: return Q(stem + f'What is the area of the path?', f'{n(big - L * W)} m²', f'Whole area: {L + 2 * w} × {W + 2 * w} = {n(big)} m². {th.capitalize()}: {L} × {W} = {n(L * W)} m². Path: {n(big)} − {n(L * W)} = {n(big - L * W)} m².', 'Paths and borders')
+    if t == 1: return Q(stem + f'What is the area of the {th} and path together?', f'{n(big)} m²', f'The whole rectangle is {L} + {2 * w} = {L + 2 * w} m by {W} + {2 * w} = {W + 2 * w} m. {L + 2 * w} × {W + 2 * w} = {n(big)} m².', 'Paths and borders')
+    return Q(stem + 'What is the perimeter of the outside edge of the path?', f'{2 * (L + W + 4 * w)} m', f'The outside rectangle is {L + 2 * w} m by {W + 2 * w} m. 2 × ({L + 2 * w} + {W + 2 * w}) = {2 * (L + W + 4 * w)} m.', 'Paths and borders')
+
+
+def par_samearea(r):
+    A = r.choice([24, 36, 48, 60, 72, 30, 40, 96, 120, 18, 84]); L = r.choice([d for d in factors(A) if d * d > A and d < A]); u = r.choice(['cm', 'm'])
+    return Q(f'A rectangular piece of card has an area of {A} {u}² and a length of {L} {u}. What is its perimeter?', f'{2 * (L + A // L)} {u}', f'Width: {A} ÷ {L} = {A // L} {u}. Perimeter: 2 × ({L} + {A // L}) = {2 * (L + A // L)} {u}.', 'Area and perimeter')
+
+
+def par_p60(r):
+    P = r.choice([40, 50, 60, 80, 100, 36, 48]); L = r.randint(P // 4 + 1, P // 2 - 1); W = P // 2 - L
+    return Q(f'A rectangle has a perimeter of {P} m and a length of {L} m. What is its area?', f'{L * W} m²', f'Width: {P // 2} − {L} = {W} m. Area: {L} × {W} = {L * W} m².', 'Area and perimeter')
+
+
+def par_ribbon(r):
+    L, W, H = r.choice([20, 25, 30, 40]), r.choice([10, 12, 15, 18]), r.choice([5, 6, 8, 9]); bow = r.choice([25, 30, 35, 40, 50]); t = r.randint(0, 1)
+    stem = f'A box is {L} cm long, {W} cm wide and {H} cm high. '
+    if t == 0: return Q(stem + f'A ribbon is tied round the box once lengthwise and once round the width, with {bow} cm extra for the bow. How much ribbon is needed?', f'{2 * (L + H) + 2 * (W + H) + bow} cm',
+                        f'Lengthwise: 2 × ({L} + {H}) = {2 * (L + H)} cm. Round the width: 2 × ({W} + {H}) = {2 * (W + H)} cm. Add the bow: {2 * (L + H)} + {2 * (W + H)} + {bow} = {2 * (L + H) + 2 * (W + H) + bow} cm.', 'Ribbon round a box')
+    f, (a, b) = r.choice([('base', (L, W)), ('side (the long face)', (L, H)), ('end (the short face)', (W, H))])
+    return Q(stem + f'What is the perimeter of the {f} of the box?', f'{2 * (a + b)} cm', f'2 × ({a} + {b}) = {2 * (a + b)} cm.', 'Ribbon round a box')
+
+
+def par_km(r):
+    k = r.choice([2, 3, 4]); W = 50 * r.randint(1, 6); L = k * W; P = 2 * (L + W)
+    return Q(f'A rectangular field is {k} times as long as it is wide. Its perimeter is {dec(D(P) / 1000)} km. What is its area in square metres?', f'{n(L * W)} m²',
+             f'{dec(D(P) / 1000)} km = {n(P)} m. Half of that, {n(P // 2)} m, is {k + 1} widths, so the width is {W} m and the length is {L} m. {L} × {W} = {n(L * W)} m².', 'Length is a multiple of the width')
+
+
+# ---------- 23 Triangles and compound shapes ----------
+def tri_grid(r):
+    b = r.randint(2, 8); h = r.randint(2, 6)
+    while (b * h) % 2 and r.random() < .5: b += 1
+    x0 = r.randint(0, 2); ax = r.randint(0, x0 + b + 1); Wd = max(x0 + b, ax) + 1
+    pts = [(x0, 1), (x0 + b, 1), (ax, 1 + h)]
+    return Q('Find the area of this triangle. Each square on the grid is 1 cm².', f'{dec(D(b * h) / 2)} cm²', f'Base {b} cm, height {h} cm. ½ × {b} × {h} = {dec(D(b * h) / 2)} cm².', 'Triangles on a grid',
+             fig=('tri', pts, Wd, h + 2), alt=f'[Triangle drawn on a 1 cm square grid with corners at {pts[0]}, {pts[1]} and {pts[2]}.]')
+
+
+def tri_right(r):
+    a, b = r.randint(3, 20), r.randint(3, 20); u = r.choice(['cm', 'm'])
+    return Q(f'A right-angled triangle has sides of {a} {u} and {b} {u} next to the right angle. What is its area?', f'{dec(D(a * b) / 2)} {u}²', f'½ × {a} × {b} = {dec(D(a * b) / 2)} {u}².', 'Area of a triangle')
+
+
+def tri_height(r):
+    b, h = r.randint(4, 20), r.randint(3, 16)
+    if (b * h) % 2: b += 1
+    if r.random() < .5: return Q(f'A triangle has an area of {b * h // 2} cm² and a base of {b} cm. What is its height?', f'{h} cm', f'Double the area: {b * h}. {b * h} ÷ {b} = {h} cm.', 'Area of a triangle')
+    return Q(f'A triangle has a base of {b} cm and a height of {h} cm. What is its area?', f'{b * h // 2} cm²', f'½ × {b} × {h} = {b * h // 2} cm².', 'Area of a triangle')
+
+
+def tri_lshape(r):
+    a, b = r.randint(6, 14), r.randint(6, 12); c = r.randint(2, a - 2); d = r.randint(2, b - 2); u = r.choice(['cm', 'm'])
+    alt = f'[L-shape: the bottom edge is {a} {u}, the left edge is {b} {u}, the top edge is {c} {u} and the lower right edge is {d} {u}. All corners are right angles.]'
+    if r.random() < .6:
+        return Q('Find the area of this L-shape. All the corners are right angles.', f'{a * d + c * (b - d)} {u}²', f'Split it into two rectangles: {a} × {d} = {a * d} and {c} × {b - d} = {c * (b - d)}. {a * d} + {c * (b - d)} = {a * d + c * (b - d)} {u}².', 'Compound shapes', fig=('lshape', a, b, c, d, u), alt=alt)
+    return Q('Find the perimeter of this L-shape. All the corners are right angles.', f'{2 * (a + b)} {u}', f'The missing sides are {a} − {c} = {a - c} and {b} − {d} = {b - d}. The perimeter is the same as a {a} by {b} rectangle: 2 × ({a} + {b}) = {2 * (a + b)} {u}.', 'Compound shapes', fig=('lshape', a, b, c, d, u), alt=alt)
+
+
+def tri_para(r):
+    b, h = r.randint(4, 25), r.randint(3, 15); u = r.choice(['cm', 'm'])
+    if r.random() < .6: return Q(f'A parallelogram has a base of {b} {u} and a perpendicular height of {h} {u}. What is its area?', f'{b * h} {u}²', f'Base × height = {b} × {h} = {b * h} {u}².', 'Parallelograms')
+    return Q(f'A parallelogram has an area of {b * h} {u}² and a base of {b} {u}. What is its perpendicular height?', f'{h} {u}', f'{b * h} ÷ {b} = {h} {u}.', 'Parallelograms')
+
+
+def tri_flag(r):
+    W, H = 10 * r.randint(4, 12), 10 * r.randint(3, 8); w = r.choice([4, 5, 6, 8, 10]); t = r.randint(0, 2)
+    if W <= H: W += H
+    cross = w * W + w * H - w * w
+    stem = f'A rectangular flag is {W} cm long and {H} cm high. It has a cross on it made from one horizontal stripe and one vertical stripe, each {w} cm wide and each going right across the flag. '
+    if t == 0: return Q(stem + 'What is the area of the cross?', f'{n(cross)} cm²', f'Horizontal stripe: {W} × {w} = {n(W * w)}. Vertical stripe: {H} × {w} = {n(H * w)}. They overlap in a {w} by {w} square ({w * w}). {n(W * w)} + {n(H * w)} − {w * w} = {n(cross)} cm².', 'Flags')
+    if t == 1: return Q(stem + 'What is the area of the flag that is not covered by the cross?', f'{n(W * H - cross)} cm²', f'Flag: {W} × {H} = {n(W * H)} cm². Cross: {n(W * w)} + {n(H * w)} − {w * w} = {n(cross)} cm². {n(W * H)} − {n(cross)} = {n(W * H - cross)} cm².', 'Flags')
+    return Q(stem + 'What is the perimeter of the flag?', f'{2 * (W + H)} cm', f'2 × ({W} + {H}) = {2 * (W + H)} cm.', 'Flags')
+
+
+def tri_house(r):
+    s = 2 * r.randint(2, 10); h = r.randint(2, 12)
+    return Q(f'A shape is made from a square of side {s} cm with a triangle on top. The base of the triangle is the top of the square and the height of the triangle is {h} cm. What is the total area?', f'{s * s + s * h // 2} cm²',
+             f'Square: {s} × {s} = {s * s}. Triangle: ½ × {s} × {h} = {s * h // 2}. Total: {s * s + s * h // 2} cm².', 'Compound shapes')
+
+
+def tri_diag(r):
+    a, b = r.randint(3, 18), r.randint(3, 18); u = r.choice(['cm', 'm'])
+    return Q(f'A rectangle {a} {u} by {b} {u} is cut into two equal triangles along a diagonal. What is the area of each triangle?', f'{dec(D(a * b) / 2)} {u}²', f'Rectangle: {a} × {b} = {a * b}. Half of that is {dec(D(a * b) / 2)} {u}².', 'Area of a triangle')
+
+
+# ---------- 24 Angles ----------
+def ang_type(r):
+    a = r.choice([r.randint(5, 89), 90, r.randint(91, 179), r.randint(181, 355)])
+    nm = 'acute' if a < 90 else 'right angle' if a == 90 else 'obtuse' if a < 180 else 'reflex'
+    return Q(f'Is an angle of {a}° acute, obtuse, reflex or a right angle?', nm, 'Acute: less than 90°. Right angle: 90°. Obtuse: between 90° and 180°. Reflex: more than 180°.', 'Types of angle')
+
+
+def ang_tri(r):
+    a = r.randint(25, 100); b = r.randint(20, 150 - a)
+    return Q('Find the size of angle x in this triangle.', f'{180 - a - b}°', f'Angles in a triangle add up to 180°. 180 − {a} − {b} = {180 - a - b}°.', 'Angles in a triangle',
+             fig=('angles', 'tri', [f'{a}°', f'{b}°', 'x']), alt=f'[Triangle with angles {a}°, {b}° and x.]')
+
+
+def ang_iso(r):
+    if r.random() < .5:
+        a = 2 * r.randint(10, 80)
+        return Q(f'An isosceles triangle has one angle of {a}° and two other angles that are equal. What is the size of each equal angle?', f'{(180 - a) // 2}°', f'180 − {a} = {180 - a}. {180 - a} ÷ 2 = {(180 - a) // 2}°.', 'Isosceles triangles')
+    b = r.randint(20, 85)
+    return Q(f'An isosceles triangle has two equal angles of {b}°. What is the size of the third angle?', f'{180 - 2 * b}°', f'180 − {b} − {b} = {180 - 2 * b}°.', 'Isosceles triangles')
+
+
+def ang_line(r):
+    a = r.randint(20, 100); b = r.randint(20, 160 - a)
+    if r.random() < .5:
+        return Q('Three angles lie on a straight line. Find the size of angle x.', f'{180 - a - b}°', f'Angles on a straight line add up to 180°. 180 − {a} − {b} = {180 - a - b}°.', 'Angles on a straight line',
+                 fig=('angles', 'line', [f'{a}°', 'x', f'{b}°']), alt=f'[Three angles on a straight line: {a}°, x and {b}°.]')
+    return Q('Two angles lie on a straight line. Find the size of angle x.', f'{180 - a}°', f'180 − {a} = {180 - a}°.', 'Angles on a straight line', fig=('angles', 'line', [f'{a}°', 'x']), alt=f'[Two angles on a straight line: {a}° and x.]')
+
+
+def ang_point(r):
+    xs = [r.randint(40, 110) for _ in range(r.choice([2, 3]))]
+    return Q(f'{len(xs) + 1} angles meet at a point and make a full turn. {"Two" if len(xs) == 2 else "Three"} of them are {", ".join(f"{x}°" for x in xs[:-1])} and {xs[-1]}°. What is the size of the other angle?', f'{360 - sum(xs)}°',
+             f'Angles round a point add up to 360°. 360 − {" − ".join(map(str, xs))} = {360 - sum(xs)}°.', 'Angles at a point')
+
+
+def ang_x2x(r):
+    ks = r.choice([(1, 2), (1, 3), (1, 4), (2, 3), (1, 2, 3), (1, 5), (1, 8), (1, 2, 6), (4, 5), (2, 7), (1, 1, 2), (1, 9), (2, 3, 4), (1, 3, 5)]); s = sum(ks); x = 180 // s
+    lab = [('x' if k == 1 else f'{k}x') for k in ks]; ask = r.choice(lab)
+    kk = 1 if ask == 'x' else int(ask[:-1])
+    return Q(f'The angles {", ".join(lab[:-1])} and {lab[-1]} lie on a straight line. What is the size of the angle marked {ask}?', f'{dec(D(180) * kk / s)}°',
+             f'Altogether there are {s} lots of x, so {s}x = 180° and x = {dec(D(180) / s)}°.' + (f' {ask} = {dec(D(180) * kk / s)}°.' if kk > 1 else ''), 'x and 2x', fig=('angles', 'line', lab), alt=f'[Angles on a straight line labelled {", ".join(lab)}.]') if 180 % s == 0 else ang_x2x(r)
+
+
+POLY = {3: 'equilateral triangle', 4: 'square', 5: 'regular pentagon', 6: 'regular hexagon', 8: 'regular octagon', 9: 'regular nonagon (9 sides)', 10: 'regular decagon (10 sides)', 12: 'regular dodecagon (12 sides)'}
+
+
+def ang_polycentre(r):
+    k = r.choice(list(POLY))
+    return Q(f'Lines are drawn from the centre of a {POLY[k]} to each of its corners. What is the size of each angle at the centre?', f'{360 // k}°', f'The {k} equal angles make a full turn: 360 ÷ {k} = {360 // k}°.', 'Regular polygons')
+
+
+def ang_interior(r):
+    k = r.choice([5, 6, 8, 9, 10, 12])
+    return Q(f'What is the size of each interior angle of a {POLY[k]}?', f'{180 - 360 // k}°', f'Each exterior angle is 360 ÷ {k} = {360 // k}°. Interior angle = 180 − {360 // k} = {180 - 360 // k}°.', 'Regular polygons')
+
+
+COMP = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+
+
+def ang_compass(r):
+    i = r.randint(0, 7); st = r.randint(1, 7); cw = r.random() < .5; j = (i + st if cw else i - st) % 8
+    return Q(f'You start facing {COMP[i]}. You turn through {45 * st}° {"clockwise" if cw else "anticlockwise"}. Which direction are you facing now?', COMP[j],
+             f'Each step between neighbouring compass points (N, NE, E, …) is 45°. {45 * st}° is {st} step{"s" if st > 1 else ""} {"clockwise" if cw else "anticlockwise"}: {COMP[j]}.', 'Compass turns')
+
+
+def ang_quad(r):
+    xs = [r.randint(50, 120) for _ in range(3)]
+    if sum(xs) >= 340: xs[0] -= 40
+    return Q(f'Three angles of a quadrilateral are {xs[0]}°, {xs[1]}° and {xs[2]}°. What is the fourth angle?', f'{360 - sum(xs)}°', f'Angles in a quadrilateral add up to 360°. 360 − {sum(xs)} = {360 - sum(xs)}°.', 'Angles in a quadrilateral')
+
+
+def ang_minute(r):
+    m = r.choice([5, 10, 15, 20, 25, 35, 40, 45, 50, 55, 12, 7, 24])
+    return Q(f'Through how many degrees does the minute hand of a clock turn in {m} minutes?', f'{6 * m}°', f'The minute hand turns 360° in 60 minutes, which is 6° every minute. {m} × 6 = {6 * m}°.', 'Clock turns')
+
+
+# ---------- 25 2D and 3D shapes ----------
+SOL = {'cube': (6, 8, 12), 'cuboid': (6, 8, 12), 'triangular prism': (5, 6, 9), 'square-based pyramid': (5, 5, 8), 'triangular-based pyramid (tetrahedron)': (4, 4, 6), 'pentagonal prism': (7, 10, 15),
+       'hexagonal prism': (8, 12, 18), 'pentagonal-based pyramid': (6, 6, 10), 'hexagonal-based pyramid': (7, 7, 12), 'octagonal prism': (10, 16, 24)}
+PROP = ['faces', 'vertices (corners)', 'edges']
+
+
+def shp_solid(r):
+    s = r.choice(list(SOL)); i = r.randint(0, 2)
+    return Q(f'How many {PROP[i]} does a {s} have?', SOL[s][i], f'A {s} has {SOL[s][0]} faces, {SOL[s][1]} vertices and {SOL[s][2]} edges.', 'Faces, vertices and edges')
+
+
+def shp_sum(r):
+    a, b = r.sample(list(SOL), 2); i = r.randint(0, 2)
+    return Q(f'How many {PROP[i]} do a {a} and a {b} have altogether?', SOL[a][i] + SOL[b][i], f'{a.capitalize()}: {SOL[a][i]}. {b.capitalize()}: {SOL[b][i]}. {SOL[a][i]} + {SOL[b][i]} = {SOL[a][i] + SOL[b][i]}.', 'Faces, vertices and edges')
+
+
+NETS = [('6 equal squares', 'cube'), ('2 triangles and 3 rectangles', 'triangular prism'), ('1 square and 4 triangles', 'square-based pyramid'), ('4 triangles and nothing else', 'triangular-based pyramid (tetrahedron)'),
+        ('2 pentagons and 5 rectangles', 'pentagonal prism'), ('6 rectangles in three matching pairs', 'cuboid'), ('2 hexagons and 6 rectangles', 'hexagonal prism'), ('1 pentagon and 5 triangles', 'pentagonal-based pyramid'),
+        ('2 circles and 1 rectangle', 'cylinder'), ('1 hexagon and 6 triangles', 'hexagonal-based pyramid')]
+
+
+def shp_net(r):
+    d, s = r.choice(NETS)
+    return Q(f'A net is made from {d}. Which solid will it fold up to make?', s, f'Count the faces and their shapes: {d} make a {s}.', 'Nets')
+
+
+QUAD = [('four equal sides and four right angles', 'square'), ('four equal sides, but its angles are not right angles', 'rhombus'), ('two pairs of opposite sides that are equal and parallel, and four right angles (its sides are not all equal)', 'rectangle'),
+        ('two pairs of opposite sides that are parallel, but no right angles and its sides are not all equal', 'parallelogram'), ('exactly one pair of parallel sides', 'trapezium'),
+        ('two pairs of equal sides that are next to each other, and no parallel sides', 'kite'), ('diagonals that are equal in length and cross at right angles', 'square')]
+
+
+def shp_quad(r):
+    d, s = r.choice(QUAD)
+    return Q(f'A quadrilateral has {d}. What is it called?', s, f'That describes a {s}.', 'Naming quadrilaterals')
+
+
+SYM = [('an equilateral triangle', 3), ('a square', 4), ('a rectangle (that is not a square)', 2), ('a rhombus (that is not a square)', 2), ('a kite', 1), ('a parallelogram (that is not a rectangle or rhombus)', 0),
+       ('a regular pentagon', 5), ('a regular hexagon', 6), ('an isosceles triangle (that is not equilateral)', 1), ('a regular octagon', 8), ('a scalene triangle', 0), ('an isosceles trapezium', 1),
+       ('the capital letter A', 1), ('the capital letter H', 2), ('the capital letter M', 1), ('the capital letter T', 1), ('the capital letter E', 1), ('the capital letter N', 0), ('the capital letter S', 0),
+       ('the capital letter Z', 0), ('the capital letter F', 0), ('the capital letter C', 1), ('the capital letter D', 1), ('the capital letter W', 1), ('the capital letter Y', 1), ('the capital letter V', 1), ('the capital letter R', 0)]
+
+
+def shp_sym(r):
+    s, k = r.choice(SYM)
+    return Q(f'How many lines of symmetry does {s} have?', k, f'{s.capitalize()} has {k} line{"s" if k != 1 else ""} of symmetry.', 'Lines of symmetry')
+
+
+YN = [('Are all four sides of a rhombus the same length?', 'YES'), ('Are the diagonals of a rhombus always the same length?', 'NO'), ('Do the diagonals of a rhombus cross at right angles?', 'YES'),
+      ('Are the opposite sides of a parallelogram parallel?', 'YES'), ('Are all the angles of a parallelogram always equal?', 'NO'), ('Are the diagonals of a rectangle the same length?', 'YES'),
+      ('Do the diagonals of a rectangle always cross at right angles?', 'NO'), ('Is every square also a rectangle?', 'YES'), ('Is every rectangle also a square?', 'NO'), ('Is every square also a rhombus?', 'YES'),
+      ('Does a trapezium have two pairs of parallel sides?', 'NO'), ('Does a kite have a line of symmetry?', 'YES'), ('Can a triangle have two obtuse angles?', 'NO'), ('Can a triangle have two acute angles?', 'YES'),
+      ('Are the opposite angles of a parallelogram equal?', 'YES'), ('Is a rhombus a parallelogram?', 'YES'), ('Do the diagonals of a kite cross at right angles?', 'YES'), ('Are perpendicular lines lines that never meet?', 'NO'),
+      ('Are parallel lines always the same distance apart?', 'YES'), ('Is a horizontal line perpendicular to a vertical line?', 'YES')]
+
+
+def shp_yn(r):
+    q, a = r.choice(YN)
+    return Q(q + ' Answer YES or NO.', a, 'Sketch the shape and check the property.', 'Shape properties')
+
+
+def shp_rot(r):
+    s, k = r.choice([('an equilateral triangle', 3), ('a square', 4), ('a rectangle (that is not a square)', 2), ('a regular pentagon', 5), ('a regular hexagon', 6), ('a parallelogram (that is not a rectangle)', 2), ('a regular octagon', 8), ('a rhombus (that is not a square)', 2)])
+    return Q(f'How many times does {s} fit exactly onto itself during one full turn (its order of rotational symmetry)?', k, f'{s.capitalize()} looks the same {k} times in a full turn.', 'Rotational symmetry')
+
+
+# ---------- 26 Coordinates ----------
+def _pt(r, lim=5): return r.randint(-lim, lim), r.randint(-lim, lim)
+
+
+def coo_fourth(r):
+    x1, x2 = sorted(r.sample(range(-5, 6), 2)); y1, y2 = sorted(r.sample(range(-5, 6), 2)); sq = r.random() < .5
+    if sq:
+        s = r.randint(2, 5); x1 = r.randint(-5, 5 - s); y1 = r.randint(-5, 5 - s); x2, y2 = x1 + s, y1 + s
+    c = [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]; i = r.randint(0, 3); g = [c[j] for j in range(4) if j != i]
+    return Q(f'The points A{g[0]}, B{g[1]} and C{g[2]} are three corners of a {"square" if sq else "rectangle"}. What are the coordinates of the fourth corner?', f'{c[i]}',
+             f'The sides are horizontal and vertical, so the fourth corner uses the x-coordinate {c[i][0]} and the y-coordinate {c[i][1]} that have each been used only once.', 'Fourth corner',
+             fig=('pts', dict(zip('ABC', g))), alt='[The three points are plotted on a grid with x and y from −5 to 5.]')
+
+
+def coo_centre(r):
+    x1, y1 = _pt(r, 4); a, b = 2 * r.randint(1, 4), 2 * r.randint(1, 4); x2, y2 = x1 + a, y1 + b
+    return Q(f'A rectangle has opposite corners at ({x1}, {y1}) and ({x2}, {y2}). What are the coordinates of the centre of the rectangle?', f'({x1 + a // 2}, {y1 + b // 2})',
+             f'Halfway between {x1} and {x2} is {x1 + a // 2}; halfway between {y1} and {y2} is {y1 + b // 2}.', 'Centre and midpoint')
+
+
+def coo_mid(r):
+    x1, y1 = _pt(r, 8); a, b = 2 * r.randint(-4, 4), 2 * r.randint(-4, 4)
+    if a == b == 0: a = 4
+    return Q(f'What are the coordinates of the point halfway between ({x1}, {y1}) and ({x1 + a}, {y1 + b})?', f'({x1 + a // 2}, {y1 + b // 2})',
+             f'x: halfway between {x1} and {x1 + a} is {x1 + a // 2}. y: halfway between {y1} and {y1 + b} is {y1 + b // 2}.', 'Centre and midpoint')
+
+
+def coo_reflect(r):
+    x, y = _pt(r, 9)
+    if x == 0: x = 3
+    if y == 0: y = -4
+    if r.random() < .5: return Q(f'The point ({x}, {y}) is reflected in the y-axis. What are the coordinates of its image?', f'({-x}, {y})', f'Reflecting in the y-axis changes the sign of the x-coordinate: ({-x}, {y}).', 'Reflections')
+    return Q(f'The point ({x}, {y}) is reflected in the x-axis. What are the coordinates of its image?', f'({x}, {-y})', f'Reflecting in the x-axis changes the sign of the y-coordinate: ({x}, {-y}).', 'Reflections')
+
+
+def coo_translate(r):
+    x, y = _pt(r, 8); a, b = r.randint(1, 9), r.randint(1, 9); lr, ud = r.choice(['left', 'right']), r.choice(['up', 'down'])
+    nx = x + (a if lr == 'right' else -a); ny = y + (b if ud == 'up' else -b)
+    return Q(f'The point ({x}, {y}) is moved {a} square{"s" if a > 1 else ""} {lr} and {b} square{"s" if b > 1 else ""} {ud}. What are its new coordinates?', f'({nx}, {ny})',
+             f'x: {x} {"+" if lr == "right" else "−"} {a} = {nx}. y: {y} {"+" if ud == "up" else "−"} {b} = {ny}.', 'Translations')
+
+
+def coo_dist(r):
+    x1, y1 = _pt(r, 6); d = r.randint(2, 9); sc = r.choice([5, 10, 20, 50, 100]); hz = r.random() < .5
+    x2, y2 = (x1 + d, y1) if hz else (x1, y1 + d); A, B = r.sample(STN_, 2)
+    return Q(f'On a map, {A} is at ({x1}, {y1}) and {B} is at ({x2}, {y2}). The side of each grid square represents {sc} km. How far is it in a straight line from {A} to {B}?', f'{d * sc} km',
+             f'The points are {d} squares apart. {d} × {sc} = {d * sc} km.', 'Maps and grids')
+
+
+STN_ = ['Bixley', 'Comberton', 'Deepford', 'Westham', 'Stokeby', 'Longmoor', 'Ashwick', 'Milford', 'Oakley', 'Tarnside']
+
+
+def coo_line(r):
+    x, y = _pt(r, 5); a, b = r.randint(-3, 3), r.randint(1, 3)
+    return Q(f'A, B and C are equally spaced along a straight line. A is at ({x}, {y}) and B is at ({x + a}, {y + b}). What are the coordinates of C?', f'({x + 2 * a}, {y + 2 * b})',
+             f'From A to B, x changes by {a} and y changes by {b}. Do the same again from B: ({x + 2 * a}, {y + 2 * b}).', 'Points on a line')
+
+
+def coo_rect(r):
+    x1, y1 = _pt(r, 4); a, b = r.randint(2, 7), r.randint(2, 7); t = r.random() < .5
+    c = [(x1, y1), (x1 + a, y1), (x1 + a, y1 + b), (x1, y1 + b)]
+    return Q(f'A rectangle has corners at {c[0]}, {c[1]}, {c[2]} and {c[3]}. What is its {"area in squares" if t else "perimeter in units"}?', f'{a * b} squares' if t else f'{2 * (a + b)} units',
+             f'It is {a} units wide and {b} units high. ' + (f'{a} × {b} = {a * b}.' if t else f'2 × ({a} + {b}) = {2 * (a + b)}.'), 'Shapes on a grid')
+
+
+def coo_robot(r):
+    x, y = r.randint(0, 5), r.randint(0, 5); f1, f2 = r.randint(1, 6), r.randint(1, 6); turn = r.choice(['RIGHT', 'LEFT']); d0 = r.choice(['north', 'east'])
+    vec = {'north': (0, 1), 'east': (1, 0), 'south': (0, -1), 'west': (-1, 0)}; order = ['north', 'east', 'south', 'west']
+    d1 = order[(order.index(d0) + (1 if turn == 'RIGHT' else -1)) % 4]
+    nx, ny = x + f1 * vec[d0][0] + f2 * vec[d1][0], y + f1 * vec[d0][1] + f2 * vec[d1][1]
+    return Q(f'A robot starts at ({x}, {y}) facing {d0}. It follows these instructions: FORWARD {f1}, {turn} 90°, FORWARD {f2}. What are the coordinates of the point where it stops?', f'({nx}, {ny})',
+             f'It moves {f1} {d0} to ({x + f1 * vec[d0][0]}, {y + f1 * vec[d0][1]}), turns to face {d1}, then moves {f2}: ({nx}, {ny}).', 'Robot instructions')
+
+
+# ---------- 27 Averages ----------
+def _set(r, k, lo=1, hi=30): return [r.randint(lo, hi) for _ in range(k)]
+
+
+def avg_mean(r):
+    k = r.choice([3, 4, 5, 6])
+    while True:
+        xs = _set(r, k)
+        if (2 * sum(xs)) % k == 0: break
+    return Q(f'Find the mean of these numbers: {", ".join(map(str, xs))}', dec(D(sum(xs)) / k), f'Total: {sum(xs)}. {sum(xs)} ÷ {k} = {dec(D(sum(xs)) / k)}.', 'Mean')
+
+
+def avg_median(r):
+    k = r.choice([4, 5, 6, 7]); xs = _set(r, k, 1, 60); s = sorted(xs)
+    med = D(s[k // 2]) if k % 2 else D(s[k // 2 - 1] + s[k // 2]) / 2
+    return Q(f'Find the median of these numbers: {", ".join(map(str, xs))}', dec(med), f'In order: {", ".join(map(str, s))}. ' + (f'The middle number is {dec(med)}.' if k % 2 else f'The two middle numbers are {s[k // 2 - 1]} and {s[k // 2]}; halfway between them is {dec(med)}.'), 'Median')
+
+
+def avg_mode(r):
+    while True:
+        xs = _set(r, r.choice([6, 7, 8]), 3, 19); c = sorted(((xs.count(x), x) for x in set(xs)), reverse=True)
+        if c[0][0] >= 2 and (len(c) == 1 or c[1][0] < c[0][0]): break
+    return Q(f'What is the mode of these numbers? {", ".join(map(str, xs))}', c[0][1], f'{c[0][1]} appears {c[0][0]} times, more often than any other number.', 'Mode')
+
+
+def avg_range(r):
+    xs = _set(r, r.choice([5, 6, 7]), 3, 99)
+    return Q(f'What is the range of these numbers? {", ".join(map(str, xs))}', max(xs) - min(xs), f'Largest − smallest = {max(xs)} − {min(xs)} = {max(xs) - min(xs)}.', 'Range')
+
+
+def avg_changed(r):
+    ns = names(r, 5)
+    while True:
+        xs = _set(r, 5, 10, 40); i = r.randint(0, 4); new = xs[i] + r.choice([-10, -5, 5, 10, -1, 1])
+        ys = xs[:]; ys[i] = new
+        if sum(xs) % 5 == 0 and sum(ys) % 5 == 0 and new > 0: break
+    tab = [['Name'] + ns, ['Score'] + [str(x) for x in xs]]; t = r.randint(0, 2)
+    stem = f'Here are the scores in a test. {ns[i]}\'s test was wrongly marked: the score should have been {new}, not {xs[i]}. '
+    if t == 0: return Q(stem + 'What is the correct mean score?', sum(ys) // 5, f'New total: {sum(xs)} {"+" if new > xs[i] else "−"} {abs(new - xs[i])} = {sum(ys)}. {sum(ys)} ÷ 5 = {sum(ys) // 5}.', 'Correcting a mistake', table=tab)
+    if t == 1: return Q(stem + 'What is the correct median score?', sorted(ys)[2], f'Correct scores in order: {", ".join(map(str, sorted(ys)))}. The middle one is {sorted(ys)[2]}.', 'Correcting a mistake', table=tab)
+    return Q(stem + 'What is the correct range?', max(ys) - min(ys), f'{max(ys)} − {min(ys)} = {max(ys) - min(ys)}.', 'Correcting a mistake', table=tab)
+
+
+def avg_next(r):
+    k = r.randint(4, 9); m = r.randint(8, 40); up = r.randint(1, 4); th = r.choice([('A cricketer', 'innings', 'runs'), ('A basketball player', 'matches', 'points'), ('A quiz team', 'rounds', 'points')])
+    return Q(f"{th[0]}'s mean score for {k} {th[1]} is {m} {th[2]}. What score is needed in the next one to make the mean {m + up}?", (m + up) * (k + 1) - m * k,
+             f'Total so far: {k} × {m} = {k * m}. Total needed: {k + 1} × {m + up} = {(k + 1) * (m + up)}. {(k + 1) * (m + up)} − {k * m} = {(m + up) * (k + 1) - m * k}.', 'Mean problems')
+
+
+def avg_fourth(r):
+    k = r.choice([4, 5, 6]); m1 = D(r.randint(12, 40)) / (2 if k % 2 == 0 else 1); m2 = r.randint(5, 18)
+    last = m1 * k - m2 * (k - 1)
+    if last <= 0 or last % 1: return avg_fourth(r)
+    return Q(f'The mean of {k} numbers is {dec(m1)}. The mean of {k - 1} of them is {m2}. What is the other number?', dec(last), f'Total of all {k}: {k} × {dec(m1)} = {dec(m1 * k)}. Total of the {k - 1}: {k - 1} × {m2} = {m2 * (k - 1)}. {dec(m1 * k)} − {m2 * (k - 1)} = {dec(last)}.', 'Mean problems')
+
+
+def avg_others(r):
+    k = r.choice([4, 5, 6, 7]); m2 = D(r.randint(6, 30)) / r.choice([1, 1, 2]); one = r.randint(1, 20); tot = m2 * (k - 1) + one
+    if tot % k: return avg_others(r)
+    return Q(f'The mean of {k} numbers is {dec(tot / k)}. One of the numbers is {one}. What is the mean of the other {k - 1} numbers?', dec(m2), f'Total: {k} × {dec(tot / k)} = {dec(tot)}. Without the {one}: {dec(tot - one)}. {dec(tot - one)} ÷ {k - 1} = {dec(m2)}.', 'Mean problems')
+
+
+def avg_ages(r):
+    ns = names(r, 4)
+    while True:
+        ages = [r.randint(9 * 12 + 1, 11 * 12 + 11) for _ in range(4)]
+        if sum(ages) % 4 == 0: break
+    tab = [['', 'Years', 'Months']] + [[a, str(m // 12), str(m % 12)] for a, m in zip(ns, ages)]; s = sum(ages)
+    if r.random() < .5: return Q('What is the total of these four ages? Give your answer in years and months.', f'{s // 12} years {s % 12} months', f'Years: {sum(a // 12 for a in ages)}. Months: {sum(a % 12 for a in ages)} = {sum(a % 12 for a in ages) // 12} years {sum(a % 12 for a in ages) % 12} months. Total: {s // 12} years {s % 12} months.', 'Ages in years and months', table=tab)
+    return Q('What is the mean age of these four children? Give your answer in years and months.', f'{s // 4 // 12} years {s // 4 % 12} months', f'Total: {s // 12} years {s % 12} months = {s} months. {s} ÷ 4 = {s // 4} months = {s // 4 // 12} years {s // 4 % 12} months.', 'Ages in years and months', table=tab)
+
+
+def avg_total(r):
+    k = r.randint(4, 12); m = D(r.randint(15, 199)) / r.choice([1, 2, 10])
+    if r.random() < .5: return Q(f'The mean of {k} numbers is {dec(m)}. What is the total of the {k} numbers?', dec(m * k), f'Total = mean × how many = {dec(m)} × {k} = {dec(m * k)}.', 'Mean and total')
+    a = r.randint(20, 90)
+    return Q(f'Three numbers that follow each other (consecutive numbers) add up to {3 * a}. What is the largest of the three?', a + 1, f'The middle number is the mean: {3 * a} ÷ 3 = {a}. The numbers are {a - 1}, {a} and {a + 1}.', 'Mean and total')
+
+
+# ---------- 28 Charts and data ----------
+SUBS = ['English', 'Maths', 'PE', 'Music', 'Art', 'Science', 'History', 'Drama']
+COLS = ['Red', 'Blue', 'Green', 'Pink', 'Orange', 'Purple', 'Yellow']
+HOLS = ['Beach', 'Camping', 'Sailing', 'City break', 'Activity', 'Canal boat']
+
+
+def dat_table(r):
+    labs = r.sample(SUBS, 4)
+    while True:
+        v = r.sample(range(3, 19), 4)
+        if sum(v) % 4 == 0: break
+    tab = [['Favourite subject', 'Votes']] + [[a, str(b)] for a, b in zip(labs, v)]; t = r.randint(0, 3)
+    if t == 0: return Q('A class voted for their favourite subject. How many votes were there in total?', sum(v), ' + '.join(map(str, v)) + f' = {sum(v)}.', 'Frequency tables', table=tab)
+    if t == 1: return Q('A class voted for their favourite subject. What is the mean number of votes for a subject?', sum(v) // 4, f'{sum(v)} ÷ 4 = {sum(v) // 4}.', 'Frequency tables', table=tab)
+    if t == 2: return Q('A class voted for their favourite subject. How many more votes did the most popular subject get than the least popular?', max(v) - min(v), f'{max(v)} − {min(v)} = {max(v) - min(v)}.', 'Frequency tables', table=tab)
+    i = r.randint(0, 3)
+    return Q(f'A class voted for their favourite subject. What fraction of the votes were for {labs[i]}? Give your answer in its simplest form.', fr(F(v[i], sum(v))), f'{v[i]} out of {sum(v)} = {fr(F(v[i], sum(v)))}.', 'Frequency tables', table=tab)
+
+
+def _pie(r):
+    N = r.choice([24, 48, 72, 96, 120, 144, 240]); k = r.choice([4, 5])
+    while True:
+        cuts = sorted(r.sample(range(1, 24), k - 1)); u = [b - a for a, b in zip([0] + cuts, cuts + [24])]
+        if min(u) >= 3 and max(u) <= 9 and len(set(u)) >= k - 2: break
+    return N, [x * N // 24 for x in u], [x * 15 for x in u], k
+
+
+def dat_pie(r):
+    N, cnt, ang, k = _pie(r); labs = r.sample(COLS if r.random() < .5 else HOLS, k); i = r.randint(0, k - 1)
+    alt = '[Pie chart with sectors: ' + ', '.join(f'{a} {b}°' for a, b in zip(labs, ang)) + '.]'
+    return Q(f'{N} children were asked to make a choice, and the pie chart shows the results. How many children chose {labs[i]}?', cnt[i], f'{labs[i]} is {ang[i]}° out of 360°, which is {fr(F(ang[i], 360))} of the children. {fr(F(ang[i], 360))} of {N} = {cnt[i]}.', 'Pie charts',
+             fig=('pie', labs, ang), alt=alt)
+
+
+def dat_pietotal(r):
+    a = r.choice([30, 36, 40, 45, 60, 72, 90, 120]); k = r.randint(3, 40); tot = k * 360 // a
+    if (k * 360) % a: return dat_pietotal(r)
+    return Q(f'In a pie chart about how pupils travel to school, the sector for walking has an angle of {a}° and stands for {k} pupils. How many pupils does the whole pie chart stand for?', tot,
+             f'{a}° is {fr(F(a, 360))} of the circle, so the total is {k} × {360 // a if 360 % a == 0 else fr(F(360, a))} = {tot}.', 'Pie charts')
+
+
+def dat_bar(r):
+    labs = r.sample(['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], 5); labs = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']; step = r.choice([2, 5, 10]); v = [step * r.randint(1, 9) for _ in range(5)]
+    th = r.choice(['books borrowed from the library', 'cars in the car park at noon', 'pupils having a school dinner', 'ice creams sold'])
+    alt = f'[Bar chart of {th}: ' + ', '.join(f'{a} {b}' for a, b in zip(labs, v)) + '.]'; t = r.randint(0, 2); i, j = r.sample(range(5), 2)
+    if v[i] == v[j]: return dat_bar(r)
+    if t == 0: return Q(f'The bar chart shows the number of {th} each day. How many were there altogether in the week?', sum(v), ' + '.join(map(str, v)) + f' = {sum(v)}.', 'Bar charts', fig=('bar', labs, v, 'Number', step), alt=alt)
+    if t == 1: return Q(f'The bar chart shows the number of {th} each day. How many more were there on {labs[i] if v[i] > v[j] else labs[j]} than on {labs[j] if v[i] > v[j] else labs[i]}?', abs(v[i] - v[j]), f'{max(v[i], v[j])} − {min(v[i], v[j])} = {abs(v[i] - v[j])}.', 'Bar charts', fig=('bar', labs, v, 'Number', step), alt=alt)
+    return Q(f'The bar chart shows the number of {th} each day. What is the mean number per day?', dec(D(sum(v)) / 5), f'Total {sum(v)} ÷ 5 = {dec(D(sum(v)) / 5)}.', 'Bar charts', fig=('bar', labs, v, 'Number', step), alt=alt)
+
+
+def dat_venn(r):
+    la, lb = r.choice([('Cycling club', 'Swimming club'), ('Like rock', 'Like pop'), ('Have a dog', 'Have a cat'), ('Play football', 'Play tennis'), ('Speak French', 'Speak Spanish')])
+    oa, both, ob, nei = r.randint(2, 12), r.randint(1, 9), r.randint(2, 12), r.randint(0, 8); N = oa + both + ob + nei
+    alt = f'[Venn diagram: only "{la}" {oa}; both {both}; only "{lb}" {ob}; outside both circles {nei}.]'; fig = ('venn', la, lb, oa, both, ob, nei); t = r.randint(0, 4)
+    stem = 'The Venn diagram shows information about the children in a class. '
+    qs = [(f'How many children are in the "{la}" circle altogether?', oa + both, f'{oa} + {both} = {oa + both}.'), ('How many children are in both circles?', both, f'The overlap shows {both}.'),
+          ('How many children are in exactly one of the two circles?', oa + ob, f'{oa} + {ob} = {oa + ob}.'), ('How many children are in the class?', N, f'{oa} + {both} + {ob} + {nei} = {N}.'),
+          ('How many children are in neither circle?', nei, f'The number outside both circles is {nei}.')]
+    return Q(stem + qs[t][0], qs[t][1], qs[t][2], 'Venn diagrams', fig=fig, alt=alt)
+
+
+def dat_travel(r):
+    s = r.choice([12, 18, 24, 30, 36, 48, 60]); t0 = 60 * r.randint(8, 14); hrs = 2; dmax = s * 2; t = r.randint(0, 2)
+    step = dmax // 6 if dmax % 6 == 0 else dmax // 4
+    fig = ('travel', [('', [(0, 0), (120, dmax)])], t0, hrs, dmax, step); alt = f'[Straight-line distance–time graph from (0 km at {t24(t0)}) to ({dmax} km at {t24(t0 + 120)}).]'
+    m = r.choice([10, 20, 30, 40, 50, 70, 90, 100]); d = s * m // 60
+    if (s * m) % 60: return dat_travel(r)
+    if t == 0: return Q(f'The graph shows a journey that starts at {t24(t0)}. What is the speed in km/h?', f'{s} km/h', f'The line reaches {s} km after 1 hour (at {t24(t0 + 60)}), so the speed is {s} km/h.', 'Travel graphs', fig=fig, alt=alt)
+    if t == 1: return Q(f'The graph shows a journey that starts at {t24(t0)}. How far has the traveller gone after {m} minutes?', f'{d} km', f'Speed {s} km/h is {dec(D(s) / 60)} km each minute... {m} minutes is {fr(F(m, 60))} of an hour: {fr(F(m, 60))} × {s} = {d} km.'.replace(f'Speed {s} km/h is {dec(D(s) / 60)} km each minute... ', ''), 'Travel graphs', fig=fig, alt=alt)
+    return Q(f'The graph shows a journey that starts at {t24(t0)}. At what time has the traveller gone {d} km?', t24(t0 + m), f'At {s} km/h, {d} km takes {fr(F(d, s))} of an hour = {m} minutes. {t24(t0)} + {m} minutes = {t24(t0 + m)}.', 'Travel graphs', fig=fig, alt=alt)
+
+
+def dat_minclass(r):
+    a, b = r.randint(12, 24), r.randint(12, 24); both = r.randint(4, min(a, b) - 2); x, y = r.choice([('dogs', 'cats'), ('a bike', 'a scooter'), ('a brother', 'a sister')])
+    return Q(f'In a class, {a} children have {x} and {b} children have {y}. {both} children have both. What is the smallest possible number of children in the class?', a + b - both,
+             f'The {both} children with both have been counted twice. {a} + {b} − {both} = {a + b - both}.', 'Overlapping groups')
+
+
+# ---------- 29 Probability ----------
+def _p(a, b): return '0' if a == 0 else '1' if a == b else fr(F(a, b))
+
+
+def prb_die(r):
+    ev = [('a 6', [6]), ('a 2 or a 3', [2, 3]), ('an even number', [2, 4, 6]), ('a number greater than 4', [5, 6]), ('a prime number', [2, 3, 5]), ('a 7', []), ('a number less than 7', [1, 2, 3, 4, 5, 6]),
+          ('a multiple of 3', [3, 6]), ('a number less than 3', [1, 2]), ('a square number', [1, 4]), ('a factor of 6', [1, 2, 3, 6]), ('an odd number greater than 1', [3, 5]), ('a number greater than 1', [2, 3, 4, 5, 6])]
+    e, s = r.choice(ev)
+    return Q(f'A fair dice numbered 1 to 6 is rolled. What is the probability of rolling {e}? Give your answer as a fraction in its simplest form (or 0 or 1).', _p(len(s), 6),
+             (f'{len(s)} of the 6 equally likely numbers work ({", ".join(map(str, s))}): {len(s)}/6' + (f' = {_p(len(s), 6)}.' if _p(len(s), 6) != f'{len(s)}/6' else '.')) if s else 'It is impossible, so the probability is 0.', 'Dice')
+
+
+def prb_bag(r):
+    cs = r.sample(['grey', 'white', 'red', 'blue', 'green', 'yellow'], 3); v = [r.randint(1, 9) for _ in range(3)]; N = sum(v); t = r.randint(0, 3); th = r.choice(['balls', 'counters', 'beads', 'marbles'])
+    stem = f'A bag contains {v[0]} {cs[0]} {th}, {v[1]} {cs[1]} {th} and {v[2]} {cs[2]} {th}. One is picked without looking. '
+    if t == 0: return Q(stem + f'What is the probability that it is {cs[0]}? Give your answer as a fraction in its simplest form.', _p(v[0], N), f'{v[0]} out of {N}' + (f' = {_p(v[0], N)}.' if gcd(v[0], N) > 1 else '.'), 'Bags')
+    if t == 1: return Q(stem + f'What is the probability that it is not {cs[0]}? Give your answer as a fraction in its simplest form.', _p(N - v[0], N), f'{N} − {v[0]} = {N - v[0]} are not {cs[0]}: {N - v[0]} out of {N}' + (f' = {_p(N - v[0], N)}.' if gcd(N - v[0], N) > 1 else '.'), 'Bags')
+    if t == 2: return Q(stem + f'What is the probability that it is {cs[1]} or {cs[2]}? Give your answer as a fraction in its simplest form.', _p(v[1] + v[2], N), f'{v[1]} + {v[2]} = {v[1] + v[2]} out of {N}' + (f' = {_p(v[1] + v[2], N)}.' if gcd(v[1] + v[2], N) > 1 else '.'), 'Bags')
+    return Q(stem + 'What is the probability that it is black?', '0', 'There are no black ones in the bag, so it is impossible: 0.', 'Bags')
+
+
+def prb_cards(r):
+    N = r.choice([10, 12, 15, 20, 24, 25, 30]); ev = [('an even number', lambda x: x % 2 == 0), ('a multiple of 3', lambda x: x % 3 == 0), ('a multiple of 5', lambda x: x % 5 == 0), ('a prime number', lambda x: x in primes_upto(40)),
+                                                        ('a square number', lambda x: int(x ** .5) ** 2 == x), ('a number greater than 8', lambda x: x > 8), ('a factor of 12', lambda x: 12 % x == 0), ('a multiple of 4', lambda x: x % 4 == 0),
+                                                        ('a 2-digit number', lambda x: x > 9), ('a number less than 6', lambda x: x < 6)]
+    e, f = r.choice(ev); c = sum(1 for x in range(1, N + 1) if f(x))
+    return Q(f'Cards numbered 1 to {N} are shuffled and one is chosen at random. What is the probability that it shows {e}? Give your answer as a fraction in its simplest form.', _p(c, N),
+             f'{c} of the {N} cards work ({", ".join(str(x) for x in range(1, N + 1) if f(x))}): {c}/{N}' + (f' = {_p(c, N)}.' if gcd(c, N) > 1 else '.'), 'Number cards')
+
+
+def prb_word(r):
+    w = r.choice(['MATHEMATICS', 'PROBABILITY', 'BANANA', 'COLCHESTER', 'SOUTHEND', 'ADDITION', 'TRIANGLE', 'PARALLEL', 'ESSEX', 'MISSISSIPPI', 'STATISTICS', 'GEOMETRY', 'FRACTION', 'DIVISION'])
+    l = r.choice(sorted(set(w))); c = w.count(l); v = r.random() < .3
+    if v:
+        c = sum(1 for x in w if x in 'AEIOU')
+        return Q(f'The letters of the word {w} are written on separate cards and one card is chosen at random. What is the probability that it is a vowel? Give your answer as a fraction in its simplest form.', _p(c, len(w)), f'{c} of the {len(w)} letters are vowels: {c}/{len(w)}' + (f' = {_p(c, len(w))}.' if gcd(c, len(w)) > 1 else '.'), 'Letter cards')
+    return Q(f'The letters of the word {w} are written on separate cards and one card is chosen at random. What is the probability that it is the letter {l}? Give your answer as a fraction in its simplest form.', _p(c, len(w)),
+             f'{l} appears {c} time{"s" if c > 1 else ""} in {len(w)} letters: {c}/{len(w)}' + (f' = {_p(c, len(w))}.' if gcd(c, len(w)) > 1 else '.'), 'Letter cards')
+
+
+def prb_spinner(r):
+    k = r.choice([5, 8, 10, 12]); a = r.randint(1, k - 2); b = r.randint(1, k - a - 1); c = k - a - b
+    return Q(f'A fair spinner has {k} equal sections: {a} red, {b} blue and {c} green. What is the probability that it lands on {"red" if a else "blue"}? Give your answer as a fraction in its simplest form.', _p(a, k),
+             f'{a} out of {k}' + (f' = {_p(a, k)}.' if gcd(a, k) > 1 else '.'), 'Spinners')
+
+
+def prb_expect(r):
+    N = r.choice([60, 120, 180, 240, 300, 600, 90, 30]); e, c = r.choice([('a 4', 1), ('an even number', 3), ('a 5 or a 6', 2), ('a number less than 6', 5), ('a multiple of 3', 2)])
+    return Q(f'A fair dice numbered 1 to 6 is rolled {N} times. About how many times would you expect to get {e}?', N * c // 6, f'The probability is {_p(c, 6)}. {_p(c, 6)} of {N} = {N * c // 6}.', 'Expected results')
+
+
+def prb_add(r):
+    a, b = r.randint(2, 8), r.randint(2, 8); den = r.choice([2, 3, 4]);
+    need = (den - 1) * a - b
+    if need <= 0: return prb_add(r)
+    return Q(f'A bag contains {a} red counters and {b} blue counters. How many more blue counters must be added so that the probability of picking a red counter is 1/{den}?', need,
+             f'For a probability of 1/{den}, the {a} red counters must be 1 part out of {den}, so there must be {den} × {a} = {den * a} counters in total. {den * a} − {a} − {b} = {need}.', 'Changing the bag')
+
+
+# ---------- 30 Reasoning word problems ----------
+def wrd_sumdiff(r):
+    a = r.randint(60, 400); d = 2 * r.randint(3, 30); x, y, ctx = r.choice([('girls', 'boys', 'children in a school'), ('adults', 'children', 'people at a show'), ('red', 'blue', 'counters in a box'), ('sheep', 'goats', 'animals on a farm')])
+    w = r.randint(0, 1)
+    return Q(f'There are {2 * a + d} {ctx}. There are {d} more {x} than {y}. How many {[x, y][w]} are there?', [a + d, a][w], f'Take away the extra {d}: {2 * a + d} − {d} = {2 * a}. Half of that is {a} {y}, so there are {a + d} {x}.', 'Sum and difference')
+
+
+def wrd_three(r):
+    m, w, c = r.randint(1200, 4000), r.randint(1200, 4000), r.randint(1500, 5000); T = m + w + c; t = r.randint(0, 2); town = r.choice(['Grangeford', 'Little Marsham', 'Northby', 'Oakhampton'])
+    stem = f'The population of {town} is {n(T)}. The men and children together number {n(m + c)}, and the men and women together number {n(m + w)}. '
+    why = f'Women = {n(T)} − {n(m + c)} = {n(w)}. Children = {n(T)} − {n(m + w)} = {n(c)}. Men = {n(T)} − {n(w)} − {n(c)} = {n(m)}.'
+    return Q(stem + f'How many {["women", "children", "men"][t]} are there?', n([w, c, m][t]), why, 'Three groups')
+
+
+def wrd_chain(r):
+    k1, k2 = r.choice([(2, 2), (2, 3), (3, 2), (3, 3), (2, 4), (4, 2)]); c = r.randint(3, 25); A, B, C = names(r, 3); th = r.choice(['apps', 'beads', 'stickers', 'cards', 'games']); t = r.randint(0, 2)
+    b, a = k2 * c, k1 * k2 * c; tw = {2: 'twice', 3: 'three times', 4: 'four times'}
+    return Q(f'{A} has {tw[k1]} as many {th} as {B}, and {B} has {tw[k2]} as many as {C}. Together they have {a + b + c} {th}. How many does {[A, B, C][t]} have?', [a, b, c][t],
+             f'If {C} has 1 part, {B} has {k2} parts and {A} has {k1 * k2} parts: {1 + k2 + k1 * k2} parts in total. {a + b + c} ÷ {1 + k2 + k1 * k2} = {c}. So {C} has {c}, {B} has {b} and {A} has {a}.', 'Twice as many')
+
+
+def wrd_pens(r):
+    p, q = 5 * r.randint(2, 12), 5 * r.randint(3, 16); a = r.randint(2, 5); b1, b2 = sorted(r.sample(range(1, 7), 2)); x, y = r.choice([('pencils', 'pens'), ('apples', 'pears'), ('buns', 'cakes'), ('rubbers', 'rulers')]); t = r.randint(0, 1)
+    c1, c2 = a * p + b2 * q, a * p + b1 * q
+    return Q(f'{a} {x} and {b2} {y} cost {money(c1)}. {a} {x} and {b1} {y} cost {money(c2)}. What is the cost of one {[y, x][t][:-1]}?', pm([q, p][t]),
+             f'The difference is {b2 - b1} {y if b2 - b1 > 1 else y[:-1]}: {money(c1)} − {money(c2)} = {money(c1 - c2)}, so one {y[:-1]} costs {pm(q)}.' + (f' Then {a} {x} cost {money(c2)} − {money(b1 * q)} = {money(a * p)}, so one costs {pm(p)}.' if t else ''), 'Two purchases')
+
+
+def wrd_coins(r):
+    k = r.randint(4, 40); (c1, c2, c3) = r.choice([(5, 2, 1), (10, 5, 2), (20, 10, 5), (50, 20, 10)]); tot = 4 * k * c1 + 2 * k * c2 + k * c3; t = r.randint(0, 2)
+    return Q(f'A cash box contains {money(tot)} in {c1}p, {c2}p and {c3}p coins. There are twice as many {c1}p coins as {c2}p coins, and twice as many {c2}p coins as {c3}p coins. How many {[c1, c2, c3][t]}p coins are there?', [4 * k, 2 * k, k][t],
+             f'One group is one {c3}p, two {c2}p and four {c1}p coins, worth {c3} + {2 * c2} + {4 * c1} = {c3 + 2 * c2 + 4 * c1}p. {money(tot)} ÷ {c3 + 2 * c2 + 4 * c1}p = {k} groups. So there are {k} {c3}p, {2 * k} {c2}p and {4 * k} {c1}p coins.', 'Coins')
+
+
+def wrd_posts(r):
+    k = r.randint(12, 41); d = 5 * r.randint(3, 20); th = r.choice(['telegraph posts', 'lamp posts', 'fence posts', 'trees'])
+    if r.random() < .5: return Q(f'{k} {th} are spaced equally along one side of a straight road, with {d} m between each pair. How long is that stretch of road, from the first to the last?', f'{n((k - 1) * d)} m', f'{k} posts have {k - 1} gaps. {k - 1} × {d} = {n((k - 1) * d)} m.', 'Posts and gaps')
+    return Q(f'{k} {th} are spaced evenly along a road, from one end to the other. The road is {dec(D((k - 1) * d) / 1000)} km long. What is the distance in metres between each pair?', f'{d} m', f'{dec(D((k - 1) * d) / 1000)} km = {n((k - 1) * d)} m. There are {k - 1} gaps: {n((k - 1) * d)} ÷ {k - 1} = {d} m.', 'Posts and gaps')
+
+
+def wrd_ages(r):
+    c = r.randint(9, 14); k1, k2 = r.choice([(2, 3), (3, 2), (2, 3)]); t = r.randint(0, 2); A = names(r, 1)[0]; tw = {2: 'twice', 3: 'three times'}
+    g, u = k1 * k2 * c, k2 * c
+    return Q(f'The ages of Grandma, Uncle Jo and {A} add up to {g + u + c} years. Grandma is {tw[k1]} as old as Uncle Jo, and Uncle Jo is {tw[k2]} as old as {A}. How old is {["Grandma", "Uncle Jo", A][t]}?', [g, u, c][t],
+             f'{A} is 1 part, Uncle Jo is {k2} parts and Grandma is {k1 * k2} parts: {1 + k2 + k1 * k2} parts = {g + u + c}. One part = {c}. Ages: {c}, {u} and {g}.', 'Ages')
+
+
+def wrd_speed(r):
+    s = r.choice([12, 15, 20, 24, 30, 36, 40, 45, 48, 60, 72, 80, 90]); m = r.choice([10, 15, 20, 30, 40, 45, 50, 75, 90, 100, 120, 150]); t = r.randint(0, 2)
+    if (s * m) % 60: return wrd_speed(r)
+    d = s * m // 60
+    if t == 0: return Q(f'A vehicle travels at a steady {s} km/h. How far does it go in {dur(m).replace(" h", " hour" + ("s" if m >= 120 else "")).replace(" min", " minutes")}?', f'{d} km', f'{m} minutes is {fr(F(m, 60))} hour{"s" if m > 60 else ""}. {s} × {fr(F(m, 60))} = {d} km.', 'Speed, distance and time')
+    if t == 1: return Q(f'A vehicle travels {d} km in {m} minutes at a steady speed. What is its speed in km/h?', f'{s} km/h', f'{m} minutes is {fr(F(m, 60))} of an hour. {d} ÷ {fr(F(m, 60))} = {s} km/h.', 'Speed, distance and time')
+    return Q(f'How many minutes does it take to travel {d} km at a steady {s} km/h?', f'{m} minutes', f'{d} ÷ {s} = {fr(F(d, s))} hour{"s" if d > s else ""} = {m} minutes.', 'Speed, distance and time')
+
+
+def wrd_sweets(r):
+    A, B = names(r, 2); n1 = 10 * r.randint(2, 8); p = r.choice([20, 30, 40, 50, 60, 70]); den = r.choice([4, 5, 8]); n2 = den * r.randint(3, 10); num = r.choice([x for x in range(1, den) if gcd(x, den) == 1])
+    t1 = n1 * p // 100; c2 = n2 * num // den; t2 = n2 - c2
+    if t1 == t2: return wrd_sweets(r)
+    return Q(f'{A} has {n1} sweets; {p}% of them are toffees and the rest are chocolates. {B} has {n2} sweets; {num}/{den} of them are chocolates and the rest are toffees. Who has more toffees, and how many more?', f'{A if t1 > t2 else B}, {abs(t1 - t2)} more',
+             f'{A}: {p}% of {n1} = {t1} toffees. {B}: {num}/{den} of {n2} = {c2} chocolates, so {n2} − {c2} = {t2} toffees. Difference: {abs(t1 - t2)}.', 'Comparing shares')
+
+
+def wrd_teachers(r):
+    t, b, g = r.randint(12, 40), r.randint(150, 320), r.randint(150, 320); w = r.randint(0, 2)
+    return Q(f'In a school there are {t + b + g} pupils and teachers altogether. The girls and the teachers together number {g + t}. The boys and the teachers together number {b + t}. How many {["teachers", "boys", "girls"][w]} are there?', [t, b, g][w],
+             f'Boys = {t + b + g} − {g + t} = {b}. Girls = {t + b + g} − {b + t} = {g}. Teachers = {t + b + g} − {b} − {g} = {t}.', 'Three groups')
+
+
+TOPICS3 = [
+    ('MON', 'Money: prices, profit and exchange rates', [mon_carpark, mon_exchange, mon_profit, mon_totalprofit, mon_change, mon_rides, mon_howmany, mon_bestbuy, mon_half]),
+    ('PAR', 'Perimeter and area of rectangles', [par_width, par_length, par_square, par_ktimes, par_path, par_samearea, par_p60, par_ribbon, par_km]),
+    ('TRI', 'Area of triangles and compound shapes', [tri_grid, tri_right, tri_height, tri_lshape, tri_para, tri_flag, tri_house, tri_diag]),
+    ('ANG', 'Angles', [ang_type, ang_tri, ang_iso, ang_line, ang_point, ang_x2x, ang_polycentre, ang_interior, ang_compass, ang_quad, ang_minute]),
+    ('SHP', '2D and 3D shapes', [shp_solid, shp_sum, shp_net, shp_quad, shp_sym, shp_yn, shp_rot]),
+    ('COO', 'Coordinates', [coo_fourth, coo_centre, coo_mid, coo_reflect, coo_translate, coo_dist, coo_line, coo_rect, coo_robot]),
+    ('AVG', 'Mean, median, mode and range', [avg_mean, avg_median, avg_mode, avg_range, avg_changed, avg_next, avg_fourth, avg_others, avg_ages, avg_total]),
+    ('DAT', 'Charts and data', [dat_table, dat_pie, dat_pietotal, dat_bar, dat_venn, dat_travel, dat_minclass]),
+    ('PRB', 'Probability', [prb_die, prb_bag, prb_cards, prb_word, prb_spinner, prb_expect, prb_add]),
+    ('WRD', 'Reasoning word problems', [wrd_sumdiff, wrd_three, wrd_chain, wrd_pens, wrd_coins, wrd_posts, wrd_ages, wrd_speed, wrd_sweets, wrd_teachers]),
+]
