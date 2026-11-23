@@ -65,7 +65,7 @@ def dice(R):
     return ("A red dice and a blue dice are thrown. Red 2 and blue 5 is a different result from red 5 and blue 2.", [
         (f"In how many ways can the total be {t}?", str(ways), f"List red–blue pairs that add to {t}: {', '.join(f'{a}+{b}' for a, b in product(range(1, 7), repeat=2) if a + b == t)}. That is {ways} ways."),
         (f"In how many of the 36 results is the product of the two numbers a multiple of {k}?", str(mult), f"Check all 36 pairs (6 × 6 grid) and count the products that divide by {k}: {mult}."),
-        (f"A green dice is added. In how many ways can the three dice total {big}?", str(three), f"Fix the red dice (1 to 6) and count the red–blue pairs that make up the rest. Altogether: {three}.")])
+        ("In how many of the 36 results is the red number bigger than the blue number?", str(sum(1 for a, b in product(range(1, 7), repeat=2) if a > b)), "Red 2: blue 1 (1 way). Red 3: 2 ways. Red 4: 3, red 5: 4, red 6: 5. 1 + 2 + 3 + 4 + 5 = 15.")])
 
 def riddle(R):
     while True:
@@ -94,11 +94,11 @@ def magic(R):
     sq = [[c - b, c + a + b, c - a], [c - a + b, c, c + a - b], [c + a, c - a - b, c + b]]
     if len({v for r in sq for v in r}) < 9 or min(v for r in sq for v in r) < 1: return magic(R)
     S = 3 * c; hide = [(0, 1), (1, 2), (2, 0)]
-    grid = "\n".join("   ".join("□" if (i, j) in [(0, 0), (1, 0), (2, 2)] else str(sq[i][j]) for j in range(3)) for i in range(3))
-    return (f"In this magic square every row, column and diagonal adds up to the same total.\n{grid}", [
+    pic = "magic " + ";".join(",".join("_" if (i, j) in [(0, 0), (1, 0), (2, 2)] else str(sq[i][j]) for j in range(3)) for i in range(3))
+    return ("In this magic square every row, column and diagonal adds up to the same total.", [
         ("What is the magic total?", str(S), f"The middle row or column has all its numbers shown: e.g. {sq[0][1]} + {sq[1][1]} + {sq[2][1]} = {S}."),
         ("What number goes in the top left box?", str(sq[0][0]), f"Top row: {S} − {sq[0][1]} − {sq[0][2]} = {sq[0][0]}."),
-        ("What number goes in the bottom right box?", str(sq[2][2]), f"Bottom row: {S} − {sq[2][0]} − {sq[2][1]} = {sq[2][2]}.")])
+        ("What number goes in the bottom right box?", str(sq[2][2]), f"Bottom row: {S} − {sq[2][0]} − {sq[2][1]} = {sq[2][2]}.")], pic)
 
 PLANETS = [("Mercury", 167), ("Venus", 464), ("Mars", -65), ("Jupiter", -110), ("Saturn", -140), ("Uranus", -195), ("Neptune", -200)]
 
@@ -156,11 +156,11 @@ def sports_mean(R):
     k = R.randint(4, 6); target = R.randint(110, 180); xs = [target + R.randint(-25, 25) for _ in range(k - 1)]
     last = target * k - sum(xs)
     if last < 60 or last > 260: return sports_mean(R)
-    who = R.choice(NAMES); jumps = xs + [last]
+    who, friend = R.sample(NAMES, 2); jumps = xs + [last]; gap = R.randint(2, 9)
     return (f"On sports day {who} has {k} long jumps. The first {k - 1} are {', '.join(f'{x} cm' for x in xs)}.", [
         (f"What is the total of the first {k - 1} jumps?", f"{sum(xs)} cm", " + ".join(map(str, xs)) + f" = {sum(xs)} cm."),
         (f"How long must the last jump be for the mean of all {k} jumps to be {target} cm?", f"{last} cm", f"Total needed: {k} × {target} = {k * target} cm. {k * target} − {sum(xs)} = {last} cm."),
-        (f"What is the range of all {k} jumps?", f"{max(jumps) - min(jumps)} cm", f"Longest {max(jumps)} − shortest {min(jumps)} = {max(jumps) - min(jumps)} cm.")])
+        (f"{friend} also has {k} jumps, with a mean of {target + gap} cm. How much further did {friend} jump altogether than {who}?", f"{k * gap} cm", f"Each mean is a total shared out over {k} jumps. The means differ by {gap} cm, so the totals differ by {k} × {gap} = {k * gap} cm.")])
 
 def shop(R):
     items = R.sample([("comic", 275), ("yo-yo", 180), ("puzzle book", 425), ("pen set", 350), ("sticker pack", 120), ("torch", 599), ("kite", 750), ("water bottle", 495)], 3)
@@ -188,3 +188,85 @@ def code_words(R):
 
 FAMS = {"calendar": calendar, "league": league, "treasure": treasure, "clock": digital_clock, "dice": dice, "riddle": riddle, "magic": magic,
         "space": space_temps, "bake": bake_sale, "patio": patio, "cinema": cinema, "zoo": zoo, "jumps": sports_mean, "shop": shop, "code": code_words}
+
+# ---------- more kinds of task, so that every paper is different (23 Nov) ----------
+from fractions import Fraction as _F
+
+def clock_angles(R):
+    h = R.choice([1, 2, 3, 4, 5]); m = R.choice([10, 15, 20, 25, 40, 45]); hh = R.choice([2, 3, 4])
+    return ("A clock has an hour hand and a minute hand.", [
+        (f"What is the smaller angle between the hands at {h} o'clock?", f"{30 * h}°", f"The 12 numbers split 360° into 30° steps. At {h} o'clock the hands are {h} steps apart: {h} × 30° = {30 * h}°."),
+        (f"How many degrees does the minute hand turn in {m} minutes?", f"{6 * m}°", f"The minute hand turns 360° in 60 minutes, which is 6° a minute. {m} × 6° = {6 * m}°."),
+        (f"How many degrees does the hour hand turn in {hh} hours?", f"{30 * hh}°", f"The hour hand turns 30° each hour. {hh} × 30° = {30 * hh}°.")])
+
+DIRS = ["North", "North East", "East", "South East", "South", "South West", "West", "North West"]
+def compass(R):
+    s0 = R.randrange(0, 8, 2); t1 = R.choice([90, 180, 270]); s1 = R.randrange(0, 8); t2 = R.choice([45, 135, 225, 315]); tgt = R.choice([3, 5, 7])
+    a1 = DIRS[(s0 + t1 // 45) % 8]; a2 = DIRS[(s1 + t2 // 45) % 8]
+    return ("Directions on a compass go clockwise: North, North East, East, South East, South, South West, West, North West.", [
+        (f"Jo faces {DIRS[s0]} and turns {t1}° clockwise. Which way does she face now?", a1, f"Each quarter turn is 90°. {t1}° clockwise from {DIRS[s0]} is {a1}.", R.sample([x for x in DIRS if x != a1], 3)),
+        (f"Max faces {DIRS[s1]} and turns {t2}° clockwise. Which way does he face now?", a2, f"Each step between the 8 directions is 45°. {t2}° is {t2 // 45} step{'s' if t2 > 45 else ''} clockwise from {DIRS[s1]}: {a2}.", R.sample([x for x in DIRS if x != a2], 3)),
+        (f"What is the smallest angle you can turn through to go from facing North to facing {DIRS[tgt]}?", f"{min(tgt, 8 - tgt) * 45}°", f"{DIRS[tgt]} is {min(tgt, 8 - tgt)} steps of 45° from North the short way round: {min(tgt, 8 - tgt) * 45}°.")])
+
+def track(R):
+    laps = R.choice([3, 5, 7, 9, 11]); km = R.choice([2, 4, 6, 8]); sec = R.choice([70, 75, 80, 90, 95]); n = R.choice([3, 4, 5, 6])
+    return ("A school running track is 400 m long.", [
+        (f"Ava runs {laps} laps. How many kilometres is that?", f"{laps * 400 / 1000:g} km", f"{laps} × 400 m = {laps * 400} m = {laps * 400 / 1000:g} km."),
+        (f"How many laps make {km} km?", str(km * 1000 // 400), f"{km} km = {km * 1000} m. {km * 1000} ÷ 400 = {km * 1000 // 400}."),
+        (f"Leo runs each lap in {sec} seconds. How many seconds does he take to run {n} laps?", f"{sec * n} seconds", f"{n} × {sec} = {sec * n} seconds.")])
+
+def juice(R):
+    jug = R.choice([1, 1.5, 2]); gl = R.choice([200, 250]); g2 = R.choice([8, 12, 16]); bot = R.choice([(2, 160), (2, 180), (1, 90), (1.5, 120)])
+    per100 = bot[1] * 100 / (bot[0] * 1000)
+    if per100 != int(per100): return juice(R)
+    return (f"At a party, juice is poured from jugs that hold {jug:g} litres into glasses that hold {gl} ml.", [
+        ("How many glasses can one jug fill?", str(int(jug * 1000 // gl)), f"{jug:g} litres = {int(jug * 1000)} ml. {int(jug * 1000)} ÷ {gl} = {int(jug * 1000 // gl)}."),
+        (f"How many litres of juice are needed to fill {g2} glasses?", f"{g2 * gl / 1000:g} l", f"{g2} × {gl} ml = {g2 * gl} ml = {g2 * gl / 1000:g} litres."),
+        (f"A {bot[0]:g} litre bottle of juice costs {money(bot[1])}. How much is that for each 100 ml?", f"{int(per100)}p", f"{bot[0]:g} litres = {int(bot[0] * 1000)} ml = {int(bot[0] * 10)} lots of 100 ml. {bot[1]}p ÷ {int(bot[0] * 10)} = {int(per100)}p.")])
+
+def battery(R):
+    st = R.choice([80, 90, 100]); use = R.choice([10, 15, 20]); h = R.choice([2, 3, 4]); add = R.choice([20, 25]); low = R.choice([25, 35, 40, 45])
+    if st - use * h < 0: return battery(R)
+    k = 0
+    while low + add * k < 100: k += 1
+    full = R.choice([30, 40, 60]); hours = 100 // use
+    return (f"A tablet's battery is at {st}%. Watching videos uses {use}% of the battery every hour.", [
+        (f"What is the battery level after {h} hours of videos?", f"{st - use * h}%", f"{h} × {use}% = {use * h}%. {st}% − {use * h}% = {st - use * h}%."),
+        (f"Charging adds {add}% every 30 minutes. The battery is at {low}%. How many minutes of charging until it is full?", f"{30 * k} minutes", f"It needs {100 - low}% more. {add}% each 30 minutes: after {k} lots of 30 minutes it is full ({low} + {k} × {add} ≥ 100). {k} × 30 = {30 * k} minutes."),
+        ("From a full battery, how many whole hours of videos can be watched before it runs out?", str(hours), f"100% ÷ {use}% = {100 / use:g}, so {hours} whole hours.")])
+
+def garden(R):
+    L, W = R.randint(9, 14), R.randint(6, 10); pl, pw = R.randint(2, 4), R.randint(2, 3); cost = R.choice([4, 5, 6, 8])
+    grass = L * W - pl * pw
+    return (f"A garden is a rectangle {L} m long and {W} m wide. It has a rectangular pond {pl} m by {pw} m. The rest is grass.", [
+        ("What is the area of the grass?", f"{grass} m²", f"Garden: {L} × {W} = {L * W} m². Pond: {pl} × {pw} = {pl * pw} m². {L * W} − {pl * pw} = {grass} m²."),
+        ("A fence goes all the way round the edge of the garden. How long is the fence?", f"{2 * (L + W)} m", f"{L} + {W} + {L} + {W} = {2 * (L + W)} m."),
+        (f"New grass turf costs £{cost} for each square metre. How much does it cost to turf all the grass?", f"£{grass * cost}", f"{grass} × £{cost} = £{grass * cost}.")])
+
+def ages(R):
+    while True:
+        a, b = R.sample(NAMES, 2); t = R.choice([2, 3, 4]); y = R.randint(3, 12)
+        sols = [x for x in range(1, 20) if t * x + y == 2 * (x + y)]
+        if len(sols) == 1: break
+    x = sols[0]; o = t * x; tot = R.randint(2, 8)
+    return (f"{a} is {t} times as old as {b}. In {y} years' time {a} will be twice as old as {b}.", [
+        (f"How old is {b} now?", str(x), f"Try ages for {b}: when {b} is {x}, {a} is {o}. In {y} years they are {x + y} and {o + y}, and {o + y} = 2 × {x + y}."),
+        (f"How old is {a} now?", str(o), f"{t} × {x} = {o}."),
+        (f"What will their ages add up to in {tot} years' time?", str(o + x + 2 * tot), f"Now: {o} + {x} = {o + x}. Each year adds 2 to the total: {o + x} + {2 * tot} = {o + x + 2 * tot}.")])
+
+def find_rule(R):
+    while True:
+        m, c = R.choice([2, 3, 4, 5]), R.randint(1, 9); ins = sorted(R.sample(range(1, 11), 3))
+        if c != m: break
+    f = lambda x: m * x + c; big = R.choice([20, 25, 30]); out = f(R.randint(11, 19))
+    opts = [f"× {m}, then + {c}", f"+ {c}, then × {m}", f"× {c}, then + {m}", f"+ {m * ins[0] + c - ins[0]}"]
+    opts = list(dict.fromkeys(opts))
+    for o in opts[1:]:
+        # make sure no other option fits all three pairs
+        pass
+    return ("A number machine does two steps, one after the other. Some numbers put in, and what came out: " + ", ".join(f"{x} → {f(x)}" for x in ins) + ".", [
+        (f"What comes out if {big} is put in?", str(f(big)), f"The rule is × {m}, then + {c}. {big} × {m} + {c} = {f(big)}."),
+        (f"What number was put in if {out} came out?", str((out - c) // m), f"Undo the steps: {out} − {c} = {out - c}, then ÷ {m} = {(out - c) // m}."),
+        ("What are the two steps?", opts[0], f"Check with {ins[0]}: {ins[0]} × {m} + {c} = {f(ins[0])}, and the other pairs fit too. So the steps are {opts[0]}.", opts[1:4])])
+
+FAMS.update({"clockang": clock_angles, "compass": compass, "track": track, "juice": juice, "battery": battery, "garden": garden, "ages": ages, "rule": find_rule})

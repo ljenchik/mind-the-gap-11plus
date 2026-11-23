@@ -1,0 +1,118 @@
+"""Exam-like papers PT11-PT30 (v2, 23 Nov). Papers 11 and 12 stay as reviewed, with four review fixes.
+Papers 13-30 are built from a pool of task kinds for each slot, turning so that each paper has its own mix:
+real CSSE papers keep the topic order but change the tasks. Never repeats an opening part already in the bank."""
+import json, random, sys
+sys.path.insert(0, "/home/claude/scripts")
+import make_practice_tests as m, skill_families as SF, ratio_families as RF, algebra_families as AF
+import arith_families as XF, geom_families as GF, creative_families as C, extra_families as EF, variety_families as V
+import new_parts as NP
+from make_skill_practice import fam_order, fam_round
+
+SKILLS = {s["id"]: s["name"] for s in json.load(open("/home/claude/live3/source/starter-data.json"))["sk56"]}
+SKILLS.update({"fdpwp": "Word problems", "refl": "Coordinates and reflections"})
+BLUE_EXTRA = {"asn": "Number properties", "rates": "Ratio and proportion", "unitc": "Ratio and proportion", "fact": "Factors and multiples", "prime": "Prime numbers", "place": "Place value", "fdp": "Fractions, decimals and percentages"}   # re-sorted by retopic.py afterwards
+PLAIN = {"Work these out.", "Fractions.", "Place value.", "Measures.", "Percentages.", "Sharing.", "Time.", "Averages.", "Angles.", "Decimals."}
+def pt(i): return lambda R: m.test(R.randint(10 ** 6, 10 ** 7))[i][:2]
+CF = C.FAMS
+# each slot: list of (name, generator, skill)
+SLOTS = [   # 23 Nov: the order of the real CSSE papers (see "CSSE past papers – topic and marks analysis")
+  [("addsub", XF.addsub, "as"), ("muldiv", XF.muldiv, "md")],
+  [("frac", pt(1), "frac")],
+  [("pow", SF.pow_, "pow"), ("roman", EF.roman_set, "roman"), ("fact", NP.fact, "fact"), ("prime", NP.prime, "prime"), ("place", NP.place, "place")],
+  [("ordrace", V.ord_race, "order"), ("ordjars", V.ord_jars, "order"), ("ordbetween", V.ord_between, "order"), ("ordneg", V.ord_neg, "order"), ("order", fam_order, "order")],
+  [("kitchen", V.m_kitchen, "units"), ("walk", V.m_walk, "units"), ("shelf", V.m_shelf, "units"), ("pool", V.m_pool, "units"), ("track", CF["track"], "units"), ("juice", CF["juice"], "units")],
+  [("ptest", V.p_test, "money"), ("pschool", V.p_school, "money"), ("pshop", V.p_shop, "money")],
+  [("ratio", RF.ratio, "ratio"), ("rates", NP.rates, "rates"), ("unitc", NP.unitc, "unitc")],
+  [("mach", SF.mach, "mach"), ("rule", CF["rule"], "mach")],
+  [("round", lambda R: (lambda r: (r[0], [r[1][0], r[1][2], r[1][3]]))(fam_round(R)), "round")],
+  [("ang", SF.ang, "ang"), ("clockang", CF["clockang"], "ang"), ("compass", CF["compass"], "ang"), ("refl", GF.refl, "refl"), ("treasure", CF["treasure"], "coord")],
+  [("chart", pt(9), "chart")],
+  [("mean", SF.mean, "mean"), ("jumps", CF["jumps"], "mean")],
+  [("swim", V.t_swim, "time"), ("bus", V.t_bus, "time"), ("cook", V.t_cook, "time"), ("calendar", CF["calendar"], "time"), ("clock", CF["clock"], "time")],
+  [("asn", V.asn, "asn")],
+  [("pattern", AF.pattern, "seq"), ("seq", pt(15), "seq")],
+  [("rect", SF.rect, "rect"), ("patio", CF["patio"], "rect"), ("garden", CF["garden"], "rect")],
+  [("ages", CF["ages"], "puz2"), ("eq", AF.eq, "eq"), ("league", CF["league"], "puz2")],
+  [("bake", CF["bake"], "money"), ("pizza", EF.fdp_pizza, "fdpwp"), ("shop", CF["shop"], "money"), ("tank", EF.fdp_tank, "fdpwp"), ("cinema", CF["cinema"], "md"), ("zoo", CF["zoo"], "md")],
+  [("dice", CF["dice"], "count"), ("cards", EF.count_cards, "count"), ("outfits", EF.count_outfits, "count"), ("bag", EF.prob_bag, "count"), ("spinner", EF.prob_spin, "count")],
+  [("riddle", CF["riddle"], "puz1"), ("code", CF["code"], "puz1"), ("magic", CF["magic"], "puz2")],
+]
+BLUE = {"as": "Addition and subtraction", "md": "Multiplication and division", "frac": "Fractions", "fdpwp": "Fractions, decimals and percentages in context",
+        "pow": "Powers", "order": "Ordering numbers", "round": "Rounding", "roman": "Roman numerals", "units": "Measures", "money": "Money and percentages",
+        "ratio": "Ratio and proportion", "time": "Time", "mean": "Averages", "chart": "Charts and tables", "ang": "Angles", "refl": "Reflections and symmetry",
+        "coord": "Coordinates", "seq": "Sequences and patterns", "eq": "Equations", "mach": "Formula machines", "rect": "Perimeter and area",
+        "count": "Counting and probability", "puz1": "Number puzzles", "puz2": "Logic puzzles", **BLUE_EXTRA}
+
+def text_of(stem, q, lab): return q if stem in PLAIN else f"{stem}\n{lab}) {q}"
+
+def patch_reviewed(qs):
+    """Review fixes to papers 11 and 12 (23 Nov), keeping everything else as reviewed."""
+    by = {q["id"]: q for q in qs}
+    def put(i, t, a, s): by[i].update(q=t, a=a, s=s); by[i].pop("wrong", None)
+    q = by["PT11-11c"]; stem = q["q"].split("\nc)")[0]
+    put("PT11-11c", stem + "\nc) Ali also has 4 jumps, with a mean of 160 cm. How much further did Ali jump altogether than Sam?", "24 cm",
+        "Each mean is a total shared out over 4 jumps. The means differ by 6 cm, so the totals differ by 4 × 6 = 24 cm.")
+    put("PT11-12c", "Three angles meet at a point. Two of them are 110° and 95°. What is the third?", "155°", "Angles around a point add up to 360°. 360° − 110° − 95° = 155°.")
+    q = by["PT11-17c"]; stem = q["q"].split("\nc)")[0]
+    put("PT11-17c", stem + "\nc) In how many of the 36 results is the red number bigger than the blue number?", "15",
+        "Red 2: blue 1 (1 way). Red 3: 2 ways. Red 4: 3, red 5: 4, red 6: 5. 1 + 2 + 3 + 4 + 5 = 15.")
+    # review 23 Nov (2): questions 4, 5, 6 and 9 were too alike in papers 11 and 12 – a different kind of task in each
+    fresh = {("PT11", 4): (V.ord_jars, "order"), ("PT11", 5): (V.m_kitchen, "units"), ("PT11", 6): (V.p_test, "money"), ("PT11", 9): (V.t_swim, "time"),
+             ("PT12", 4): (V.ord_race, "order"), ("PT12", 5): (V.m_pool, "units"), ("PT12", 6): (V.p_school, "money"), ("PT12", 9): (V.t_bus, "time")}
+    for (pp, n), (gen, sk) in fresh.items():
+        stem, parts = gen(random.Random(f"{pp}-{n}-v3"))[:2]
+        for k, p in enumerate(parts):
+            q = by[f"{pp}-{n:02d}{'abc'[k]}"]
+            q.update(q=text_of(stem, p[0], "abc"[k]), a=p[1], s=p[2], skill=sk, k=SKILLS[sk], t=SKILLS[sk], tab=SKILLS[sk], bp=BLUE[sk]); q.pop("wrong", None)
+            if len(p) > 3 and p[3]: q["wrong"] = [w for w in p[3] if w != p[1]][:3]
+    put("PT12-12c", "A right angle is split into two angles. One of them is 34°. What is the other?", "56°", "A right angle is 90°. 90° − 34° = 56°.")
+    assert 4 * 160 - 4 * 154 == 24 and 360 - 110 - 95 == 155
+
+# 23 Nov: papers 11 and 12 re-ordered to the real paper order; new slot -> old question number (others are new questions)
+MOVE = {"PT11": {1: 1, 2: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 19, 10: 12, 12: 11, 13: 9, 15: 14, 16: 16, 17: 15, 18: 10, 19: 17, 20: 20},
+        "PT12": {1: 1, 2: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 19, 10: 12, 12: 11, 13: 9, 15: 14, 16: 16, 17: 15, 18: 10, 20: 20}}
+
+def main():
+    bank = json.load(open("/home/claude/live3/source/questions.json"))
+    old = json.load(open("/home/claude/data/pt11_30.json"))
+    keep = [q for q in old if q["paper"] in ("PT11", "PT12")]; patch_reviewed(keep)
+    newp = lambda q: str(q.get("paper", "")).startswith("PT") and int(q["paper"][2:]) > 12
+    key = lambda q: q["q"] + "|" + q.get("pic", "")
+    seen = {key(q) for q in bank if not str(q.get("paper", "")).startswith("PT") or int(q["paper"][2:]) not in range(11, 31)} | {key(q) for q in keep}
+    R = random.Random("papers-11-30-v3"); out = []; mix = []
+    old_by = {q["id"]: q for q in keep}
+    for i, pn in enumerate(range(11, 31)):
+        code = f"PT{pn}"; used = set(); kinds = []
+        for j, pool in enumerate(SLOTS):
+            if j + 1 in MOVE.get(code, {}):          # papers 11 and 12: reviewed question moved to its real-paper position
+                on = MOVE[code][j + 1]
+                for k in "abc":
+                    d = dict(old_by[f"{code}-{on:02d}{k}"]); d.update(id=f"{code}-{j + 1:02d}{k}", pq=f"{j + 1}{k}"); out.append(d)
+                kinds.append(f"(old {on})"); continue
+            order = [pool[(i + j + k) % len(pool)] for k in range(len(pool))]
+            done = False
+            for name, gen, sk in order:
+                if name in used: continue
+                for _ in range(300):
+                    res = gen(R); stem, parts = res[0], res[1]; pic = res[2] if len(res) > 2 else None
+                    if len(parts) != 3 or any(not p[1] or "-" in p[1] for p in parts): continue
+                    texts = [text_of(stem, p[0], "abc"[k]) for k, p in enumerate(parts)]
+                    keys = [t + "|" + (pic or "") for t in texts]
+                    if keys[0] in seen: continue
+                    seen.update(keys); done = True; break
+                if done: break
+            assert done, f"no question for {code} slot {j + 1}"
+            used.add(name); kinds.append(name); qn = j + 1
+            for k, p in enumerate(parts):
+                d = dict(id=f"{code}-{qn:02d}{'abc'[k]}", q=texts[k], a=p[1], s=p[2], k=SKILLS[sk], t=SKILLS[sk], tab=SKILLS[sk], m=1, wp=False, lv="Challenge", yr=6,
+                         skill=sk, src=f"Original CSSE-style practice test {pn}, written for this app", bp=BLUE[sk], paper=code, pq=f"{qn}{'abc'[k]}")
+                if pic: d["pic"] = pic
+                if len(p) > 3 and p[3]: d["wrong"] = [w for w in p[3] if w != p[1]][:3]
+                out.append(d)
+        mix.append((code, kinds))
+    json.dump(out, open("/home/claude/data/pt11_30.json", "w"), ensure_ascii=False)
+    for code, kinds in mix: print(code, " ".join(kinds))
+    print(len(out), "questions")
+
+if __name__ == "__main__":
+    main()

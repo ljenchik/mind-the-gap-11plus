@@ -1,0 +1,25 @@
+import pickle, re
+from decimal import Decimal as D
+bank = pickle.load(open('/home/claude/out3/bank.pkl','rb')); ps = pickle.load(open('/home/claude/out3/papers.pkl','rb'))
+items = [(q['id'], q['text'], q['ans'], q['sol']) for _,_,qs in bank for q in qs]
+for label, qs in ps:
+    for k, q in enumerate(qs, 1):
+        for j, (t, a, s) in enumerate(q['parts']): items.append((f'{label} Q{k}{"abcde"[j]}', t, a, s))
+num = r'(?<![\d/.,])(\d[\d,]*(?:\.\d+)?)(?![\d/]| \d+/)'
+pat = re.compile(r'(?<![×÷+−] )(?<![\d/.,°%£p])' + r'(\d[\d,]*(?:\.\d+)?) ([×÷+−]) (\d[\d,]*(?:\.\d+)?) = (\d[\d,]*(?:\.\d+)?)(?![\d/,.]*\d| \d+/\d|/)')
+bad = 0; checked = 0
+for id_, t, a, s in items:
+    assert a.strip() and 'None' not in a and 'None' not in t and 'None' not in s, id_
+    for blob in (t, a, s):
+        if re.search(r'\d\.\d{6,}', blob): print('LONGDEC', id_, blob[:100])
+        assert '/1 ' not in blob + ' ' and '/1.' not in blob, (id_, blob)
+    for m in pat.finditer(s):
+        x, op, y, z = m.groups(); x, y, z = [D(v.replace(',', '')) for v in (x, y, z)]
+        pre = s[max(0, m.start() - 2):m.start()]; post = s[m.end():m.end() + 3]
+        if post.strip().startswith(('×', '÷', '+', '−')) and False: continue
+        val = {'×': x * y, '÷': (x / y if y else None), '+': x + y, '−': x - y}[op]
+        checked += 1
+        if 'remainder' in s[m.end():m.end()+12] or s[max(0,m.start()-1):m.start()] == '−': continue
+        if val is None or abs(val - z) > D('0.0000001'):
+            bad += 1; print('MISMATCH', id_, '|', m.group(0), '|', s[:150])
+print('items', len(items), 'equations checked', checked, 'mismatches', bad)

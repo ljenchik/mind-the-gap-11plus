@@ -1,0 +1,34 @@
+import random, sys
+from common import *
+
+
+def build_topic(code, title, temps, k=50, seed=0):
+    r = random.Random(hash(code) % 1000 + 17 * seed + sum(map(ord, code)))
+    out, seen, tries, i = [], set(), 0, 0
+    while len(out) < k:
+        f = temps[i % len(temps)]; i += 1
+        for _ in range(60):
+            q = f(r); key = q['text'] + (q['alt'] or '') + str(q['table'])
+            if key not in seen:
+                seen.add(key); q['topic'] = title; q['code'] = code; out.append(q); break
+        tries += 1
+        assert tries < 5000, f'{code}: cannot reach {k}'
+    for j, q in enumerate(out, 1): q['id'] = f'{code}-{j:03d}'
+    return out
+
+
+if __name__ == '__main__':
+    import importlib
+    mods = sys.argv[1:]
+    for m in mods:
+        mod = importlib.import_module(m)
+        for code, title, temps in getattr(mod, m.upper()):
+            for f in temps:
+                r = random.Random(1)
+                for _ in range(300): f(r)
+            qs = build_topic(code, title, temps)
+            print('==', code, title, len(qs), 'templates', len(temps))
+            rr = random.Random(5)
+            for q in qs[:len(temps)]:
+                print('  Q:', q['text'], q['alt'] or '', '|', q['table'] or '')
+                print('     A:', q['ans'], '||', q['sol'])

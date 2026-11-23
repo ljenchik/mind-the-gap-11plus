@@ -1,0 +1,579 @@
+from common import *
+from math import gcd
+
+
+def lcm(a, b): return a * b // gcd(a, b)
+
+
+# ---------- 1 Ratio and sharing ----------
+def rat_ages(r):
+    a, b = r.sample(range(5, 14), 2); k = r.randint(2, 9); A, B = names(r, 2); w = r.randint(0, 1)
+    return Q(f'{A} is {a} years old and {B} is {b}. They are given £{(a + b) * k} to share in the ratio of their ages. How much does {[A, B][w]} get?',
+             f'£{[a, b][w] * k}', f'{a} + {b} = {a + b} parts. £{(a + b) * k} ÷ {a + b} = £{k} for each part. {[a, b][w]} × £{k} = £{[a, b][w] * k}.', 'Sharing by ages')
+
+
+def rat_three(r):
+    a, b, c = r.sample(range(1, 10), 3); k = 5 * r.randint(2, 24); A, B, C = names(r, 3); w = r.randint(0, 2)
+    tot = (a + b + c) * k
+    return Q(f'{money(tot)} is shared between {A}, {B} and {C} in the ratio {a}:{b}:{c}. How much does {[A, B, C][w]} receive?',
+             money([a, b, c][w] * k), f'{a} + {b} + {c} = {a + b + c} parts. {money(tot)} ÷ {a + b + c} = {pm(k)} for each part. {[a, b, c][w]} × {pm(k)} = {money([a, b, c][w] * k)}.', 'Three-way ratio')
+
+
+def rat_school(r):
+    while True:
+        a, b = r.sample(range(2, 10), 2)
+        if gcd(a, b) == 1: break
+    k = r.randint(12, 60); w = r.randint(0, 1); g = ['boys', 'girls']
+    return Q(f'There are {(a + b) * k} children in a school. There are {a} boys to every {b} girls. How many {g[w]} are there?',
+             [a, b][w] * k, f'{a} + {b} = {a + b} parts. {(a + b) * k} ÷ {a + b} = {k}. {[a, b][w]} × {k} = {[a, b][w] * k} {g[w]}.', 'Boys to girls')
+
+
+def rat_forevery(r):
+    p = r.choice([(10, 5, 2), (10, 4, 1), (5, 3, 2), (20, 10, 5), (10, 6, 4), (10, 5, 1), (5, 2, 1), (20, 5, 2)])
+    m = r.randint(6, 40); A, B, C = names(r, 3); w = r.randint(0, 2); tot = sum(p) * m
+    return Q(f'Share {money(tot)} among {A}, {B} and {C}. For every {p[0]}p {A} gets, {B} gets {p[1]}p and {C} gets {p[2]}p. How much does {[A, B, C][w]} get?',
+             money(p[w] * m), f'One round gives out {p[0]}p + {p[1]}p + {p[2]}p = {sum(p)}p. {money(tot)} ÷ {sum(p)}p = {m} rounds. {m} × {p[w]}p = {money(p[w] * m)}.', 'For every')
+
+
+def rat_simplify(r):
+    while True:
+        a, b = r.sample(range(1, 12), 2)
+        if gcd(a, b) == 1: break
+    g = r.randint(2, 12)
+    return Q(f'Write the ratio {a * g}:{b * g} in its simplest form.', f'{a}:{b}', f'Divide both numbers by {g}: {a * g} ÷ {g} = {a} and {b * g} ÷ {g} = {b}.', 'Simplify a ratio')
+
+
+def rat_onepart(r):
+    while True:
+        a, b = r.sample(range(2, 10), 2)
+        if gcd(a, b) == 1: break
+    k = r.randint(3, 15)
+    x, y, w = r.choice([('red beads', 'blue beads', 'In a necklace'), ('cats', 'dogs', 'At a rescue centre'), ('adults', 'children', 'On a coach trip'),
+                        ('apple trees', 'pear trees', 'In an orchard'), ('fiction books', 'non-fiction books', 'On a shelf'), ('goats', 'sheep', 'On a farm')])
+    return Q(f'{w} the ratio of {x} to {y} is {a}:{b}. There are {a * k} {x}. How many {y} are there?', b * k,
+             f'{a} parts = {a * k}, so 1 part = {a * k} ÷ {a} = {k}. {b} parts = {b} × {k} = {b * k}.', 'Ratio from one part')
+
+
+def rat_diff(r):
+    while True:
+        a, b = r.sample(range(2, 10), 2)
+        if a > b and gcd(a, b) == 1: break
+    k = r.randint(2, 15); A, B = names(r, 2)
+    return Q(f'{A} and {B} share some money in the ratio {a}:{b}. {A} gets £{(a - b) * k} more than {B}. How much money did they share altogether?',
+             f'£{(a + b) * k}', f'The difference is {a} − {b} = {a - b} part{"s" if a - b > 1 else ""} = £{(a - b) * k}, so 1 part = £{k}. Altogether {a + b} parts = £{(a + b) * k}.', 'Ratio and difference')
+
+
+# ---------- 2 Proportion ----------
+def pro_items(r):
+    k = r.randint(3, 13); m = r.choice([x for x in range(2, 16) if x != k]); u = r.randint(12, 96); it = r.choice(ITEMS)
+    return Q(f'If {k} {it} cost {money(k * u)}, what would {m} {it} cost?', money(m * u),
+             f'{money(k * u)} ÷ {k} = {u}p each. {m} × {u}p = {money(m * u)}.', 'Unit cost')
+
+
+def pro_food(r):
+    while True:
+        d, e, nn = r.randint(2, 8), r.randint(2, 10), r.randint(4, 30)
+        if d != e and (d * nn) % e == 0: break
+    an = r.choice(['dogs', 'cats', 'rabbits', 'horses', 'hens'])
+    return Q(f'I have enough food to last my {d} {an} for {nn} days. How long would the same food last {e} {an}?', f'{d * nn // e} days',
+             f'For 1 animal the food lasts {d} × {nn} = {d * nn} days. {d * nn} ÷ {e} = {d * nn // e} days.', 'Inverse proportion')
+
+
+def pro_workers(r):
+    while True:
+        a, b, h = r.randint(2, 12), r.randint(2, 20), r.randint(3, 24)
+        if a != b and (a * h) % b == 0: break
+    job = r.choice(['paint a fence', 'pick a field of strawberries', 'lay a path', 'pack an order', 'clear a car park of snow'])
+    return Q(f'If {a} people can {job} in {h} hours, how long would it take {b} people working at the same speed?', f'{a * h // b} hours',
+             f'The job needs {a} × {h} = {a * h} hours of work in total. {a * h} ÷ {b} = {a * h // b} hours.', 'Inverse proportion')
+
+
+def pro_perkg(r):
+    p = 20 * r.randint(4, 18); st = r.choice(['Britesoap', 'rice', 'compost', 'birdseed', 'flour', 'grass seed']); v = r.randint(0, 2)
+    if v == 0:
+        k = r.randint(2, 9)
+        return Q(f'1 kg of {st} costs {money(p)}. How many kilograms could I buy with {money(p * k)}?', f'{k} kg', f'{money(p * k)} ÷ {money(p)} = {k}.', 'Price per kg')
+    if v == 1:
+        k = r.choice([3, 5, 7, 9, 11]);
+        return Q(f'1 kg of {st} costs {money(p)}. How much would I pay for {dec(D(k) / 2)} kg?', money(p * k // 2),
+                 f'{dec(D(k) / 2)} × {money(p)} = {money(p * k // 2)} (half a kilogram costs {pm(p // 2)}).', 'Price per kg')
+    fr_, g = r.choice([(4, 250), (2, 500), (5, 200), (10, 100)])
+    return Q(f'1 kg of {st} costs {money(p)}. How many grams could I buy with {pm(p // fr_)}?', f'{g} g',
+             f'{pm(p // fr_)} is 1/{fr_} of {money(p)}, so I get 1/{fr_} of 1,000 g = {g} g.', 'Price per kg')
+
+
+def pro_recipe(r):
+    s = r.choice([2, 4, 6, 8]); t = r.choice([x for x in (3, 5, 6, 9, 10, 12, 14, 15) if x != s]); per = r.choice([25, 30, 40, 45, 50, 60, 75])
+    ing = r.choice(['flour', 'sugar', 'butter', 'rice', 'pasta', 'oats'])
+    return Q(f'A recipe for {s} people uses {s * per} g of {ing}. How much {ing} is needed for {t} people?', f'{n(t * per)} g',
+             f'{s * per} ÷ {s} = {per} g for each person. {t} × {per} = {n(t * per)} g.', 'Scaling a recipe')
+
+
+def pro_rate(r):
+    a = r.randint(3, 9); b = r.choice([x for x in range(4, 21) if x != a]); k = r.choice([15, 20, 24, 25, 30, 35, 40, 45, 60])
+    th = r.choice(['bottles', 'tins', 'leaflets', 'boxes', 'badges'])
+    return Q(f'A machine packs {a * k} {th} in {a} minutes. How many {th} will it pack in {b} minutes?', n(b * k),
+             f'{a * k} ÷ {a} = {k} each minute. {b} × {k} = {n(b * k)}.', 'Rates')
+
+
+def pro_petrol(r):
+    a = r.randint(3, 9); b = r.choice([x for x in range(2, 16) if x != a]); k = r.choice([12, 14, 15, 16, 18, 20])
+    return Q(f'A car travels {a * k} km on {a} litres of petrol. How far can it travel on {b} litres?', f'{b * k} km',
+             f'{a * k} ÷ {a} = {k} km for each litre. {b} × {k} = {b * k} km.', 'Rates')
+
+
+# ---------- 3 Percentages of amounts ----------
+def pct_of(r):
+    if r.random() < .25:
+        p, ps = r.choice([(D('12.5'), '12½%'), (D('17.5'), '17½%'), (D('2.5'), '2½%')]); a = 40 * r.randint(1, 20)
+        v = p * a / 100
+        return Q(f'Find {ps} of £{a}.', money(int(v * 100)), f'10% of £{a} = £{dec(D(a) / 10)}, 5% = £{dec(D(a) / 20)}, 2½% = £{dec(D(a) / 40)}. Add the parts that make {ps}: {money(int(v * 100))}.', 'Percentage of an amount')
+    p = r.choice([5, 15, 20, 30, 35, 40, 45, 60, 70, 75, 80, 90]); a = 20 * r.randint(2, 45); u = r.choice(['£', ' kg', ' m', ' km', ''])
+    f = lambda x: f'£{x}' if u == '£' else f'{x}{u}'
+    return Q(f'Find {p}% of {f(a)}.', f(a * p // 100), f'10% of {a} = {dec(D(a) / 10)}, so 5% = {dec(D(a) / 20)}. {p}% = {dec(D(a) * p / 100)}.', 'Percentage of an amount')
+
+
+def pct_reduce(r):
+    p = r.choice([10, 15, 20, 25, 30, 40]); a = 5 * r.randint(2, 60); it = r.choice(['coat', 'bike', 'tent', 'pair of trainers', 'scooter', 'lamp', 'guitar'])
+    return Q(f'In a sale all prices are reduced by {p}%. A {it} normally costs £{a}.00. What is its sale price?', money(a * (100 - p)),
+             f'{p}% of £{a} = {money(a * p)}. £{a}.00 − {money(a * p)} = {money(a * (100 - p))}.', 'Percentage reduction')
+
+
+def pct_vat(r):
+    a = r.choice([5 * r.randint(4, 120), r.randint(21, 199)]); w = r.randint(0, 1)
+    return Q(f'VAT is charged at 20%. An article costs £{a}.00 before VAT. ' + ['How much VAT is added?', 'What is the total cost including VAT?'][w],
+             [money(a * 20), money(a * 120)][w], f'20% is one fifth: £{a} ÷ 5 = {money(a * 20)}.' + ['', f' £{a}.00 + {money(a * 20)} = {money(a * 120)}.'][w], 'VAT')
+
+
+def pct_increase(r):
+    p = r.choice([2, 3, 4, 5, 10]); s = 1000 * r.randint(12, 60); w = r.choice(['increase', 'decrease'])
+    new = s * (100 + p) // 100 if w == 'increase' else s * (100 - p) // 100
+    return Q(f'A salary of £{n(s)} is given a {p}% {w}. What is the new salary?', f'£{n(new)}',
+             f'{p}% of £{n(s)} = £{n(s * p // 100)}. £{n(s)} {"+" if w == "increase" else "−"} £{n(s * p // 100)} = £{n(new)}.', 'Percentage change')
+
+
+def pct_class(r):
+    p = r.choice([15, 20, 25, 30, 35, 40, 45, 55, 60, 65, 70, 80]); N = 20 * r.randint(1, 30)
+    a, b, ctx = r.choice([('girls', 'boys', 'children in a school'), ('away on a trip', 'in school', 'pupils in a school'), ('toffees', 'chocolates', 'sweets in a tin'),
+                          ('adults', 'children', 'people at a concert'), ('full', 'empty', 'seats on a train')])
+    link = 'are' if a not in ('girls', 'toffees', 'adults') else 'are'
+    return Q(f'There are {N} {ctx}. {p}% of them are {a}. How many are {b}?', N - N * p // 100,
+             f'{p}% of {N} = {N * p // 100}. {N} − {N * p // 100} = {N - N * p // 100} (or find {100 - p}% of {N}).', 'Percentage of a group')
+
+
+def pct_reverse_frac(r):
+    p = r.choice([5, 10, 20, 25]); T = 20 * r.randint(15, 120); b = r.choice([2, 4, 5, 10]); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1])
+    return Q(f'{p}% of my money is {money(T * p // 100)}. What is {a}/{b} of my money?', money(T * a // b),
+             f'{p}% is 1/{100 // p}, so all my money is {100 // p} × {money(T * p // 100)} = {money(T)}. {a}/{b} of {money(T)} = {money(T * a // b)}.', 'Reverse percentage')
+
+
+def pct_original(r):
+    p = r.choice([10, 20, 25, 30, 40]); O = 20 * r.randint(1, 25); it = r.choice(['jacket', 'tablet', 'watch', 'sofa', 'drone', 'keyboard'])
+    s = O * (100 - p) // 100
+    return Q(f'After a {p}% reduction a {it} costs £{s}. What was the price before the reduction?', f'£{O}',
+             f'£{s} is {100 - p}% of the old price. £{s} ÷ {100 - p} × 100 = £{O}. Check: {p}% of £{O} = £{O * p // 100}, and £{O} − £{O * p // 100} = £{s}.', 'Reverse percentage')
+
+
+# ---------- 4 Marks as percentages ----------
+SUBJ = ['Science', 'French', 'English', 'Art', 'Music', 'History', 'Geography', 'Maths', 'Spanish', 'Computing']
+
+
+def _mark(r):
+    while True:
+        b = r.choice([15, 20, 25, 30, 35, 40, 50, 60, 70, 75, 80, 120, 150, 200]); p = 5 * r.randint(4, 19)
+        if (b * p) % 100 == 0: return b * p // 100, b, p
+
+
+def pcm_mark(r):
+    a, b, p = _mark(r); A = names(r, 1)[0]; s = r.choice(SUBJ)
+    return Q(f'{A} scored {a} out of {b} in {s}. Write this mark as a percentage.', f'{p}%', f'{a}/{b} = {fr(F(a, b))} in its simplest form = {p}/100 = {p}%.', 'Mark to percentage')
+
+
+def pcm_actual(r):
+    a, b, p = _mark(r); A = names(r, 1)[0]; s = r.choice(SUBJ)
+    return Q(f'{A} got {p}% in the {s} test, which was marked out of {b}. How many marks did {A} get?', a, f'{p}% of {b}: 10% of {b} = {dec(D(b) / 10)}, so {p}% = {a}.', 'Percentage to mark')
+
+
+def pcm_club(r):
+    a, b, p = _mark(r); c = r.choice(['clean the beach', 'plant trees', 'run a cake sale', 'paint the club hut'])
+    return Q(f'A club has {b} members. {a} of them helped to {c}. What percentage of the members helped?', f'{p}%', f'{a}/{b} = {fr(F(a, b))} = {p}%.', 'Percentage of a group')
+
+
+def pcm_frac(r):
+    b = r.choice([4, 5, 10, 20, 25, 50, 30, 40, 60]);
+    while True:
+        a = r.randint(1, b - 1)
+        if (100 * a) % b == 0: break
+    return Q(f'What percentage is {a}/{b}?', f'{100 * a // b}%', f'{a}/{b} = {100 * a // b}/100 = {100 * a // b}%.', 'Fraction to percentage')
+
+
+def pcm_better(r):
+    while True:
+        (a1, b1, p1), (a2, b2, p2) = _mark(r), _mark(r)
+        if p1 != p2 and b1 != b2 and abs(p1 - p2) <= 15: break
+    s1, s2 = r.sample(SUBJ, 2); A = names(r, 1)[0]
+    return Q(f'{A} scored {a1}/{b1} in {s1} and {a2}/{b2} in {s2}. In which subject did {A} get the higher percentage?', s1 if p1 > p2 else s2,
+             f'{s1}: {a1}/{b1} = {p1}%. {s2}: {a2}/{b2} = {p2}%.', 'Comparing marks')
+
+
+def pcm_rest(r):
+    N = r.choice([50, 100, 200, 250, 400, 500, 20, 25])
+    while True:
+        a = r.randint(N // 10, N * 9 // 10)
+        if (100 * a) % N == 0: break
+    x, y, ctx = r.choice([('non-fiction', 'fiction', 'books in a library'), ('red', 'not red', 'cars in a car park'), ('boys', 'girls', 'children at a holiday club'),
+                          ('milk chocolate', 'dark chocolate', 'bars in a box')])
+    return Q(f'There are {N} {ctx}. {a} of them are {x} and the rest are {y}. What percentage are {y}?', f'{100 - 100 * a // N}%',
+             f'{a}/{N} = {100 * a // N}% are {x}. 100% − {100 * a // N}% = {100 - 100 * a // N}%.', 'Percentage of a group')
+
+
+def pcm_total(r):
+    b1, b2 = r.choice([(15, 35), (20, 30), (40, 60), (80, 70), (20, 80), (45, 55), (30, 20), (25, 75), (90, 60)]); T = b1 + b2
+    while True:
+        p = 2 * r.randint(20, 46); a = T * p // 100; a1 = r.randint(b1 // 2, b1); a2 = a - a1
+        if (T * p) % 100 == 0 and b2 // 3 <= a2 <= b2: break
+    s1, s2 = r.sample(SUBJ, 2); A = names(r, 1)[0]
+    return Q(f'{A} scored {a1} out of {b1} in {s1} and {a2} out of {b2} in {s2}. What is the total mark for the two subjects as a percentage?', f'{p}%',
+             f'Total: {a1} + {a2} = {a} out of {b1} + {b2} = {T}. {a}/{T} = {p}%.', 'Combined percentage')
+
+
+# ---------- 5 Fractions, decimals, percentages ----------
+def _basefrac(r, dens=(2, 4, 5, 8, 10, 20, 25, 50)):
+    b = r.choice(dens); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); return a, b
+
+
+def fdp_f2d(r):
+    a, b = _basefrac(r)
+    return Q(f'Write {a}/{b} as a decimal.', dec(D(a) / D(b)), f'{a} ÷ {b} = {dec(D(a) / D(b))} (or change it to {a * 1000 // b}/1000).', 'Fraction to decimal')
+
+
+def fdp_f2p(r):
+    a, b = _basefrac(r)
+    return Q(f'Write {a}/{b} as a percentage.', f'{dec(D(a) * 100 / D(b))}%', f'{a}/{b} = {dec(D(a) / D(b))} = {dec(D(a) * 100 / D(b))}%.', 'Fraction to percentage')
+
+
+def fdp_d2f(r):
+    a, b = _basefrac(r, (4, 5, 8, 10, 20, 25, 50, 125, 500)); w = r.randint(0, 12)
+    x = D(w) + D(a) / D(b)
+    return Q(f'Write {dec(x)} as a {"mixed number" if w else "fraction"} in its lowest terms.', fr(F(w) + F(a, b)),
+             f'{dec(x)} = {str(w) + " " if w else ""}{a * 1000 // b}/1000, which simplifies to {fr(F(w) + F(a, b))}.', 'Decimal to fraction')
+
+
+def fdp_p2f(r):
+    p = r.choice([x for x in range(4, 99, 2) if x % 10] + [5, 15, 35, 45, 55, 65, 85, 95])
+    return Q(f'Write {p}% as a fraction in its lowest terms.', fr(F(p, 100)), f'{p}% = {p}/100 = {fr(F(p, 100))}.', 'Percentage to fraction')
+
+
+def fdp_d2p(r):
+    x = D(r.randint(1, 199)) / 100 if r.random() < .7 else D(r.choice([125, 375, 625, 875, 5, 45, 105])) / 1000
+    return Q(f'Write {dec(x)} as a percentage.', f'{dec(x * 100)}%', f'Multiply by 100: {dec(x)} × 100 = {dec(x * 100)}%.', 'Decimal to percentage')
+
+
+def fdp_div10(r):
+    if r.random() < .7:
+        N = r.choice([x for x in range(11, 999) if x % 10]); v = F(N, 10); s = str(N)
+    else:
+        k = r.randint(1, 400); q = r.choice([F(1, 2), F(1, 4), F(3, 4)]); v = (k + q) / 10; s = dec(D(k) + D(q.numerator) / D(q.denominator))
+    return Q(f'Divide {s} by 10. Give your answer as a {"mixed number" if v > 1 else "fraction"} with the fraction in its lowest terms.', fr(v),
+             f'{s} ÷ 10 = {dec(D(v.numerator) / D(v.denominator))} = {fr(v)}.', 'Divide by 10 as a mixed number')
+
+
+def fdp_table(r):
+    a, b = _basefrac(r, (2, 4, 5, 10, 20, 25)); x = D(a) / D(b); w = r.randint(0, 2)
+    given = [f'the fraction {a}/{b}', f'the decimal {dec(x)}', f'the percentage {dec(x * 100)}%'][w]
+    others = [f'{a}/{b}', dec(x), f'{dec(x * 100)}%']; ask = ['fraction (in its lowest terms)', 'decimal', 'percentage']
+    rest = [i for i in range(3) if i != w]
+    return Q(f'A table shows {given}. Write the same value as a {ask[rest[0]]} and as a {ask[rest[1]]}.', f'{others[rest[0]]} and {others[rest[1]]}',
+             f'{a}/{b} = {dec(x)} = {dec(x * 100)}%.', 'Fraction, decimal and percentage table')
+
+
+# ---------- 6 Fraction calculations ----------
+DENS = (2, 3, 4, 5, 6, 8, 9, 10, 12, 16, 20)
+
+
+def _pf(r, proper=True):
+    b = r.choice(DENS); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); return F(a, b)
+
+
+def _cd(x, y, op):
+    L = lcm(x.denominator, y.denominator); res = x + y if op == '+' else x - y
+    return f'Use a common denominator of {L}: {x.numerator * L // x.denominator}/{L} {op} {y.numerator * L // y.denominator}/{L} = {(x.numerator * L // x.denominator) + (1 if op == "+" else -1) * (y.numerator * L // y.denominator)}/{L}' + ('.' if fr(res) == f'{(x.numerator * L // x.denominator) + (1 if op == "+" else -1) * (y.numerator * L // y.denominator)}/{L}' else f' = {fr(res)}.')
+
+
+def frc_add(r):
+    while True:
+        x, y = _pf(r), _pf(r)
+        if x.denominator != y.denominator: break
+    return Q(f'{fr(x)} + {fr(y)} = ____  (give your answer in its simplest form)', fr(x + y), _cd(x, y, '+'), 'Adding fractions')
+
+
+def frc_sub(r):
+    while True:
+        x, y = _pf(r), _pf(r)
+        if x.denominator != y.denominator and x > y: break
+    return Q(f'{fr(x)} − {fr(y)} = ____  (give your answer in its simplest form)', fr(x - y), _cd(x, y, '−'), 'Subtracting fractions')
+
+
+def frc_mixadd(r):
+    while True:
+        x, y = _pf(r), _pf(r)
+        if x.denominator != y.denominator: break
+    a, b = r.randint(1, 9), r.randint(1, 9)
+    return Q(f'{fr(a + x)} + {fr(b + y)} = ____', fr(a + b + x + y), f'Whole numbers: {a} + {b} = {a + b}. Fractions: ' + _cd(x, y, '+') + f' Total: {fr(a + b + x + y)}.', 'Adding mixed numbers')
+
+
+def frc_mixsub(r):
+    while True:
+        x, y = _pf(r), _pf(r); a, b = r.randint(3, 12), r.randint(1, 8)
+        if x.denominator != y.denominator and a > b: break
+    X, Y = a + x, b + y; L = lcm(X.denominator, Y.denominator)
+    return Q(f'{fr(X)} − {fr(Y)} = ____', fr(X - Y), f'As improper fractions over {L}: {X.numerator * L // X.denominator}/{L} − {Y.numerator * L // Y.denominator}/{L} = {(X - Y).numerator * L // (X - Y).denominator}/{L} = {fr(X - Y)}.', 'Subtracting mixed numbers')
+
+
+def frc_equiv(r):
+    b = r.choice([3, 4, 5, 6, 7, 8, 9, 11, 12]); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); k = r.randint(3, 12)
+    if r.random() < .6:
+        return Q(f'Fill in the missing number: {a}/{b} = ____/{b * k}', a * k, f'{b} × {k} = {b * k}, so multiply the top by {k} as well: {a} × {k} = {a * k}.', 'Equivalent fractions')
+    return Q(f'Fill in the missing number: {a}/{b} = {a * k}/____', b * k, f'{a} × {k} = {a * k}, so multiply the bottom by {k} as well: {b} × {k} = {b * k}.', 'Equivalent fractions')
+
+
+def frc_mul(r):
+    x, y = _pf(r), _pf(r)
+    return Q(f'{fr(x)} × {fr(y)} = ____  (give your answer in its simplest form)', fr(x * y),
+             f'Multiply the tops and the bottoms: {x.numerator * y.numerator}/{x.denominator * y.denominator} = {fr(x * y)}.', 'Multiplying fractions')
+
+
+def frc_mulint(r):
+    x = _pf(r); k = r.randint(2, 15)
+    return Q(f'{fr(x)} × {k} = ____  (give your answer in its simplest form)', fr(x * k), f'{x.numerator} × {k} = {x.numerator * k}, so the answer is {x.numerator * k}/{x.denominator} = {fr(x * k)}.', 'Fraction times a whole number')
+
+
+def frc_divunit(r):
+    k = r.randint(2, 15); x = _pf(r) if r.random() < .5 else F(1, r.randint(2, 9))
+    return Q(f'{k} ÷ {fr(x)} = ____', fr(k / x), f'Dividing by {fr(x)} is the same as multiplying by {inv(x)}: {k} × {inv(x)} = {fr(k / x)}.', 'Dividing by a fraction')
+
+
+def frc_div(r):
+    while True:
+        x, y = _pf(r), _pf(r)
+        if x != y: break
+    return Q(f'{fr(x)} ÷ {fr(y)} = ____  (give your answer in its simplest form)', fr(x / y),
+             f'Turn the second fraction upside down and multiply: {fr(x)} × {inv(y)} = {fr(x / y)}.', 'Dividing fractions')
+
+
+def frc_simplify(r):
+    x = _pf(r); k = r.choice([2, 3, 4, 5, 6, 7, 8, 9, 12])
+    return Q(f'Write {x.numerator * k}/{x.denominator * k} in its simplest form.', fr(x), f'Divide the top and the bottom by {k}: {fr(x)}.', 'Simplifying')
+
+
+# ---------- 7 Ordering fractions and decimals ----------
+def _decset(r, k):
+    a, b = r.sample(range(1, 10), 2); w = r.choice(['0', '0', str(r.randint(1, 9))])
+    pool = {f'{w}.{a}0{b}', f'{w}.{a}{b}', f'{w}.{a}', f'{w}.{a}{a}', f'{w}.{a}0{a}', f'{w}.0{a}{b}', f'{w}.{a}{b}{a}', f'{w}.{b}', f'{w}.0{a}', f'{w}.{a}{b}{b}'}
+    pool = [s for s in pool if not s.endswith('0')]
+    vals = {}
+    for s in pool: vals.setdefault(D(s), s)
+    return r.sample(sorted(vals.values()), k)
+
+
+def fro_dec(r):
+    k = r.choice([4, 5]); xs = _decset(r, k); big = r.random() < .5
+    o = sorted(xs, key=D, reverse=big)
+    return Q(f'Put these numbers in order, {"largest" if big else "smallest"} first: {", ".join(xs)}', ', '.join(o),
+             'Compare the tenths first, then the hundredths, then the thousandths. Writing them all with three decimal places helps: ' + ', '.join(f'{D(x):.3f}' for x in o) + '.', 'Ordering decimals')
+
+
+def fro_frac(r):
+    L = r.choice([24, 36, 40, 30]); pool = sorted({F(a, L) for a in range(1, L)} - {F(a, L) for a in range(1, L) if F(a, L).denominator == L and L > 24})
+    while True:
+        xs = r.sample(pool, r.choice([4, 5]))
+        if len({x.denominator for x in xs}) >= 3: break
+    big = r.random() < .6; o = sorted(xs, reverse=big)
+    return Q(f'Arrange these fractions in order of size, {"largest" if big else "smallest"} first: {", ".join(fr(x) for x in xs)}', ', '.join(fr(x) for x in o),
+             f'Change them all to a denominator of {L}: ' + ', '.join(f'{fr(x)} = {x.numerator * L // x.denominator}/{L}' for x in o) + '.', 'Ordering fractions')
+
+
+def _mixed(r, k):
+    out = {}
+    while len(out) < k:
+        t = r.randint(0, 2)
+        if t == 0: a, b = _basefrac(r, (2, 4, 5, 8, 10, 20, 3)); v = F(a, b); s = f'{a}/{b}'
+        elif t == 1: v = F(r.randint(5, 95), 100); s = dec(D(v.numerator) / D(v.denominator))
+        else: v = F(r.randint(5, 95), 100); s = f'{v.numerator * 100 // v.denominator}%'
+        if v not in out: out[v] = s
+    return out
+
+
+def fro_mix(r):
+    d = _mixed(r, 4); big = r.random() < .5; best = (max if big else min)(d)
+    items = list(d.items()); r.shuffle(items)
+    return Q(f'Which of these is the {"largest" if big else "smallest"}?   ' + ';   '.join(s for _, s in items), d[best],
+             'As decimals: ' + ', '.join(f'{s} = {float(v):.3g}' for v, s in items) + '.', 'Comparing fractions, decimals and percentages')
+
+
+def fro_closest(r):
+    target, ts = r.choice([(F(1, 2), '1/2'), (F(1, 4), '1/4'), (F(3, 4), '3/4'), (F(1, 1), '1')])
+    while True:
+        d = _mixed(r, 4)
+        if target in d: continue
+        ds = sorted(abs(v - target) for v in d)
+        if ds[0] != ds[1]: break
+    best = min(d, key=lambda v: abs(v - target)); items = list(d.items()); r.shuffle(items)
+    return Q(f'Which of these is closest to {ts}?   ' + ';   '.join(s for _, s in items), d[best],
+             'As decimals: ' + ', '.join(f'{s} = {float(v):.3g}' for v, s in items) + f'. The one nearest to {float(target):g} is {d[best]}.', 'Closest to')
+
+
+def fro_half(r):
+    a = D(r.randint(1, 80)) / 10; g = D(r.choice([2, 4, 6, 8, 12, 14, 30, 50, 1, 3])) / 100 * 2
+    b = a + g
+    return Q(f'What number is exactly halfway between {dec(a)} and {dec(b)}?', dec((a + b) / 2), f'Add them and halve: ({dec(a)} + {dec(b)}) ÷ 2 = {dec(a + b)} ÷ 2 = {dec((a + b) / 2)}.', 'Halfway between')
+
+
+# ---------- 8 Fractions of amounts ----------
+def foa_simple(r):
+    b = r.choice([3, 4, 5, 6, 7, 8, 9, 10, 12]); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); k = r.randint(3, 40); u = r.choice(['£', ' kg', ' km', ' sweets', ' pages', ' ml'])
+    f = lambda x: f'£{x}' if u == '£' else f'{x}{u}'
+    return Q(f'Find {a}/{b} of {f(b * k)}.', f(a * k), f'{b * k} ÷ {b} = {k}. {a} × {k} = {a * k}.', 'Fraction of an amount')
+
+
+def foa_other(r):
+    while True:
+        b, d = r.choice([2, 3, 4, 5, 6, 8, 10]), r.choice([2, 3, 4, 5, 6, 8, 10])
+        if b != d: break
+    a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); c = r.choice([x for x in range(1, d) if gcd(x, d) == 1])
+    T = lcm(b, d) * 5 * r.randint(1, 12)
+    return Q(f'{a}/{b} of a sum of money is {pm(T * a // b)}. What is {c}/{d} of the same sum of money?', pm(T * c // d),
+             f'1/{b} is {pm(T * a // b)} ÷ {a} = {pm(T // b)}, so the whole sum is {b} × {pm(T // b)} = {pm(T)}. {c}/{d} of {pm(T)} = {pm(T * c // d)}.', 'Finding the whole first')
+
+
+def foa_absent(r):
+    b = r.choice([3, 4, 5, 6, 7, 8, 9, 10, 12]); a = r.choice([1, 1, 2]) if b > 3 else 1
+    while gcd(a, b) != 1: a = 1
+    N = b * r.randint(8, 80); x, y, ctx = r.choice([('absent', 'present', 'pupils in a school'), ('rotten', 'good', 'apples in a crate'), ('empty', 'taken', 'seats in a theatre'), ('broken', 'whole', 'eggs in a delivery')])
+    return Q(f'There are {N} {ctx}. {a}/{b} of them are {x}. How many are {y}?', N - N * a // b, f'{N} ÷ {b} = {N // b}, so {a}/{b} is {N * a // b}. {N} − {N * a // b} = {N - N * a // b}.', 'Fraction of a group')
+
+
+def foa_left(r):
+    c = 5 * r.randint(8, 120); b = r.choice([3, 4, 5]); y = 5 * r.randint(6, 60); it = r.choice(['book', 'magazine', 'ticket', 'sandwich', 'game'])
+    nm = {3: 'one third', 4: 'one quarter', 5: 'one fifth'}[b]
+    return Q(f'After I had bought a {it} costing {money(c)}, {nm} of what I had left was {money(y)}. How much money did I have at first?', money(c + b * y),
+             f'What I had left: {b} × {money(y)} = {money(b * y)}. Add the {it}: {money(b * y)} + {money(c)} = {money(c + b * y)}.', 'Working backwards')
+
+
+def foa_spent(r):
+    b = r.choice([3, 4, 5, 6, 8, 10]); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); k = 5 * r.randint(4, 60); A = names(r, 1)[0]
+    return Q(f'{A} spent {a}/{b} of some money and had {money((b - a) * k)} left. How much money did {A} have at first?', money(b * k),
+             f'{b - a}/{b} is left, so {b - a} part{"s" if b - a > 1 else ""} = {money((b - a) * k)} and 1 part = {money(k)}. {b} parts = {money(b * k)}.', 'Working backwards')
+
+
+def foa_units(r):
+    U, u, f = r.choice([('kg', 'g', 1000), ('km', 'm', 1000), ('m', 'cm', 100), ('hours', 'minutes', 60), ('litres', 'ml', 1000), ('cm', 'mm', 10)])
+    while True:
+        b = r.choice([2, 4, 5, 8, 10, 3, 6]); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); q = r.randint(1, 6)
+        if (q * f * a) % b == 0: break
+    return Q(f'What is {a}/{b} of {q} {U if q > 1 else U.rstrip("s") if U in ("hours", "litres") else U}? Give your answer in {u}.', f'{n(q * f * a // b)} {u}',
+             f'{q} {U} = {n(q * f)} {u}. {n(q * f)} ÷ {b} × {a} = {n(q * f * a // b)} {u}.', 'Fraction of a measure')
+
+
+# ---------- 9 Decimal calculations ----------
+def dec_mul_small(r):
+    if r.random() < .2:
+        x = D(r.choice([1, 2, 3, 4, 5])) / 10; return Q(f'{dec(x)} × {dec(x)} × {dec(x)} = ____', dec(x ** 3), f'{dec(x)} × {dec(x)} = {dec(x * x)}, then × {dec(x)} = {dec(x ** 3)} (three decimal places).', 'Multiplying decimals')
+    x = D(r.randint(1, 12)) / r.choice([10, 10, 100]); y = D(r.randint(2, 12)) / 10
+    return Q(f'{dec(x)} × {dec(y)} = ____', dec(x * y), f'Ignore the points: {int(x.scaleb(-x.as_tuple().exponent))} × {int(y.scaleb(-y.as_tuple().exponent))} = {int(x.scaleb(-x.as_tuple().exponent)) * int(y.scaleb(-y.as_tuple().exponent))}. There are {-x.as_tuple().exponent - y.as_tuple().exponent} decimal places in the question, so the answer is {dec(x * y)}.', 'Multiplying decimals')
+
+
+def dec_div(r):
+    d = D(r.choice(['0.2', '0.3', '0.4', '0.5', '0.6', '0.8', '1.2', '1.5', '0.05', '0.25', '0.02'])); q = r.choice([r.randint(2, 30), D(r.randint(2, 30)) / 10])
+    a = d * D(q); k = 10 ** (-d.as_tuple().exponent)
+    return Q(f'{dec(a)} ÷ {dec(d)} = ____', dec(q), f'Multiply both numbers by {k}: {dec(a * k)} ÷ {dec(d * k)} = {dec(q)}.', 'Dividing by a decimal')
+
+
+def dec_divint(r):
+    nn = r.randint(3, 9); q = D(r.randint(2, 99)) / r.choice([100, 100, 1000])
+    return Q(f'{dec(q * nn)} ÷ {nn} = ____', dec(q), f'{int((q * nn).scaleb(-(q * nn).as_tuple().exponent)) if True else 0} ÷ {nn} gives the digits; keep the decimal point in line: {dec(q)}.'.replace(f'{int((q * nn).scaleb(-(q * nn).as_tuple().exponent))} ÷ {nn} gives the digits; keep', 'Divide as with whole numbers and keep'), 'Dividing a decimal')
+
+
+def dec_add3(r):
+    a = D(r.randint(11, 99)) / 10; b = D(r.randint(101, 1999)) / 100; c = D(r.randint(101, 999)) / 1000
+    u = r.choice(['', ' m', ' kg'])
+    return Q(f'Add together {dec(a)}{u}, {dec(b)}{u} and {dec(c)}{u}.', f'{dec(a + b + c)}{u}', f'Line up the decimal points: {a:.3f} + {b:.3f} + {c:.3f} = {dec(a + b + c)}.', 'Adding decimals')
+
+
+def dec_sub(r):
+    a = D(r.randint(21, 99)) / 10; b = D(r.randint(1001, int(a * 1000) - 1)) / 1000
+    return Q(f'Take {dec(b)} from {dec(a)}.', dec(a - b), f'Write {dec(a)} as {a:.3f}. {a:.3f} − {b:.3f} = {dec(a - b)}.', 'Subtracting decimals')
+
+
+def dec_mulint(r):
+    x = D(r.randint(11, 999)) / r.choice([100, 100, 1000, 10000]); k = r.choice([6, 7, 8, 9, 11, 12, 15, 25])
+    return Q(f'{dec(x)} × {k} = ____', dec(x * k), f'{int(x.scaleb(-x.as_tuple().exponent))} × {k} = {int(x.scaleb(-x.as_tuple().exponent)) * k}; put back {-x.as_tuple().exponent} decimal places: {dec(x * k)}.', 'Decimal times a whole number')
+
+
+def dec_sqminus(r):
+    x = D(r.randint(12, 59)) / 10
+    return Q(f'Multiply {dec(x)} by itself, and then take {dec(x)} from the answer.', dec(x * x - x), f'{dec(x)} × {dec(x)} = {dec(x * x)}. {dec(x * x)} − {dec(x)} = {dec(x * x - x)}.', 'Two-step decimals')
+
+
+def dec_tenminus(r):
+    w = r.choice([1, 2, 5, 10, 20, 100]); g = D(r.choice([1, 2, 3, 7, 9, 11, 23, 77, 101])) / r.choice([100, 1000])
+    return Q(f'{w} − {dec(D(w) - g)} = ____', dec(g), f'Count on from {dec(D(w) - g)} to {w}: the gap is {dec(g)}.', 'Subtracting decimals')
+
+
+# ---------- 10 Powers of ten and place value ----------
+def _pnum(r):
+    return r.choice([D(r.randint(101, 9999)) / r.choice([10, 100, 1000]), D(r.randint(1, 99)) / r.choice([100, 1000, 10000]), D(r.randint(2, 999))])
+
+
+def p10_mul(r):
+    x = _pnum(r); k = r.choice([10, 100, 1000])
+    return Q(f'Multiply {dec(x)} by {n(k)}.', dec(x * k), f'Each digit moves {len(str(k)) - 1} place{"s" if k > 10 else ""} to the left: {dec(x * k)}.', 'Multiplying by 10, 100, 1000')
+
+
+def p10_div(r):
+    k = r.choice([10, 100, 1000]); x = _pnum(r) * k
+    return Q(f'Divide {dec(x)} by {n(k)}.', dec(x / k), f'Each digit moves {len(str(k)) - 1} place{"s" if k > 10 else ""} to the right: {dec(x / k)}.', 'Dividing by 10, 100, 1000')
+
+
+def p10_value(r):
+    ds = r.sample(range(1, 10), 5); dp = r.randint(1, 3); s = ''.join(map(str, ds)); num = s[:5 - dp] + '.' + s[5 - dp:]
+    i = r.randint(0, 4); pos = (5 - dp - 1) - i
+    name = {3: 'thousands', 2: 'hundreds', 1: 'tens', 0: 'ones', -1: 'tenths', -2: 'hundredths', -3: 'thousandths'}[pos]
+    val = D(ds[i]) * (D(10) ** pos)
+    return Q(f'Give the value of the {ds[i]} in {num}.', f'{ds[i]} {name} ({dec(val)})', f'The {ds[i]} is in the {name} place, so it is worth {dec(val)}.', 'Value of a digit')
+
+
+def p10_units(r):
+    u, v = r.choice([('tenths', D('0.1')), ('hundredths', D('0.01')), ('thousandths', D('0.001')), ('tens', D(10)), ('hundreds', D(100))]); k = r.randint(3, 480)
+    return Q(f'Write {k} {u} as a number.', dec(k * v), f'{k} × {dec(v)} = {dec(k * v)}.', 'Tenths, hundredths, thousandths')
+
+
+def p10_missing(r):
+    k = r.choice([10, 100, 1000]); t = r.randint(0, 3); x = _pnum(r) * (k if t in (1, 2) else 1)
+    if t == 0: return Q(f'Fill in the missing number: {dec(x)} × ____ = {dec(x * k)}', n(k), f'The digits have moved {len(str(k)) - 1} place{"s" if k > 10 else ""} to the left, so the number is {n(k)}.', 'Missing numbers')
+    if t == 1: return Q(f'Fill in the missing number: ____ ÷ {n(k)} = {dec(x / k)}', dec(x), f'Work backwards: {dec(x / k)} × {n(k)} = {dec(x)}.', 'Missing numbers')
+    if t == 2: return Q(f'Fill in the missing number: {dec(x)} ÷ ____ = {dec(x / k)}', n(k), f'The digits have moved {len(str(k)) - 1} place{"s" if k > 10 else ""} to the right, so the number is {n(k)}.', 'Missing numbers')
+    return Q(f'Fill in the missing number: ____ × {n(k)} = {dec(x * k)}', dec(x), f'Work backwards: {dec(x * k)} ÷ {n(k)} = {dec(x)}.', 'Missing numbers')
+
+
+def p10_numline(r):
+    step = D(r.choice(['0.1', '0.2', '0.02', '0.05', '0.5', '2', '5', '0.25', '20', '0.01'])); lo = step * 5 * r.randint(0, 12); i = r.choice([1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14])
+    x = lo + step * i; labs = [dec(lo + step * 5 * j) for j in range(4)]
+    return Q('Look at the number line. Which number is arrow A pointing to?', dec(x),
+             f'From {labs[0]} to {labs[1]} there are 5 equal steps, so each step is {dec(step)}. Count {i % 5} step{"s" if i % 5 != 1 else ""} on from {dec(lo + step * 5 * (i // 5))}: {dec(x)}.', 'Reading a number line',
+             fig=('numline', float(lo), float(step), 15, 5, {'A': float(x)}),
+             alt=f'[Number line: labelled marks at {", ".join(labs)}, with 5 equal steps between neighbouring labels. Arrow A is {i % 5} step{"s" if i % 5 != 1 else ""} to the right of {dec(lo + step * 5 * (i // 5))}.]')
+
+
+TOPICS1 = [
+    ('RAT', 'Ratio and sharing', [rat_ages, rat_three, rat_school, rat_forevery, rat_simplify, rat_onepart, rat_diff]),
+    ('PRO', 'Proportion and unit cost', [pro_items, pro_food, pro_workers, pro_perkg, pro_recipe, pro_rate, pro_petrol]),
+    ('PCT', 'Percentages of amounts', [pct_of, pct_reduce, pct_vat, pct_increase, pct_class, pct_reverse_frac, pct_original]),
+    ('PCM', 'Marks and amounts as percentages', [pcm_mark, pcm_actual, pcm_club, pcm_frac, pcm_better, pcm_rest, pcm_total]),
+    ('FDP', 'Fractions, decimals and percentages', [fdp_f2d, fdp_f2p, fdp_d2f, fdp_p2f, fdp_d2p, fdp_div10, fdp_table]),
+    ('FRC', 'Fraction calculations', [frc_add, frc_sub, frc_mixadd, frc_mixsub, frc_equiv, frc_mul, frc_mulint, frc_divunit, frc_div, frc_simplify]),
+    ('FRO', 'Ordering fractions and decimals', [fro_dec, fro_frac, fro_mix, fro_closest, fro_half]),
+    ('FOA', 'Fractions of amounts', [foa_simple, foa_other, foa_absent, foa_left, foa_spent, foa_units]),
+    ('DEC', 'Decimal calculations', [dec_mul_small, dec_div, dec_divint, dec_add3, dec_sub, dec_mulint, dec_sqminus, dec_tenminus]),
+    ('P10', 'Place value and multiplying by 10, 100, 1000', [p10_mul, p10_div, p10_value, p10_units, p10_missing, p10_numline]),
+]

@@ -1,0 +1,32 @@
+"""23 Nov: tops up the thinnest parts with Bond-style question types (bond_families.py). Run after pct_update.py. Safe to re-run."""
+import json, re, random, sys
+sys.path.insert(0, "/home/claude/scripts")
+import bond_families as B, variety_families as V
+PLAN = {"roman": (B.ROMAN, 30), "mach": (B.MACH, 32), "seq": (B.SEQ, 30), "as": (B.ADDSUB, 32), "puz1": (B.PUZ1, 32), "puz2": (B.PUZ2, 35), "asn": ([V.asn], 16), "eq": (B.ALG, 40)}
+PLAIN = {"Roman numerals.", "Signs puzzles.", "Remainders.", "Products.", "Halfway numbers.", "Numbers in words and figures."}
+
+def main(qp, sp):
+    Q = [q for q in json.load(open(qp)) if not re.match(r"SK-\w+-Y\d", q["id"])]
+    NAME = {s["id"]: s["name"] for s in json.load(open(sp))["sk56"]}
+    seen = {q["q"] for q in Q}
+    for sk, (fams, n) in PLAN.items():
+        R = random.Random("bond-" + sk); k = 0; tries = 0
+        while k < n and tries < 5000:
+            tries += 1; gen = fams[(k + tries) % len(fams)]; res = gen(R); stem, parts = res[0], res[1]; pic = res[2] if len(res) > 2 else None
+            if len(parts) != 3 or any(not p[1] or "-" in str(p[1]) for p in parts): continue
+            texts = [p[0] if stem in PLAIN else f"{stem}\n{'abc'[i]}) {p[0]}" for i, p in enumerate(parts)]
+            if (texts[0] + (pic or "")) in seen: continue
+            seen.update(texts); seen.add(texts[0] + (pic or "")); k += 1
+            for i, p in enumerate(parts):
+                d = dict(id=f"SK-{sk}-Y{k:02d}{'abc'[i]}", q=texts[i], a=p[1], s=p[2], m=1, wp=sk in ("puz2",), yr=5, skill=sk, set=f"{sk}-Y{k:02d}",
+                         lv=["Easy", "Hard", "Challenge"][i], k=NAME[sk], t=NAME[sk], tab=NAME[sk], src="Written for this app in the Bond / CSSE style")
+                if pic: d["pic"] = pic
+                if len(p) > 3 and p[3]: d["wrong"] = [w for w in p[3] if w != p[1]][:3]; d["fixed"] = True
+                Q.append(d)
+        print(f"{NAME[sk]:30} +{k} sets, now {sum(1 for q in Q if q.get('skill') == sk and not q.get('paper'))}")
+    for q in Q:   # clock-hand angles belong in Angles, not Time
+        if q.get("skill") == "time" and not q.get("paper") and "angle between the hands" in q["q"]: q.update(skill="ang", k=NAME["ang"], t=NAME["ang"], tab=NAME["ang"])
+    json.dump(Q, open(qp, "w"), ensure_ascii=False)
+
+if __name__ == "__main__":
+    main(*sys.argv[1:3])

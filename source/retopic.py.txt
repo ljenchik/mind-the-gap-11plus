@@ -1,0 +1,103 @@
+"""23 Nov: the 10-topic main page. Re-sorts every Year 5 question into the new parts (skill ids) and renames them.
+Topic-bank questions go by the topic and type in their source note; the older sets go by their wording.
+Usage: python3 retopic.py questions.json starter-data.json [starter-data.json ...]"""
+import json, re, sys, collections
+
+SK56 = [  # id, name  (order = order on the page inside each main topic)
+    ("as", "Add and subtract"), ("md", "Multiply and divide"), ("round", "Rounding"), ("roman", "Roman numerals"),
+    ("fact", "Factors and multiples"), ("prime", "Prime numbers"), ("pow", "Powers"), ("asn", "Number properties"),
+    ("frac", "Calculating with fractions"), ("famt", "Fractions of amounts"), ("order", "Ordering fractions and decimals"),
+    ("dec", "Decimal calculations"), ("place", "× and ÷ by 10, 100, 1000"), ("fdp", "Fractions, decimals and percentages"), ("money", "Percentages and word problems"),
+    ("ratio", "Sharing in a ratio"), ("unitc", "Unit cost and best buys"), ("rates", "Recipes, maps and rates"),
+    ("cash", "Money"), ("time", "Time and timetables"), ("units", "Units and measures"),
+    ("eq", "Equations"), ("seq", "Sequences and patterns"), ("mach", "Formula machines"),
+    ("ang", "Angles"), ("rect", "Perimeter and area"), ("shape", "2D and 3D shapes"), ("coord", "Coordinates and reflections"),
+    ("chart", "Charts and graphs"), ("mean", "Averages"), ("count", "Probability and counting"),
+    ("wp", "Word problems"), ("puz1", "Number puzzles"), ("puz2", "Logic puzzles"),
+]
+NAME = dict(SK56)
+LABELS = ["Decimals and negative numbers.", "Decimals and order of operations.", "Work these out.", "Problems.", "Counting the ways.", "Comparing numbers.",
+          "Factors and multiples.", "Prime numbers.", "× and ÷ by 10, 100, 1000.", "Fractions, decimals and percentages.", "Digit puzzles.", "Lines of symmetry.",
+          "Reflections on a coordinate grid.", "Working at a steady rate.", "Fractions.", "Place value.", "Measures.", "Percentages.", "Sharing.", "Time.",
+          "Averages.", "Angles.", "Decimals.", "Powers.", "Rectangles.", "Coordinates.", "Two unknowns.", "Speed."]
+
+BANK = {  # (bank topic, type or "*") -> new part
+    ("Factors, multiples and primes", "Prime numbers"): "prime", ("Factors, multiples and primes", "Prime factors"): "prime",
+    ("Factors, multiples and primes", "*"): "fact",
+    ("Fractions of amounts", "*"): "famt",
+    ("Fractions, decimals and percentages", "*"): "fdp",
+    ("Place value and multiplying by 10, 100, 1000", "*"): "place",
+    ("Marks and amounts as percentages", "*"): "money", ("Percentages of amounts", "*"): "money",
+    ("Money", "*"): "cash",
+    ("Proportion and unit cost", "Price per kg"): "unitc", ("Proportion and unit cost", "Unit cost"): "unitc",
+    ("Proportion and unit cost", "*"): "rates",
+    ("2D and 3D shapes", "*"): "shape",
+    ("Reasoning word problems", "*"): "wp",
+}
+
+def bank_part(q):
+    m = re.search(r"\(([^:()]+): ([^()]+)\)$", q.get("src", ""))
+    if not m: return None
+    topic, typ = m.group(1), m.group(2)
+    if topic == "Money" and "Best buys" in typ: return "unitc"
+    return BANK.get((topic, typ)) or BANK.get((topic, "*"))
+
+def text_part(q):
+    t, sk = q["q"], q["skill"]
+    if sk == "refl": return "shape" if re.search(r"symmetry|letters?\b|capital", t, re.I) else "coord"
+    if sk == "ratio":
+        if re.search(r"exchange rate", t): return "cash"
+        if re.search(r"costs? £|Pack [AB]|\bg of .* costs|best value|for each 100", t): return "unitc"
+        if re.search(r"recipe|map|plan of|scale", t, re.I): return "rates"
+        return "ratio"
+    if sk == "fdpwp": return "money" if "%" in t.split("\n")[0] else "famt"
+    if sk == "dec" and re.search(r"Round .* nearest", t): return "round"
+    if sk == "puz1":
+        if re.search(r"prime", t, re.I): return "prime"
+        if re.search(r"factor|multiple", t, re.I): return "fact"
+        if re.search(r"breads|bases|flavours|outfits|how many different", t, re.I): return "count"
+        if re.search(r"add up to .* difference|born in|older|years old|times as old", t): return "wp"
+        return "puz1"
+    return sk
+
+def part_of(q):
+    return bank_part(q) or text_part(q)
+
+def main():
+    qp, sps = sys.argv[1], sys.argv[2:]
+    Q = json.load(open(qp)); moved = collections.Counter()
+    sets = collections.defaultdict(list)
+    for q in Q:
+        if not q.get("skill"): continue
+        sets[q.get("set") or q["id"]].append(q)
+    for key, qs in sets.items():
+        # a linked set stays together: sort it by its first part
+        first = sorted(qs, key=lambda x: x["id"])[0]
+        new = part_of(first) if not str(first.get("paper", "")).startswith("PT") else None
+        for q in qs:
+            n = new or part_of(q)          # paper questions are sorted one by one
+            if n not in NAME: n = q["skill"]
+            if n != q["skill"]: moved[(q["skill"], n)] += 1
+            q["skill"] = n; q["k"] = q["t"] = q["tab"] = NAME[n]
+    # topic labels are not shown in questions (23 Nov): "Decimals and order of operations.\na) Calculate …" -> "Calculate …"
+    lab = re.compile(r"^(?:" + "|".join(map(re.escape, LABELS)) + r")\n(?:[a-d]\) )?")
+    for q in Q: q["q"] = lab.sub("", q["q"])
+    json.dump(Q, open(qp, "w"), ensure_ascii=False)
+    for sp in sps:
+        d = json.load(open(sp)); d["sk56"] = [{"id": i, "name": n, "topic": n} for i, n in SK56]
+        for P in d["papers"]:
+            if P["level"] != "y56": continue
+            for q in P["qs"]:
+                if q["sk"] == "refl": q["sk"] = "coord"
+                if q["sk"] == "puz1" and q["parts"] and "bike lock" in " ".join(q["intro"]): q["sk"] = "count"
+                for p in q["parts"]:
+                    if q["sk"] == "puz1" and re.search(r"prime", p["t"], re.I): p["sk"] = "prime"
+                    elif q["sk"] == "puz1" and re.search(r"factor|multiple", p["t"], re.I): p["sk"] = "fact"
+        json.dump(d, open(sp, "w"), ensure_ascii=False, separators=(", ", ": "))
+    for (a, b), n in sorted(moved.items()): print(f"{a:6} -> {b:6} {n}")
+    c = collections.Counter(q["skill"] for q in Q if q.get("skill") and not str(q.get("paper", "")).startswith("PT"))
+    print("\npractice questions per part:")
+    for i, n in SK56: print(f"  {n:38} {c[i]}")
+
+if __name__ == "__main__":
+    main()

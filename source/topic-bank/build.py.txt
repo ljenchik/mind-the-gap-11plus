@@ -1,0 +1,30 @@
+import os, sys, pickle, shutil
+from bank import build_topic
+from topics1 import TOPICS1
+from topics2 import TOPICS2
+from topics3 import TOPICS3
+import papers, render
+
+OUT = '/home/claude/out3'
+TOP = f'{OUT}/Topic practice'; PAP = f'{OUT}/Practice papers Set B'
+for p in (TOP, PAP): os.makedirs(p, exist_ok=True)
+what = sys.argv[1] if len(sys.argv) > 1 else 'all'
+
+ALL = TOPICS1 + TOPICS2 + TOPICS3
+bank = []
+for i, (code, title, temps) in enumerate(ALL, 1):
+    qs = build_topic(code, title, temps); bank.append((code, title, qs))
+    if what in ('all', 'topics'):
+        safe = title.replace(':', ' -').replace('/', ' ').replace('<', '').replace('>', '').replace('(', '').replace(')', '').replace(',  =', '').replace('  ', ' ')
+        render.topic_doc(f'{TOP}/{i:02d} {safe}.docx', code, title, qs, i, len(ALL))
+pickle.dump(bank, open(f'{OUT}/bank.pkl', 'wb'))
+
+if what in ('all', 'papers'):
+    ps = []
+    for i in range(20):
+        qs = papers.make_paper(i); label = f'Set B  ·  Paper {i + 1:02d}'
+        tot = render.paper_doc(f'{PAP}/Set B Paper {i + 1:02d}.docx', label, qs); ps.append((label, qs))
+    render.answers_doc(f'{PAP}/Set B Answers and worked solutions.docx', '11+ Maths Practice Papers (CSSE style) – Set B – Answers', ps)
+    pickle.dump(ps, open(f'{OUT}/papers.pkl', 'wb'))
+    print('papers', [sum(len(q['parts']) for q in qs) for _, qs in ps])
+print('topics', len(bank), sum(len(q) for _, _, q in bank))

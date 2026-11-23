@@ -1,0 +1,443 @@
+from common import *
+from math import gcd
+from itertools import combinations
+import topics1 as T1, topics2 as T2, topics3 as T3
+
+
+def lcm(a, b): return a * b // gcd(a, b)
+
+
+def _pf(r, dens=(2, 3, 4, 5, 6, 8, 9, 12, 20)):
+    b = r.choice(dens); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); return F(a, b)
+
+
+# 1 Written arithmetic
+def s1(r, v):
+    a = r.randint(11, 89) * 100 + r.randint(40, 99); b = r.randint(100 - a % 100 + 1, 98)
+    while True:
+        x = r.randint(2000, 9000); y = r.randint(123, 989)
+        if y % 10 > x % 10 and (y // 10) % 10 > (x // 10) % 10: break
+    if v % 3 == 0:
+        p, q = r.randint(123, 489), r.randint(23, 67); c = (f'{p} × {q}', n(p * q), f'{p} × {q % 10} = {n(p * (q % 10))} and {p} × {q // 10 * 10} = {n(p * (q // 10 * 10))}. Add: {n(p * q)}.')
+    else:
+        d = r.choice([6, 7, 9, 6, 7]); q = r.randint(34, 148) if v % 3 == 1 else r.randint(152, 1100)
+        c = (f'{n(d * q)} ÷ {d}', n(q), f'{d} × {n(q)} = {n(d * q)}.')
+    return P('Work out:', [(f'{n(a)} + {b}', n(a + b), f'{n(a)} + {b} = {n(a + b)} (the tens carry into the hundreds).'), (f'{n(x)} − {y}', n(x - y), f'{n(x)} − {y} = {n(x - y)} (exchange in the ones and tens columns).'), c], 'Written arithmetic')
+
+
+# 2 Fractions
+def s2(r, v):
+    while True:
+        x, y = _pf(r), _pf(r)
+        if x.denominator != y.denominator: break
+    w1, w2 = r.randint(1, 5), r.randint(1, 4)
+    A = (f'{fr(w1 + x)} + {fr(w2 + y)}', fr(w1 + w2 + x + y), f'Whole numbers: {w1 + w2}. Fractions: ' + T1._cd(x, y, '+') + f' Total: {fr(w1 + w2 + x + y)}.') if v % 2 else (f'{fr(x)} + {fr(y)}', fr(x + y), T1._cd(x, y, '+'))
+    while True:
+        p, q = _pf(r), _pf(r); a, b = r.randint(3, 9), r.randint(1, 4)
+        if p.denominator != q.denominator and a > b and p < q: break
+    X, Y = a + p, b + q; L = lcm(X.denominator, Y.denominator)
+    B = (f'{fr(X)} − {fr(Y)}', fr(X - Y), f'As improper fractions over {L}: {X.numerator * L // X.denominator}/{L} − {Y.numerator * L // Y.denominator}/{L} = {(X - Y).numerator * L // (X - Y).denominator}/{L} = {fr(X - Y)}.')
+    while True:
+        m, k = _pf(r), _pf(r)
+        if m != k: break
+    C = (f'{fr(m)} × {fr(k)}', fr(m * k), f'{m.numerator * k.numerator}/{m.denominator * k.denominator} = {fr(m * k)}.') if v % 2 == 0 else (f'{fr(m)} ÷ {fr(k)}', fr(m / k), f'Turn the second fraction upside down and multiply: {fr(m)} × {inv(k)} = {fr(m / k)}.')
+    t = v % 3
+    if t == 0: u = r.randint(2, 8); mm = r.randint(4, 20); D_ = (f'Fill in the box:  □ ÷ 1/{u} = {mm}', fr(F(mm, u)), f'Dividing by 1/{u} multiplies by {u}, so □ × {u} = {mm} and □ = {fr(F(mm, u))}.')
+    elif t == 1: k2 = r.choice([3, 4, 5, 6, 7]); val = k2 * (r.randint(0, 2) + r.choice([F(1, 3), F(2, 3), F(1, 4), F(3, 4), F(2, 5), F(1, 6), F(3, 8)])); D_ = (f'Fill in the box:  {k2} × □ = {fr(val)}', fr(val / k2), f'□ = {fr(val)} ÷ {k2} = {val.numerator}/{val.denominator * k2} = {fr(val / k2)}.')
+    else: g, h = _pf(r), _pf(r); D_ = (f'Fill in the box:  □ − {fr(g)} = {fr(h)}', fr(g + h), f'□ = {fr(h)} + {fr(g)} = {fr(g + h)}.')
+    return P('Work out the following. Give each answer in its simplest form.', [A, B, C, D_], 'Fractions')
+
+
+# 3 Powers
+def s3(r, v):
+    a, k = r.choice([(3, 5), (2, 6), (2, 7), (5, 3), (5, 4), (4, 4), (3, 4), (2, 8), (6, 3), (10, 5), (4, 3), (3, 6), (7, 3), (2, 9)])
+    A = (f'Fill in the box:  {a}^□ = {n(a ** k)}', k, ', '.join(f'{sup(a, i)} = {n(a ** i)}' for i in range(1, k + 1)) + '.')
+    t = v % 4
+    if t == 0: p, q = r.randint(5, 9), r.randint(2, 4); B = (f'Fill in the box:  2^□ ÷ {2 ** q} = {2 ** (p - q)}', p, f'{2 ** (p - q)} × {2 ** q} = {2 ** p} = {sup(2, p)}.')
+    elif t == 1: x, y = r.choice([(3, 4), (2, 5), (2, 6), (3, 5), (4, 5), (2, 7)]); B = (f'Which is larger, {sup(x, y)} or {sup(y, x)}, and by how much?', f'{sup(x, y) if x ** y > y ** x else sup(y, x)}, by {abs(x ** y - y ** x)}', f'{sup(x, y)} = {x ** y} and {sup(y, x)} = {y ** x}.')
+    elif t == 2: x, y, z = r.choice([(3, 4, 5), (5, 12, 13), (6, 8, 10), (8, 15, 17), (9, 12, 15)]); B = (f'Fill in the box:  {x}² + {y}² = □²', z, f'{x * x} + {y * y} = {z * z} = {z}².')
+    else: x, y = r.choice([(2, 3), (3, 2), (2, 4), (5, 2), (4, 2)]); c, d = r.choice([(3, 2), (5, 2), (10, 2), (2, 3)]); B = (f'Work out {sup(x, y)} × {sup(c, d)}', n(x ** y * c ** d), f'{sup(x, y)} = {x ** y} and {sup(c, d)} = {c ** d}. {x ** y} × {c ** d} = {n(x ** y * c ** d)}.')
+    b0 = r.choice([4, 6, 7, 9])
+    return P(f'{sup(b0, 5)} means {" × ".join([str(b0)] * 5)}.', [A, B], 'Powers')
+
+
+# 4 Ordering
+def s4(r, v):
+    target, ts = r.choice([(F(1, 2), '1/2'), (F(3, 4), '3/4'), (F(1, 4), '1/4'), (F(2, 3), '2/3')])
+    while True:
+        d = {}
+        while len(d) < 5:
+            if r.random() < .55:
+                b = r.choice([3, 4, 5, 6, 8, 9, 12, 20]); a = r.choice([x for x in range(1, b) if gcd(x, b) == 1]); val = F(a, b); s = f'{a}/{b}'
+            else: val = F(r.randint(15, 92), 100) if r.random() < .7 else F(r.randint(150, 920), 1000); s = dec(D(val.numerator) / D(val.denominator))
+            if val not in d: d[val] = s
+        ds = sorted(abs(x - target) for x in d)
+        if target not in d and ds[0] != ds[1] and sum('/' in s for s in d.values()) in (2, 3): break
+    items = list(d.items()); r.shuffle(items); best = min(d, key=lambda x: abs(x - target))
+    why = 'As decimals: ' + ', '.join(f'{s} = {float(x):.3g}' for x, s in sorted(items)) + '.'
+    return P(['Here are five numbers:', '      '.join(s for _, s in items)], [('Which is the smallest?', d[min(d)], why), ('Which is the largest?', d[max(d)], why), (f'Which is closest to {ts}?', d[best], why + f' {ts} = {float(target):.3g}.')], 'Ordering fractions and decimals')
+
+
+# 5 Decimals
+def s5(r, v):
+    x = D(r.randint(12, 99)) / 10; y = D(r.randint(2, 9)) / r.choice([10, 100])
+    d = D(r.choice(['0.2', '0.3', '0.4', '0.6', '0.7', '0.8', '0.05', '0.04', '1.2'])); q = r.randint(3, 40); k = 10 ** (-d.as_tuple().exponent)
+    z = D(r.randint(101, 9999)) / r.choice([10, 100, 1000]); m = r.choice([10, 100, 1000])
+    while (z / m).as_tuple().exponent < -4: z *= 10
+    C = (f'Fill in the box:  □ × {n(m)} = {dec(z)}', dec(z / m), f'{dec(z)} ÷ {n(m)} = {dec(z / m)}.') if v % 2 else (f'Fill in the box:  {dec(z)} ÷ □ = {dec(z / m)}', n(m), f'The digits have moved {len(str(m)) - 1} place{"s" if m > 10 else ""} to the right, so □ = {n(m)}.')
+    return P('Work out the following. Give your answers as decimals.', [(f'{dec(x)} × {dec(y)}', dec(x * y), f'{int(x * 10)} × {int(y.scaleb(-y.as_tuple().exponent))} = {int(x * 10) * int(y.scaleb(-y.as_tuple().exponent))}; the question has {1 - y.as_tuple().exponent} decimal places, so {dec(x * y)}.'),
+                                                                   (f'{dec(d * q)} ÷ {dec(d)}', q, f'Multiply both by {k}: {dec(d * q * k)} ÷ {dec(d * k)} = {q}.'), C], 'Decimals')
+
+
+# 6 Units
+def s6(r, v):
+    U, u, f = r.choice([('km', 'm', 1000), ('kg', 'g', 1000), ('litres', 'ml', 1000), ('m', 'cm', 100)]); x = D(r.randint(105, 9995)) / (1000 if f == 1000 else 100)
+    A = (f'Write {dec(x)} {U} in {u}.', f'{dec(x * f)} {u}', f'{dec(x)} × {n(f)} = {dec(x * f)}.') if v % 2 else (f'Write {dec(x * f)} {u} in {U}.', f'{dec(x)} {U}', f'{dec(x * f)} ÷ {n(f)} = {dec(x)}.')
+    a, b = r.randint(2, 9), D(r.randint(3, 19)) / 2
+    B = (f'A rectangle is {a} cm long and {dec(b)} cm wide. What is its area in mm²?', f'{n(int(a * 10 * b * 10))} mm²', f'{a * 10} mm × {dec(b * 10)} mm = {n(int(a * 10 * b * 10))} mm² (1 cm² = 100 mm²).') if v % 3 else \
+        (f'How many cm² are there in {dec(b)} m²?', f'{n(int(b * 10000))} cm²', f'1 m² = 100 cm × 100 cm = 10,000 cm². {dec(b)} × 10,000 = {n(int(b * 10000))}.')
+    t = v % 4
+    if t == 0: k = r.randint(2, 9); C = (f'There are 12 inches in a foot and 3 feet in a yard. How many inches are there in {k} yards?', k * 36, f'1 yard = 3 × 12 = 36 inches. {k} × 36 = {k * 36}.')
+    elif t == 1: fr_, nm = r.choice([(2, 'half a mile'), (4, 'a quarter of a mile'), (8, 'one eighth of a mile')]); C = (f'There are 1,760 yards in a mile and 3 feet in a yard. How many feet are there in {nm}?', n(1760 * 3 // fr_), f'{nm.capitalize()} = {1760 // fr_} yards. {1760 // fr_} × 3 = {n(1760 * 3 // fr_)} feet.')
+    elif t == 2: k = r.randint(2, 6); C = (f'There are 16 ounces in a pound and 14 pounds in a stone. How many ounces are there in {k} stone?', n(k * 224), f'1 stone = 14 × 16 = 224 ounces. {k} × 224 = {n(k * 224)}.')
+    else: k = r.randint(2, 9); C = (f'There are 20 fluid ounces in a pint and 8 pints in a gallon. How many fluid ounces are there in {k} gallons?', n(k * 160), f'1 gallon = 8 × 20 = 160 fluid ounces. {k} × 160 = {n(k * 160)}.')
+    return P('', [A, B, C], 'Units and conversions')
+
+
+# 7 Percentages and money
+def s7(r, v):
+    t = v % 4
+    if t == 0:
+        a = 20 * r.randint(3, 30); O = 50 * r.randint(1, 8); p2 = r.choice([10, 5]); O2 = 5 * r.randint(8, 60); pr = r.choice([20, 25, 10])
+        s1_ = O * 80; s2_ = s1_ * (100 - p2) // 100
+        return P('', [(f'Find 15% of £{a}.', money(a * 15), f'10% = {money(a * 10)}, 5% = {money(a * 5)}. Total {money(a * 15)}.'),
+                      (f'A bike costs £{O}. In a sale its price is reduced by 20%. On the last day the sale price is reduced by a further {p2}%. What is the final price?', money(s2_), f'After 20% off: {money(s1_)}. {p2}% of that is {money(s1_ * p2 // 100)}. Final price {money(s2_)}.'),
+                      (f'After a {pr}% price rise, a ticket costs {money(O2 * (100 + pr))}. What did it cost before the rise?', money(O2 * 100), f'{100 + pr}% = {money(O2 * (100 + pr))}, so 1% = {money(O2)} and 100% = {money(O2 * 100)}.')], 'Percentages and money')
+    if t == 1:
+        a = 5 * r.randint(8, 90); b = 10 * r.randint(3, 60)
+        return P('VAT is a tax of 20% that is added to the price of some goods.', [(f'How much VAT is added to a price of £{a}?', money(a * 20), f'£{a} ÷ 5 = {money(a * 20)}.'), (f'What is the total cost, including VAT, of goods priced at £{a}?', money(a * 120), f'£{a} + {money(a * 20)} = {money(a * 120)}.'),
+                                                                                    (f'A printer costs {money(b * 120)} including VAT. What was its price before VAT was added?', money(b * 100), f'{money(b * 120)} is 120% of the price. Divide by 6 to find 20% ({money(b * 20)}), then multiply by 5: {money(b * 100)}.')], 'Percentages and money')
+    if t == 2:
+        (a1, b1, p1), (a2, b2, p2) = T1._mark(r), T1._mark(r); s1_, s2_ = r.sample(T1.SUBJ, 2); A = names(r, 1)[0]
+        b3, b4 = r.choice([(40, 60), (20, 80), (45, 55), (25, 75), (30, 70)]); p = 2 * r.randint(25, 45); tot = p; a3 = r.randint(b3 // 2, b3 - 2); a4 = tot - a3
+        while not (b4 // 3 <= a4 <= b4): a3 = r.randint(b3 // 2, b3 - 2); a4 = tot - a3
+        return P('', [(f'{A} scored {a1} out of {b1} in {s1_}. Write this as a percentage.', f'{p1}%', f'{a1}/{b1} = {fr(F(a1, b1))} = {p1}%.'), (f'{A} got {p2}% in {s2_}, which was marked out of {b2}. How many marks was that?', a2, f'{p2}% of {b2} = {a2}.'),
+                      (f'In two more tests {A} scored {a3} out of {b3} and {a4} out of {b4}. What is the total for these two tests as a percentage?', f'{p}%', f'{a3} + {a4} = {tot} out of {b3 + b4}, which is {p}%.')], 'Percentages and money')
+    a = 40 * r.randint(2, 20); s = 1000 * r.randint(18, 48); pp = r.choice([3, 4, 5]); N = r.choice([40, 60, 80, 120, 200]); pc = r.choice([15, 35, 45, 65, 85, 30]);
+    while (N * pc) % 100: pc += 5
+    return P('', [(f'Find 17½% of £{a}.', money(a * 35 // 2), f'10% = {money(a * 10)}, 5% = {money(a * 5)}, 2½% = {money(a * 5 // 2)}. Total {money(a * 35 // 2)}.'), (f'A salary of £{n(s)} is increased by {pp}%. What is the new salary?', f'£{n(s * (100 + pp) // 100)}', f'{pp}% of £{n(s)} = £{n(s * pp // 100)}. £{n(s)} + £{n(s * pp // 100)} = £{n(s * (100 + pp) // 100)}.'),
+                  (f'What percentage of {N} is {N * pc // 100}?', f'{pc}%', f'{N * pc // 100}/{N} = {fr(F(pc, 100))} = {pc}%.')], 'Percentages and money')
+
+
+# 8 Ratio
+def s8(r, v):
+    t = v % 4
+    if t == 0:
+        a, b = r.sample(range(5, 13), 2); k = r.randint(3, 9); A, B = names(r, 2)
+        return P(f'{A} is {a} years old and {B} is {b}. They share £{(a + b) * k} in the ratio of their ages.', [(f'How much does {A} get?', f'£{a * k}', f'{a + b} parts; £{(a + b) * k} ÷ {a + b} = £{k} per part. {a} × £{k} = £{a * k}.'), (f'Next year they share £{(a + b + 2) * k} in the ratio of their new ages. How much does {B} get then?', f'£{(b + 1) * k}', f'The ages are {a + 1} and {b + 1}: {a + b + 2} parts of £{k}. {b + 1} × £{k} = £{(b + 1) * k}.')], 'Ratio and sharing')
+    if t == 1:
+        while True:
+            a, b = r.sample(range(2, 9), 2)
+            if gcd(a, b) == 1 and a > b: break
+        k = r.randint(15, 60)
+        return P(f'There are {(a + b) * k} children in a school. There are {a} boys to every {b} girls.', [('How many boys are there?', a * k, f'{(a + b) * k} ÷ {a + b} = {k} per part. {a} × {k} = {a * k}.'), ('How many more boys than girls are there?', (a - b) * k, f'Girls: {b} × {k} = {b * k}. {a * k} − {b * k} = {(a - b) * k}.')], 'Ratio and sharing')
+    if t == 2:
+        s = r.choice([4, 6, 8]); per = r.choice([25, 40, 45, 50, 75]); t2 = r.choice([x for x in (5, 10, 14, 18) if x != s]); have = per * r.randint(11, 30)
+        return P(f'A recipe for {s} people uses {s * per} g of flour.', [(f'How much flour is needed for {t2} people?', f'{n(t2 * per)} g', f'{per} g each. {t2} × {per} = {n(t2 * per)} g.'), (f'How many people can be served using {n(have)} g of flour?', have // per, f'{n(have)} ÷ {per} = {have // per}.')], 'Ratio and sharing')
+    while True:
+        a, b = r.sample(range(2, 10), 2)
+        if a > b and gcd(a, b) == 1: break
+    k = r.randint(3, 15); A, B = names(r, 2)
+    return P(f'{A} and {B} share some money in the ratio {a}:{b}. {A} gets £{(a - b) * k} more than {B}.', [('How much money did they share altogether?', f'£{(a + b) * k}', f'{a - b} part{"s" if a - b > 1 else ""} = £{(a - b) * k}, so 1 part = £{k}. {a + b} parts = £{(a + b) * k}.'), (f'How much did {B} get?', f'£{b * k}', f'{b} × £{k} = £{b * k}.')], 'Ratio and sharing')
+
+
+# 9 Puzzle (rotates)
+def s9(r, v):
+    t = v % 5
+    if t == 0:
+        k = r.randint(4, 7); m = r.randint(3, 6); ds = sorted(r.sample(range(1, 10), k)); ls = 'ABCDEF'[:m]
+        return P(f'A code is made using the digits {", ".join(map(str, ds[:-1]))} and {ds[-1]}.', [('How many different 3-digit codes are possible if digits can be repeated?', k ** 3, f'{k} × {k} × {k} = {k ** 3}.'), ('How many different 3-digit codes are possible if no digit can be used more than once?', k * (k - 1) * (k - 2), f'{k} × {k - 1} × {k - 2} = {k * (k - 1) * (k - 2)}.'),
+                                                                                                  (f'A different code is one letter from {", ".join(ls[:-1])} or {ls[-1]} followed by two different digits from the list above. How many of these codes are possible?', m * k * (k - 1), f'{m} × {k} × {k - 1} = {m * k * (k - 1)}.')], 'Counting puzzle')
+    if t == 1:
+        while True:
+            x, y = r.randint(213, 687), r.randint(124, 298)
+            if x % 10 + y % 10 >= 10 and '0' not in str(x) + str(y): break
+        xs, ys = str(x), str(y)
+        while True:
+            p, q = r.randint(512, 987), r.randint(134, 478)
+            if p % 10 < q % 10 and '0' not in str(p) + str(q): break
+        ps, qs = str(p), str(q); k = r.choice([4, 5, 6, 7]); c = r.randint(11, 29); box = r.randint(3, 9)
+        return P('In each calculation a box □ hides one digit.', [(f'{xs[0]}□{xs[2]} + {ys[0]}{ys[1]}□ = {x + y}.  Write the two missing digits in order.', f'{xs[1]} and {ys[2]}', f'Ones: {xs[2]} + {ys[2]} = {int(xs[2]) + int(ys[2])}, carry 1. Then the tens need {xs[1]}. Check: {x} + {y} = {x + y}.'),
+                                                                 (f'{ps[0]}{ps[1]}□ − {qs[0]}□{qs[2]} = {p - q}.  Write the two missing digits in order.', f'{ps[2]} and {qs[1]}', f'Check: {p} − {q} = {p - q}.'),
+                                                                 (f'{k} × (□ + {c}) = {k * (box + c)}.  What is the missing digit?', box, f'{k * (box + c)} ÷ {k} = {box + c}, and {box + c} − {c} = {box}.')], 'Missing-digit puzzle')
+    if t == 2:
+        p, q = 5 * r.randint(3, 12), 5 * r.randint(4, 16); a = r.randint(2, 5); b1 = r.randint(1, 3); b2 = b1 + 2; x, y = r.choice([('pencils', 'pens'), ('apples', 'pears'), ('buns', 'cakes')])
+        c1, c2 = a * p + b2 * q, a * p + b1 * q
+        return P(f'{a} {x} and {b2} {y} cost {money(c1)}. {a} {x} and {b1} {y} cost {money(c2)}.', [(f'What do 2 {y} cost?', money(2 * q), f'The only difference is 2 {y}: {money(c1)} − {money(c2)} = {money(2 * q)}.'), (f'What does 1 {y[:-1]} cost?', pm(q), f'{money(2 * q)} ÷ 2 = {pm(q)}.'), (f'What does 1 {x[:-1]} cost?', pm(p), f'{a} {x} cost {money(c2)} − {money(b1 * q)} = {money(a * p)}. {money(a * p)} ÷ {a} = {pm(p)}.')], 'Price puzzle')
+    if t == 3:
+        m, w, c = r.randint(1200, 4000), r.randint(1200, 4000), r.randint(1500, 5000); T = m + w + c; town = r.choice(['Grangeford', 'Little Marsham', 'Northby', 'Oakhampton', 'Westbrook'])
+        return P(f'The population of {town} is {n(T)}. The men and children together number {n(m + c)}. The men and women together number {n(m + w)}.', [('How many women are there?', n(w), f'{n(T)} − {n(m + c)} = {n(w)}.'), ('How many children are there?', n(c), f'{n(T)} − {n(m + w)} = {n(c)}.'), ('How many men are there?', n(m), f'{n(T)} − {n(w)} − {n(c)} = {n(m)}.')], 'Three-group puzzle')
+    while True:
+        ps = [5 * r.randint(22, 70) for _ in range(4)]
+        if len({a + b for a, b in combinations(ps, 2)}) == 6 and sum(ps) % 4 == 0: break
+    nm = r.sample(['Galaxy', 'Big Wheel', 'Laser', 'Rocket', 'Twister', 'Waltzer', 'Log Flume'], 4); i, j = r.sample(range(4), 2); A = names(r, 1)[0]
+    return P('The table shows the cost of rides at a fair.', [(f'{A} went on two different rides and had {money(1000 - ps[i] - ps[j])} change from £10. Which two rides were they?', ' and '.join(sorted([nm[i], nm[j]])), f'{A} spent {money(ps[i] + ps[j])} = {money(ps[i])} + {money(ps[j])}.'),
+                                                             ('How much does it cost to go on all four rides once?', money(sum(ps)), ' + '.join(money(p) for p in ps) + f' = {money(sum(ps))}.'), ('What is the mean cost of a ride?', money(sum(ps) // 4), f'{money(sum(ps))} ÷ 4 = {money(sum(ps) // 4)}.')], 'Price puzzle', table=[['Ride', 'Cost']] + [[a, money(b)] for a, b in zip(nm, ps)])
+
+
+# 10 Sequences
+def s10(r, v):
+    t = v % 4
+    if t == 0:
+        a = r.randint(2, 20); d0 = r.randint(2, 5); dd = r.choice([1, 2, 3]); xs = [a]; d = d0
+        for _ in range(6): xs.append(xs[-1] + d); d += dd
+        b = r.randint(3, 12); e = r.randint(3, 9); k = r.choice([10, 15, 20, 30]); m = r.randint(25, 60)
+        return P('', [(f'Write the next two numbers in this sequence:  {", ".join(map(str, xs[:5]))}, ____, ____', f'{xs[5]}, {xs[6]}', f'The gaps are +{d0}, +{d0 + dd}, +{d0 + 2 * dd}, +{d0 + 3 * dd}, so next +{d0 + 4 * dd} and +{d0 + 5 * dd}.'),
+                      (f'Another sequence starts {b}, {b + e}, {b + 2 * e}, {b + 3 * e} and goes up by the same amount each time. What is the {k}th number?', b + e * (k - 1), f'{b} + {k - 1} × {e} = {b + e * (k - 1)}.'),
+                      (f'Which position in that sequence is the number {b + e * (m - 1)}?', f'{m}th', f'({b + e * (m - 1)} − {b}) ÷ {e} = {m - 1} steps after the first, so it is the {m}th number.')], 'Sequences')
+    if t == 1:
+        k1, k2 = r.randint(5, 9), r.randint(11, 25); big = r.choice([15, 20, 25, 30, 40]); th = r.choice(['dots', 'tiles', 'counters'])
+        return P(f'Square patterns are made from {th}. Pattern 1 has 1, pattern 2 has 4, pattern 3 has 9 and pattern 4 has 16.', [(f'How many {th} are in pattern {k1}?', k1 * k1, f'{k1} × {k1} = {k1 * k1}.'), (f'How many more {th} are in pattern {k2} than in pattern {k2 - 1}?', 2 * k2 - 1, f'{k2 * k2} − {(k2 - 1) ** 2} = {2 * k2 - 1}.'), (f'Which pattern has exactly {big * big} {th}?', f'Pattern {big}', f'{big} × {big} = {big * big}.')], 'Sequences')
+    if t == 2:
+        while True:
+            a1, d1, a2, d2 = r.randint(2, 9), r.randint(3, 7), r.randint(2, 9), r.randint(4, 9)
+            A = [a1 + d1 * i for i in range(40)]; B = [a2 + d2 * i for i in range(40)]; com = sorted(set(A) & set(B))
+            if d1 != d2 and gcd(d1, d2) == 1 and a1 != a2 and com and com[0] > max(a1, a2) + 5: break
+        return P([f'Sequence A:  {", ".join(map(str, A[:4]))}, …', f'Sequence B:  {", ".join(map(str, B[:4]))}, …', 'Each sequence goes up by the same amount each time.'],
+                 [('What is the 10th number in sequence A?', A[9], f'{a1} + 9 × {d1} = {A[9]}.'), ('What is the 25th number in sequence B?', B[24], f'{a2} + 24 × {d2} = {B[24]}.'), ('What is the smallest number that is in both sequences?', com[0], f'A: {", ".join(map(str, [x for x in A if x <= com[0]]))}. B: {", ".join(map(str, [x for x in B if x <= com[0]]))}. The first number in both is {com[0]}.')], 'Sequences')
+    d = r.choice([F(3, 4), F(3, 8), F(2, 3), F(5, 8), F(5, 6)]); a = F(r.randint(1, 4)) + r.choice([F(1, 2), F(1, 4), F(0)]); xs = [a + d * i for i in range(12)]
+    g = D(r.randint(11, 60)) / 10; ys = [g]
+    for i in range(1, 7): ys.append(ys[-1] + D(i) / 10)
+    return P('', [(f'Write the next two numbers:  {", ".join(fr(x) for x in xs[:4])}, ____, ____', f'{fr(xs[4])}, {fr(xs[5])}', f'Add {fr(d)} each time.'), (f'What is the 10th number in that sequence?', fr(xs[9]), f'{fr(a)} + 9 × {fr(d)} = {fr(xs[9])}.'),
+                  (f'Write the next two numbers:  {", ".join(dec(y) for y in ys[:4])}, ____, ____', f'{dec(ys[4])}, {dec(ys[5])}', 'The gaps are +0.1, +0.2, +0.3, so next +0.4 and +0.5.')], 'Sequences')
+
+
+# 11 Formula machine
+def s11(r, v):
+    k = r.randint(3, 8); x0 = r.randint(2, 12); c = (k - 1) * x0; x = r.randint(x0 + 3, 40); xi = r.randint(x0 + 2, 30)
+    if v % 2 == 0:
+        return P(f'A number machine works like this:   IN → × {k} → − {c} → OUT', [(f'What comes out when {x} goes in?', k * x - c, f'{x} × {k} = {k * x}; {k * x} − {c} = {k * x - c}.'), (f'What went in when {k * xi - c} comes out?', xi, f'{k * xi - c} + {c} = {k * xi}; {k * xi} ÷ {k} = {xi}.'),
+                                                                                    ('Which number comes out the same as it went in?', x0, f'{x0} × {k} = {k * x0}; {k * x0} − {c} = {x0}. ({k - 1} lots of the number must equal {c}.)')], 'Formula machine')
+    k = r.randint(2, 5); c = (k - 1) * r.randint(1, 6); x0 = k * c // (k - 1); x = r.randint(x0 + 2, x0 + 25); xi = r.randint(c + 1, c + 25)
+    while xi == x0: xi += 1
+    return P(f'A number machine works like this:   IN → − {c} → × {k} → OUT', [(f'What comes out when {x} goes in?', (x - c) * k, f'{x} − {c} = {x - c}; {x - c} × {k} = {(x - c) * k}.'), (f'What went in when {(xi - c) * k} comes out?', xi, f'{(xi - c) * k} ÷ {k} = {xi - c}; {xi - c} + {c} = {xi}.'),
+                                                                                ('Which number comes out the same as it went in?', x0, f'Try {x0}: {x0} − {c} = {x0 - c}; {x0 - c} × {k} = {x0}.')], 'Formula machine')
+
+
+# 12 Angles
+def s12(r, v):
+    t = v % 4
+    if t == 0:
+        ks = r.choice([(1, 2, 3), (1, 3, 5), (2, 3, 4), (1, 2, 6), (1, 1, 2), (1, 3, 6), (2, 3, 5)]); s = sum(ks); x = 180 // s; lab = [('x' if k == 1 else f'{k}x') for k in ks]
+        a = r.randint(30, 80)
+        return P('The diagram shows three angles on a straight line.', [('What is the size of angle x?', f'{x}°', f'{s}x = 180°, so x = {x}°.'), (f'What is the size of the largest angle, {lab[-1]}?', f'{ks[-1] * x}°', f'{ks[-1]} × {x} = {ks[-1] * x}°.'),
+                                                                       (f'A triangle has angles of {a}° and {x}°. What is its third angle?', f'{180 - a - x}°', f'180 − {a} − {x} = {180 - a - x}°.')], 'Angles', fig=('angles', 'line', lab))
+    if t == 1:
+        a = 2 * r.randint(15, 70); b = (180 - a) // 2; k = r.choice([5, 6, 8, 9, 10])
+        return P(f'An isosceles triangle has one angle of {a}°. Its other two angles are equal.', [('What is the size of each of the equal angles?', f'{b}°', f'(180 − {a}) ÷ 2 = {b}°.'), ('One side of the triangle is extended to make a straight line at one of the equal angles. What is the angle outside the triangle on that line?', f'{180 - b}°', f'180 − {b} = {180 - b}°.'),
+                                                                                                  (f'What is the angle at the centre of a {T3.POLY[k]} between lines drawn to two neighbouring corners?', f'{360 // k}°', f'360 ÷ {k} = {360 // k}°.')], 'Angles')
+    if t == 2:
+        k = r.choice([5, 6, 8, 9, 10, 12]); i = r.randint(0, 7); st = r.randint(1, 7); j = (i + st) % 8; xs = [r.randint(60, 115) for _ in range(3)]
+        return P('', [(f'What is the size of each interior angle of a {T3.POLY[k]}?', f'{180 - 360 // k}°', f'Exterior angle 360 ÷ {k} = {360 // k}°; interior = 180 − {360 // k} = {180 - 360 // k}°.'), (f'You face {T3.COMP[i]} and turn {45 * st}° clockwise. Which direction do you face now?', T3.COMP[j], f'{45 * st}° is {st} step{"s" if st > 1 else ""} of 45° clockwise: {T3.COMP[j]}.'),
+                      (f'Three angles of a quadrilateral are {xs[0]}°, {xs[1]}° and {xs[2]}°. What is the fourth angle?', f'{360 - sum(xs)}°', f'360 − {sum(xs)} = {360 - sum(xs)}°.')], 'Angles')
+    h = r.choice([1, 2, 4, 5, 7, 8, 10, 11]); m = r.choice([5, 10, 20, 25, 35, 40]); a = r.randint(35, 75); b = r.randint(35, 75)
+    return P('Answer these questions about angles. The triangle is for part (c).', [(f"What is the smaller angle between the hands of a clock at {h} o'clock?", f'{30 * h if h <= 6 else 360 - 30 * h}°', f'Each hour space is 30°: {h if h <= 6 else 12 - h} × 30 = {30 * h if h <= 6 else 360 - 30 * h}°.'), (f'Through how many degrees does the minute hand turn in {m} minutes?', f'{6 * m}°', f'6° each minute: {m} × 6 = {6 * m}°.'),
+                  ('Find the size of angle x in the triangle.', f'{180 - a - b}°', f'180 − {a} − {b} = {180 - a - b}°.')], 'Angles', fig=('angles', 'tri', [f'{a}°', f'{b}°', 'x']))
+
+
+# 13 Coordinates
+def s13(r, v):
+    s1_ = 2 * r.randint(1, 3); s2_ = 2 * r.randint(1, 3) if v % 2 else s1_; x1 = r.randint(-5, 5 - s1_); y1 = r.randint(-5, 5 - s2_)
+    c = [(x1, y1), (x1 + s1_, y1), (x1 + s1_, y1 + s2_), (x1, y1 + s2_)]; i = r.randint(0, 3); g = [c[j] for j in range(4) if j != i]; shp = 'rectangle' if s1_ != s2_ else 'square'
+    px, py = g[0]
+    if px == 0: px = g[1][0] or 2
+    last = (f'Point A is reflected in the y-axis. What are the coordinates of its image?', f'({-g[0][0]}, {g[0][1]})', 'The x-coordinate changes sign; the y-coordinate stays the same.') if v % 2 == 0 else \
+        (f'The whole {shp} is moved 3 squares left and 2 squares up. What are the new coordinates of point A?', f'({g[0][0] - 3}, {g[0][1] + 2})', f'{g[0][0]} − 3 = {g[0][0] - 3} and {g[0][1]} + 2 = {g[0][1] + 2}.')
+    return P(f'A{g[0]}, B{g[1]} and C{g[2]} are three corners of a {shp}.', [(f'What are the coordinates of the fourth corner?', f'{c[i]}', f'The missing corner has x = {c[i][0]} and y = {c[i][1]}.'), (f'What are the coordinates of the centre of the {shp}?', f'({x1 + s1_ // 2}, {y1 + s2_ // 2})', f'Halfway between {x1} and {x1 + s1_} is {x1 + s1_ // 2}; halfway between {y1} and {y1 + s2_} is {y1 + s2_ // 2}.'), last], 'Coordinates', fig=('pts', dict(zip('ABC', g))))
+
+
+# 14 Rounding bounds
+def s14(r, v):
+    X = 10 * r.randint(12, 98); Y = 100 * r.randint(11, 60)
+    while Y <= X + 200: Y += 500
+    base = [('What is the largest possible value of X?', n(X + 4), f'{X - 5} to {X + 4} round to {X}.'), ('What is the smallest possible value of Y?', n(Y - 50), f'{n(Y - 50)} to {n(Y + 49)} round to {n(Y)}.'), ('What is the largest possible value of X + Y?', n(X + 4 + Y + 49), f'{X + 4} + {n(Y + 49)} = {n(X + 4 + Y + 49)}.')]
+    if v % 2: base.append(('What is the smallest possible value of Y − X?', n(Y - 50 - X - 4), f'Use the smallest Y and the largest X: {n(Y - 50)} − {X + 4} = {n(Y - 50 - X - 4)}.'))
+    return P(f'X and Y are whole numbers. X rounded to the nearest 10 is {X}. Y rounded to the nearest 100 is {n(Y)}.', base, 'Rounding bounds')
+
+
+# 15 Charts and graphs
+def s15(r, v):
+    t = v % 5
+    if t == 0:
+        N, cnt, ang, k = T3._pie(r); labs = r.sample(T3.HOLS if v % 2 else T3.COLS, k); i, j = r.sample(range(k), 2)
+        if cnt[i] < cnt[j]: i, j = j, i
+        return P(f'{N} children were asked to choose their favourite. The pie chart shows the results.', [(f'How many children chose {labs[i]}?', cnt[i], f'{ang[i]}/360 = {fr(F(ang[i], 360))}; {fr(F(ang[i], 360))} of {N} = {cnt[i]}.'), (f'What fraction of the children chose {labs[j]}? Give your answer in its simplest form.', fr(F(ang[j], 360)), f'{ang[j]}/360 = {fr(F(ang[j], 360))}.'),
+                                                                                                         (f'How many more children chose {labs[i]} than {labs[j]}?', cnt[i] - cnt[j], f'{cnt[i]} − {cnt[j]} = {cnt[i] - cnt[j]}.') if cnt[i] != cnt[j] else ('How many children does a sector of 60° stand for?', N // 6, f'{N} ÷ 6 = {N // 6}.')], 'Charts and graphs', fig=('pie', labs, ang))
+    if t == 1:
+        labs = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']; step = r.choice([5, 10])
+        while True:
+            vv = [step * r.randint(1, 9) for _ in range(5)]
+            if len(set(vv)) >= 4: break
+        th = r.choice(['books borrowed from a library', 'cars in a car park at noon', 'ice creams sold at a kiosk']); hi, lo = vv.index(max(vv)), vv.index(min(vv))
+        return P(f'The bar chart shows the number of {th} each day.', [('How many were there altogether in the week?', sum(vv), ' + '.join(map(str, vv)) + f' = {sum(vv)}.'), (f'How many more were there on {labs[hi]} than on {labs[lo]}?', vv[hi] - vv[lo], f'{vv[hi]} − {vv[lo]} = {vv[hi] - vv[lo]}.'), ('What was the mean number per day?', dec(D(sum(vv)) / 5), f'{sum(vv)} ÷ 5 = {dec(D(sum(vv)) / 5)}.')], 'Charts and graphs', fig=('bar', labs, vv, 'Number', step))
+    if t == 2:
+        s1_, s2_, dl = r.choice([(20, 60, 60), (15, 60, 90), (20, 40, 60), (10, 30, 60), (12, 36, 60), (10, 40, 90), (16, 48, 60)]); t0 = 60 * r.randint(8, 13); tm = s2_ * dl // (s2_ - s1_); dm = s1_ * tm // 60
+        dmax = s1_ * 3; mend = dl + dmax * 60 // s2_; step = 10 if dmax % 10 == 0 and dmax > 30 else dmax // 6
+        fig = ('travel', [('Cyclist', [(0, 0), (180, dmax)]), ('Motorist', [(dl, 0), (mend, dmax)])], t0, 3, dmax, step)
+        return P('The graph shows the journeys of a cyclist and a motorist along the same road.', [('What is the speed of the cyclist in km/h?', f'{s1_} km/h', f'The cyclist travels {dmax} km in 3 hours: {dmax} ÷ 3 = {s1_} km/h.'), ('What is the speed of the motorist in km/h?', f'{s2_} km/h', f'The motorist travels {dmax} km in {dur(mend - dl)}, which is {s2_} km/h.'),
+                                                                                                  ('At what time does the motorist overtake the cyclist?', t24(t0 + tm), f'The lines cross at {t24(t0 + tm)}.'), ('How far from the start are they when this happens?', f'{dm} km', f'The lines cross at {dm} km.')], 'Charts and graphs', fig=fig)
+    if t == 3:
+        cs = r.sample(T3.CUR, 3); tab = [['Exchange rates']] + [[f'£1 = {dec(D(x))} {c}'] for c, x in cs]; k1 = r.choice([10, 20, 50, 100]); k2 = D(r.choice(['2.50', '7.50', '0.50', '1.50', '12.50'])); k3 = r.choice([5, 20, 40, 200])
+        return P('Use the exchange rates in the table.', [(f'How many {cs[0][0]} do you get for £{k1}?', f'{dec(k1 * D(cs[0][1]))} {cs[0][0]}', f'{k1} × {cs[0][1]} = {dec(k1 * D(cs[0][1]))}.'), (f'How many {cs[1][0]} do you get for {money(int(k2 * 100))}?', f'{dec(k2 * D(cs[1][1]))} {cs[1][0]}', f'{dec(k2)} × {cs[1][1]} = {dec(k2 * D(cs[1][1]))}.'),
+                                                         (f'How many pounds do you get for {dec(k3 * D(cs[2][1]))} {cs[2][0]}?', f'£{k3}', f'{dec(k3 * D(cs[2][1]))} ÷ {cs[2][1]} = {k3}.')], 'Charts and graphs', table=tab)
+    la, lb = r.choice([('Cycling club', 'Swimming club'), ('Have a dog', 'Have a cat'), ('Play football', 'Play tennis')]); oa, both, ob, nei = r.randint(3, 12), r.randint(2, 9), r.randint(3, 12), r.randint(1, 8)
+    return P('The Venn diagram shows information about the children in a class.', [(f'How many children are in the "{la}" circle?', oa + both, f'{oa} + {both} = {oa + both}.'), ('How many children are in exactly one of the circles?', oa + ob, f'{oa} + {ob} = {oa + ob}.'), ('How many children are in the class?', oa + both + ob + nei, f'{oa} + {both} + {ob} + {nei} = {oa + both + ob + nei}.'),
+                                                                                  ('What fraction of the class is in both circles? Give your answer in its simplest form.', fr(F(both, oa + both + ob + nei)), f'{both}/{oa + both + ob + nei} = {fr(F(both, oa + both + ob + nei))}.')], 'Charts and graphs', fig=('venn', la, lb, oa, both, ob, nei))
+
+
+# 16 Time
+def s16(r, v):
+    t = v % 4
+    if t == 0:
+        while True:
+            st, cols, tab = T2._trains(r); da, db = cols[0][4] - cols[0][0], cols[1][4] - cols[1][0]
+            if da != db: break
+        i, j = sorted(r.sample(range(5), 2)); walk = r.randint(9, 25)
+        return P('Here is part of a train timetable.', [(f'How long does Train A take to travel from {st[i]} to {st[j]}?', dur(cols[0][j] - cols[0][i]), f'{t24(cols[0][i])} to {t24(cols[0][j])} is {dur(cols[0][j] - cols[0][i])}.'), (f'Which train is faster from {st[0]} to {st[4]}, and by how many minutes?', f'Train {"A" if da < db else "B"}, by {abs(da - db)} minutes', f'A takes {dur(da)}; B takes {dur(db)}.'),
+                                                       (f'It takes {walk} minutes to walk to {st[1]} station. What is the latest time to leave home to catch Train B there?', t24(cols[1][1] - walk), f'{t24(cols[1][1])} − {walk} min = {t24(cols[1][1] - walk)}.')], 'Time and timetables', table=tab)
+    if t == 1:
+        zs = r.sample([z for z in T2.ZONES if 1 <= abs(z[1]) <= 9], 3); tab = [['City', 'Time compared with London']] + [[c, f'{abs(h)} hour{"s" if abs(h) > 1 else ""} {"ahead" if h > 0 else "behind"}'] for c, h in zs]
+        m = 60 * r.randint(9, 14) + r.choice([0, 15, 30, 45]); (c1, h1), (c2, h2), (c3, h3) = zs; fl = r.randint(2, 9) * 60 + r.choice([0, 20, 40]); dep = 60 * r.randint(7, 11) + r.choice([0, 10, 30])
+        dd = lambda x: t12(x) + (' the day before' if x < 0 else ' the next day' if x >= 1440 else '')
+        return P('The table shows the time in three cities compared with London.', [(f'When it is {t12(m)} in London, what time is it in {c1}?', dd(m + 60 * h1), f'{c1} is {abs(h1)} h {"ahead" if h1 > 0 else "behind"}.'), (f'When it is {t12(m)} in {c2}, what time is it in London?', dd(m - 60 * h2), f'London is {abs(h2)} h {"behind" if h2 > 0 else "ahead of"} {c2}.'),
+                                                                                    (f'A flight leaves London at {t12(dep)} and takes {dur(fl)}. What is the local time in {c3} when it lands there?', dd(dep + fl + 60 * h3), f'London time on landing: {t12(dep + fl)}. {c3} is {abs(h3)} h {"ahead" if h3 > 0 else "behind"}: {dd(dep + fl + 60 * h3)}.')], 'Time and timetables', table=tab)
+    if t == 2:
+        k = r.choice([4, 5, 6]); L = r.choice([35, 40, 45, 50]); B = r.choice([15, 20, 25]); j = r.randint(1, k - 2); end = 60 * r.randint(12, 15) + r.choice([0, 10, 20, 30, 50]); st = end - k * L - B; o = ['1st', '2nd', '3rd', '4th', '5th', '6th']
+        return P(f'A school has {k} lessons, each {L} minutes long, with one break of {B} minutes after the {o[j - 1]} lesson. The {o[k - 1]} lesson ends at {t24(end)}.', [('At what time does the 1st lesson begin?', t24(st), f'{k} × {L} + {B} = {k * L + B} min = {dur(k * L + B)}. {t24(end)} − {dur(k * L + B)} = {t24(st)}.'), ('At what time does the break end?', t24(st + j * L + B), f'{t24(st)} + {dur(j * L)} + {B} min = {t24(st + j * L + B)}.'),
+                                                                                                                                                                        (f'At what time does the {o[k - 1]} lesson begin?', t24(end - L), f'{t24(end)} − {L} min = {t24(end - L)}.')], 'Time and timetables')
+    per = r.choice([40, 50, 60]); ex = r.choice([20, 25, 30]); w = D(r.choice(['1.5', '2.5', '3.5'])); tot = int(per * w) + ex; start = 60 * r.randint(10, 16) + r.choice([5, 15, 40, 50]); w2 = r.choice([2, 3, 4]);
+    return P(f'A chicken must be roasted for {per} minutes per kg plus an extra {ex} minutes.', [(f'What is the cooking time for a {dec(w)} kg chicken? Give your answer in hours and minutes.', dur(tot), f'{dec(w)} × {per} + {ex} = {tot} min = {dur(tot)}.'), (f'That chicken goes into the oven at {t12(start)}. At what time will it be ready?', t12(start + tot), f'{t12(start)} + {dur(tot)} = {t12(start + tot)}.'),
+                                                                                            (f'Another chicken needs {dur(per * w2 + ex)} altogether. How much does it weigh?', f'{w2} kg', f'{per * w2 + ex} − {ex} = {per * w2} min; {per * w2} ÷ {per} = {w2} kg.')], 'Time and timetables')
+
+
+# 17 Mean
+def s17(r, v):
+    t = v % 3
+    if t == 0:
+        ns = names(r, 5)
+        while True:
+            xs = [r.randint(8, 20) for _ in range(5)]; i = r.randint(0, 4); new = xs[i] + r.choice([-5, 5, 10]); m2 = r.randint(9, 19)
+            if sum(xs) % 5 == 0 and 0 < new <= 25 and (sum(xs) - xs[i] + new + 5 * m2) % 10 == 0: break
+        ys = xs[:]; ys[i] = new
+        return P('The table shows five children\'s scores in a quiz.', [('What is the mean score?', sum(xs) // 5, f'{sum(xs)} ÷ 5 = {sum(xs) // 5}.'), (f"{ns[i]}'s score was copied wrongly. It should be {new}. What is the correct mean?", dec(D(sum(ys)) / 5), f'New total {sum(ys)}; {sum(ys)} ÷ 5 = {dec(D(sum(ys)) / 5)}.'),
+                                                                        (f'Five other children have a mean score of {m2}. Using the correct scores, what is the mean score of all ten children?', dec(D(sum(ys) + 5 * m2) / 10), f'Total: {sum(ys)} + 5 × {m2} = {sum(ys) + 5 * m2}. {sum(ys) + 5 * m2} ÷ 10 = {dec(D(sum(ys) + 5 * m2) / 10)}.')], 'Mean', table=[['Name'] + ns, ['Score'] + [str(x) for x in xs]])
+    if t == 1:
+        k = r.randint(4, 8); m = r.randint(12, 35); up = r.randint(1, 3); m2 = m + up; nxt = (k + 1) * m2 - k * m; k3 = r.randint(2, 4); m3 = m2 + r.randint(2, 5)
+        return P(f'After {k} matches a basketball player has a mean score of {m} points per match.', [(f'How many points has the player scored altogether?', k * m, f'{k} × {m} = {k * m}.'), (f'How many points are needed in the next match to raise the mean to {m2}?', nxt, f'{k + 1} × {m2} = {(k + 1) * m2}; {(k + 1) * m2} − {k * m} = {nxt}.'),
+                                                                                                      (f'After that, the player scores a total of {k3 * m3} points in the next {k3} matches. What is the mean now, for all {k + 1 + k3} matches? Give your answer as a fraction or a decimal.', fr(F((k + 1) * m2 + k3 * m3, k + 1 + k3)), f'Total: {(k + 1) * m2} + {k3 * m3} = {(k + 1) * m2 + k3 * m3}. Divide by {k + 1 + k3}: {fr(F((k + 1) * m2 + k3 * m3, k + 1 + k3))}.')], 'Mean')
+    while True:
+        k = r.choice([4, 5, 6]); m1 = r.randint(12, 30); m2 = r.randint(8, 25); last = m1 * k - m2 * (k - 1); m3 = m1 + r.choice([-2, -1, 1, 2]); fifth = m3 * (k + 1) - m1 * k; N = r.randint(18, 32); mm = r.randint(11, 19)
+        if 0 < last < 80 and fifth > 0: break
+    return P('', [(f'The mean of {k} numbers is {m1}. The mean of {k - 1} of them is {m2}. What is the other number?', last, f'{k} × {m1} = {k * m1}; {k - 1} × {m2} = {(k - 1) * m2}; {k * m1} − {(k - 1) * m2} = {last}.'), (f'One more number is added to the {k} numbers and the mean becomes {m3}. What number was added?', fifth, f'{k + 1} × {m3} = {(k + 1) * m3}; {(k + 1) * m3} − {k * m1} = {fifth}.'),
+                  (f'In a class test the marks add up to {N * mm} and the mean mark is {mm}. How many pupils took the test?', N, f'{N * mm} ÷ {mm} = {N}.')], 'Mean')
+
+
+ASN = [('The sum of two odd numbers is even.', 'Always', 'odd + odd = even, e.g. 3 + 5 = 8.'), ('The product of two odd numbers is even.', 'Never', 'odd × odd is always odd, e.g. 3 × 5 = 15.'),
+       ('The sum of three consecutive whole numbers is a multiple of 3.', 'Always', 'The total is 3 × the middle number.'), ('A multiple of 6 is also a multiple of 3.', 'Always', '6 = 2 × 3.'),
+       ('A multiple of 3 is also a multiple of 6.', 'Sometimes', '12 is, but 9 is not.'), ('A prime number is odd.', 'Sometimes', '2 is prime and even; all other primes are odd.'),
+       ('A square number is even.', 'Sometimes', '4 is even, 9 is odd.'), ('The sum of two prime numbers is prime.', 'Sometimes', '2 + 3 = 5 is prime, 3 + 5 = 8 is not.'),
+       ('A square number ends in 7.', 'Never', 'Squares end in 0, 1, 4, 5, 6 or 9.'), ('A whole number that ends in 5 is a multiple of 5.', 'Always', 'Multiples of 5 end in 0 or 5.'),
+       ('Reversing the digits of a two-digit number gives a bigger number.', 'Sometimes', '12 → 21 is bigger, 31 → 13 is smaller.'), ('The difference between a two-digit number and its reverse is a multiple of 9.', 'Always', 'e.g. 73 − 37 = 36; the difference is 9 × (difference of the digits).'),
+       ('The digits of a multiple of 9 add up to exactly 9.', 'Sometimes', '27 → 9, but 99 → 18.'), ('The product of two consecutive whole numbers is even.', 'Always', 'One of the two numbers is even.'),
+       ('Half of an even number is odd.', 'Sometimes', 'Half of 6 is 3, half of 8 is 4.'), ('The sum of two even numbers is odd.', 'Never', 'even + even = even.'),
+       ('A cube number is odd.', 'Sometimes', '27 is odd, 8 is even.'), ('A prime number greater than 5 ends in 5.', 'Never', 'A number ending in 5 is divisible by 5.'),
+       ('Multiplying a whole number by itself gives a bigger number.', 'Sometimes', '3 × 3 = 9 is bigger, but 1 × 1 = 1 is not.'), ('The sum of four consecutive whole numbers is a multiple of 4.', 'Never', 'The total is always 2 more than a multiple of 4, e.g. 1 + 2 + 3 + 4 = 10.'),
+       ('A multiple of 4 is even.', 'Always', '4 = 2 × 2.'), ('The sum of an odd number and an even number is odd.', 'Always', 'odd + even = odd.'),
+       ('A whole number with exactly two factors is prime.', 'Always', 'That is the definition of a prime number.'), ('A square number has an odd number of factors.', 'Always', 'Factors pair up, except the square root, which pairs with itself.'),
+       ('Doubling an odd number gives a multiple of 4.', 'Never', '2 × odd is even but not divisible by 4, e.g. 6, 10, 14.'), ('A multiple of 5 ends in 5.', 'Sometimes', '15 does, 20 does not.'),
+       ('The sum of five consecutive whole numbers is a multiple of 5.', 'Always', 'The total is 5 × the middle number.'), ('Adding two multiples of 3 gives a multiple of 6.', 'Sometimes', '3 + 9 = 12 is, 3 + 6 = 9 is not.'),
+       ('A prime number is a multiple of 4.', 'Never', 'A multiple of 4 has 2 and 4 as factors.'), ('The product of two prime numbers is prime.', 'Never', 'The product has both primes as factors.'),
+       ('A number that is a multiple of both 2 and 3 is a multiple of 6.', 'Always', '2 and 3 share no factors, so it must be divisible by 6.'), ('Adding 1 to a prime number gives an even number.', 'Sometimes', '3 + 1 = 4 is even, but 2 + 1 = 3 is odd.'),
+       ('A two-digit number is bigger than the sum of its digits.', 'Always', 'e.g. 19 > 10; the tens digit is worth at least 10.'), ('Squaring an odd number gives an odd number.', 'Always', 'odd × odd = odd.'),
+       ('A multiple of 9 is also a multiple of 3.', 'Always', '9 = 3 × 3.'), ('Subtracting an odd number from an odd number gives an odd number.', 'Never', 'odd − odd = even.')]
+
+
+# 18 Always, sometimes, never
+def s18(r, v):
+    cat = {k: [x for x in ASN if x[1] == k] for k in ('Always', 'Sometimes', 'Never')}
+    for k in cat: random.Random(99).shuffle(cat[k])
+    pat = [['Always', 'Sometimes', 'Never', 'Sometimes'], ['Always', 'Always', 'Sometimes', 'Never'], ['Sometimes', 'Never', 'Always', 'Never']][v % 3]
+    cnt = {k: sum(p.count(k) * ((v - j) // 3 + (1 if j < v % 3 else 0)) for j, p in enumerate([['Always', 'Sometimes', 'Never', 'Sometimes'], ['Always', 'Always', 'Sometimes', 'Never'], ['Sometimes', 'Never', 'Always', 'Never']])) for k in cat}
+    pick = []
+    for k in pat:
+        pick.append(cat[k][cnt[k] % len(cat[k])]); cnt[k] += 1
+    r.shuffle(pick)
+    return P('For each statement, write whether it is ALWAYS true, SOMETIMES true or NEVER true.', [(s, a, why) for s, a, why in pick], 'Always, sometimes, never')
+
+
+# 19 Rectangles
+def s19(r, v):
+    t = v % 4
+    if t == 0:
+        s = r.randint(5, 14); d = r.randint(2, s - 2); L, W = s + d, s - d
+        return P(f'Rectangle A is {L} cm long and {W} cm wide. Square B has the same perimeter as rectangle A.', [('What is the perimeter of rectangle A?', f'{4 * s} cm', f'2 × ({L} + {W}) = {4 * s} cm.'), ('What is the length of one side of square B?', f'{s} cm', f'{4 * s} ÷ 4 = {s} cm.'), ('How much bigger is the area of B than the area of A?', f'{d * d} cm²', f'B: {s} × {s} = {s * s}. A: {L} × {W} = {L * W}. {s * s} − {L * W} = {d * d} cm².')], 'Rectangles')
+    if t == 1:
+        A = r.choice([24, 36, 48, 60, 72, 96]); fs = [d for d in factors(A) if 1 < d * d < A]; w1, w2 = r.sample(fs, 2); L1, L2 = A // w1, A // w2
+        return P(f'Rectangle A is {L1} cm long and {w1} cm wide. Rectangle B has the same area as A and is {w2} cm wide.', [('What is the area of rectangle A?', f'{A} cm²', f'{L1} × {w1} = {A} cm².'), ('What is the length of rectangle B?', f'{L2} cm', f'{A} ÷ {w2} = {L2} cm.'), ('What is the difference between the perimeters of A and B?', f'{abs(2 * (L1 + w1) - 2 * (L2 + w2))} cm', f'A: {2 * (L1 + w1)} cm. B: {2 * (L2 + w2)} cm.')], 'Rectangles')
+    if t == 2:
+        k = r.choice([2, 3, 4]); W = r.randint(3, 12); L = k * W
+        return P(f'A rectangle is {k} times as long as it is wide. Its perimeter is {2 * (L + W)} cm.', [('What is its width?', f'{W} cm', f'Half the perimeter is {L + W} cm = {k + 1} widths. {L + W} ÷ {k + 1} = {W} cm.'), ('What is its area?', f'{L * W} cm²', f'{L} × {W} = {L * W} cm².'), (f'A second rectangle has double this area and the same width. What is its perimeter?', f'{2 * (2 * L + W)} cm', f'Its length is {2 * L} cm. 2 × ({2 * L} + {W}) = {2 * (2 * L + W)} cm.')], 'Rectangles')
+    L, W = 5 * r.randint(4, 10), 5 * r.randint(2, 5); w = r.choice([2, 3, 5]); big = (L + 2 * w) * (W + 2 * w)
+    if L <= W: L += W; big = (L + 2 * w) * (W + 2 * w)
+    return P(f'A rectangular pool is {L} m long and {W} m wide. A path {w} m wide goes all the way round it.', [('What is the area of the pool?', f'{n(L * W)} m²', f'{L} × {W} = {n(L * W)} m².'), ('What is the total area of the pool and the path?', f'{n(big)} m²', f'{L + 2 * w} × {W + 2 * w} = {n(big)} m².'), ('What is the area of the path?', f'{n(big - L * W)} m²', f'{n(big)} − {n(L * W)} = {n(big - L * W)} m².')], 'Rectangles')
+
+
+# 20 Closing puzzle
+def s20(r, v):
+    t = v % 5
+    if t == 0:
+        k1, k2 = r.choice([(2, 2), (2, 3), (3, 2), (3, 3)]); c = r.randint(6, 25); c += (k1 * k2 * c - c) % 2 * (1 if (k1 * k2 - 1) % 2 else 0); A, B, C = names(r, 3); b, a = k2 * c, k1 * k2 * c; tw = {2: 'twice', 3: 'three times'}; th = r.choice(['stickers', 'cards', 'marbles'])
+        return P(f'{A} has {tw[k1]} as many {th} as {B}. {B} has {tw[k2]} as many as {C}. Together they have {a + b + c}.', [(f'How many does {C} have?', c, f'{1 + k2 + k1 * k2} parts = {a + b + c}; one part = {c}.'), (f'How many does {A} have?', a, f'{k1 * k2} × {c} = {a}.'), (f'{A} gives some to {C} so that they both have the same number. How many does {A} give?', (a - c) // 2, f'({a} − {c}) ÷ 2 = {(a - c) // 2}.')], 'Reasoning puzzle')
+    if t == 1:
+        ps = primes_upto(60)
+        while True:
+            p, q = sorted(r.sample([x for x in ps if x > 2], 2)); N = p + q
+            if sum(1 for a in ps for b in ps if a < b and a + b == N and b - a == q - p) == 1: break
+        x, y = r.sample([7, 11, 13, 17, 19, 23], 2); lo = r.choice([20, 30, 40, 50, 60, 70, 80, 90]); inr = [z for z in primes_upto(lo + 10) if z > lo]
+        return P('', [(f'Two prime numbers add up to {N}. Their difference is {q - p}. What are they?', f'{p} and {q}', f'{p} + {q} = {N} and {q} − {p} = {q - p}; both are prime.'), (f'Two prime numbers multiply to make {x * y}. What are they?', f'{min(x, y)} and {max(x, y)}', f'{min(x, y)} × {max(x, y)} = {x * y}.'),
+                      (f'Write down all the prime numbers between {lo} and {lo + 10}.', ', '.join(map(str, inr)) if inr else 'There are none', 'Check each odd number for factors of 3, 5 and 7.')], 'Reasoning puzzle')
+    if t == 2:
+        a, b = r.choice([(7, 3), (5, 3), (7, 4), (5, 4), (7, 5), (8, 3)]); fro = a * b - a - b
+        while True:
+            T = r.randint(fro + 5, 60); ways = [(i, j) for i in range(T // a + 1) for j in range(T // b + 1) if a * i + b * j == T]
+            if len(ways) == 1 and ways[0][0] and ways[0][1]: break
+        can = lambda s: any((s - a * i) % b == 0 for i in range(s // a + 1))
+        bad = r.choice([x for x in range(a + 1, fro + 1) if not can(x)]); good = r.sample([x for x in range(b + a, 40) if can(x) and x != T], 3); opts = sorted(good + [bad])
+        return P(f'In a game a team scores {a} points for a goal and {b} points for a bonus. There is no other way to score.', [(f'A team scores exactly {T} points. How many goals and how many bonuses did it score?', f'{ways[0][0]} goal{"s" if ways[0][0] > 1 else ""} and {ways[0][1]} bonus{"es" if ways[0][1] > 1 else ""}', f'{ways[0][0]} × {a} + {ways[0][1]} × {b} = {T}; no other combination works.'),
+                                                                                                                               (f'Which one of these totals is impossible?   {",   ".join(map(str, opts))}', bad, f'{bad} cannot be made from {a}s and {b}s.'), ('What is the largest total that is impossible to score?', fro, f'{fro} cannot be made, but every total above {fro} can.')], 'Reasoning puzzle')
+    if t == 3:
+        while True:
+            c = r.randint(5, 11); k = r.choice([4, 5, 6]); m = k * c; j = r.choice([2, 3])
+            if j < k and (m - j * c) % (j - 1) == 0 and 22 <= m - c <= 40: break
+        x = (m - j * c) // (j - 1); A = names(r, 1)[0]; tw = {2: 'twice', 3: 'three times'}
+        return P(f"{A}'s mum is {k} times as old as {A}. Their ages add up to {m + c}.", [(f'How old is {A}?', c, f'{k + 1} parts = {m + c}; one part = {c}.'), (f'How old was {A}\'s mum when {A} was born?', m - c, f'{m} − {c} = {m - c}.'), (f"In how many years' time will {A}'s mum be {tw[j]} as old as {A}?", x, f'In {x} years they will be {c + x} and {m + x}, and {j} × {c + x} = {m + x}.')], 'Reasoning puzzle')
+    c = r.randint(8, 20); A, B, C = names(r, 3); eA, eB, eC = 4 * c, 2 * c, c; w1, w2 = r.randint(2, 5), r.randint(1, 4)
+    return P(f'{A}, {B} and {C} play a game with {7 * c} cards. During the game {B} wins {w1} cards from {A}, and {C} loses {w2} cards to {B}. At the end {A} has twice as many cards as {B}, and {B} has twice as many as {C}.',
+             [(f'How many cards does {B} have at the end?', eB, f'7 parts = {7 * c}; one part = {c}. {B} has 2 parts = {eB}.'), (f'How many cards did {A} have at the start?', eA + w1, f'{A} ends with {eA} after losing {w1}: {eA} + {w1} = {eA + w1}.'), (f'How many cards did {B} have at the start?', eB - w1 - w2, f'{B} ends with {eB} after winning {w1} + {w2}: {eB} − {w1 + w2} = {eB - w1 - w2}.')], 'Reasoning puzzle')
+
+
+SLOTS = [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20]
+
+
+def make_paper(i):
+    qs = []
+    for k, f in enumerate(SLOTS):
+        r = random.Random(7000 + 131 * i + k)
+        v = i + (k * 3 if k in (8, 19, 14) else k)   # stagger the rotating slots so papers differ
+        for attempt in range(50):
+            try:
+                q = f(r, v); break
+            except (ValueError, IndexError, ZeroDivisionError):
+                continue
+        qs.append(q)
+    return qs

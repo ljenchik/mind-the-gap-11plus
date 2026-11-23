@@ -61,9 +61,10 @@ def ang(R):
         x, y = R.randint(25, 80), R.randint(25, 80); p2 = (f"Two angles of a triangle are {x}° and {y}°. What is the third angle?", f"{180 - x - y}°", f"180° − {x}° − {y}° = {180 - x - y}°.")
     else:
         top = R.randrange(20, 141, 2); p2 = (f"An isosceles triangle has a top angle of {top}°. What is each of the two equal angles?", f"{(180 - top) // 2}°", f"180° − {top}° = {180 - top}°. Half of that is {(180 - top) // 2}°.")
-    n, nm = R.choice([(5, "pentagon"), (6, "hexagon"), (8, "octagon"), (9, "nonagon"), (10, "decagon"), (12, "12-sided shape")])
-    if R.random() < .5: p3 = (f"What is each inside angle of a regular {nm}?", f"{(n - 2) * 180 // n}°", f"The inside angles add up to {(n - 2) * 180}°. {(n - 2) * 180} ÷ {n} = {(n - 2) * 180 // n}°.")
-    else: p3 = (f"What is each outside angle of a regular {nm}?", f"{360 // n}°", f"The outside angles of any shape add up to 360°. 360 ÷ {n} = {360 // n}°.")
+    if R.random() < .5:
+        u, v = R.randint(60, 150), R.randint(40, 130); p3 = (f"Three angles meet at a point. Two of them are {u}° and {v}°. What is the third?", f"{360 - u - v}°", f"Angles around a point add up to 360°. 360° − {u}° − {v}° = {360 - u - v}°.")
+    else:
+        u = R.randint(12, 78); p3 = (f"A right angle is split into two angles. One of them is {u}°. What is the other?", f"{90 - u}°", f"A right angle is 90°. 90° − {u}° = {90 - u}°.")
     return ("Angles.", [p1, p2, p3])
 
 def time_(R):
@@ -104,7 +105,7 @@ def pow_(R):
     b, e = R.choice([(2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (3, 3), (3, 4), (3, 5), (4, 3), (4, 4), (5, 3), (5, 4), (6, 3), (7, 3), (10, 4), (10, 6), (9, 3), (8, 3)])
     x, y = R.choice([(3, 4), (2, 5), (4, 5), (2, 6), (3, 5), (2, 3)])
     k = R.randint(2, 9); ex = R.choice([2, 3])
-    return ("Powers. 7⁵ means 7 × 7 × 7 × 7 × 7.", [
+    return ("Powers.", [
         (f"Fill in the box: {b} to the power □ = {b ** e}", str(e), "Keep multiplying by " + str(b) + ": " + ", ".join(str(b ** i) for i in range(1, e + 1)) + f". That is {e} lots of {b}."),
         (f"Which is bigger, {x} to the power {y} or {y} to the power {x}?     {x} to the power {y}     {y} to the power {x}", f"{x} to the power {y}" if x ** y > y ** x else f"{y} to the power {x}", f"{x} to the power {y} = {x ** y} and {y} to the power {x} = {y ** x}."),
         (f"What is {k}² + {k}³?", str(k * k + k ** 3), f"{k}² = {k * k} and {k}³ = {k ** 3}. {k * k} + {k ** 3} = {k * k + k ** 3}.")])

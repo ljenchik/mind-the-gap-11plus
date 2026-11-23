@@ -1,0 +1,51 @@
+"""23 Nov: 'Percentages' -> 'Percentages and word problems'. Adds 150 practice sets of percentage word problems
+(increase, decrease, reverse, percentage change, offers) and gives every exam-like paper (PT1-50) a new percentage
+question from these families. Run after retopic.py. Safe to re-run."""
+import json, re, random, sys
+sys.setrecursionlimit(5000)
+sys.path.insert(0, "/home/claude/scripts")
+import pct_families as P
+NAME = "Percentages and word problems"
+SLOT = {**{p: 5 for p in range(1, 11)}, **{p: 6 for p in range(11, 31)}, **{p: 7 for p in range(31, 51)}}
+
+def main(qp, sp):
+    Q = [q for q in json.load(open(qp)) if not re.match(r"SK-money-P\d", q["id"])]
+    slots = {f"PT{pn}-{n:02d}{c}" for pn, n in SLOT.items() for c in "abc"}
+    seen = {q["q"] for q in Q if q["id"] not in slots}
+    def make(R, gen):
+        for _ in range(500):
+            stem, parts = gen(R)
+            texts = [f"{stem}\n{'abc'[i]}) {p[0]}" for i, p in enumerate(parts)]
+            if texts[0] not in seen: seen.update(texts); return texts, parts
+        raise SystemExit("no new set for " + gen.__name__)
+    by = {q["id"]: q for q in Q}
+    for pn, n in SLOT.items():                                   # papers first, so practice never repeats them
+        gen = P.PCT[(pn * 5) % len(P.PCT)]
+        texts, parts = make(random.Random(f"pct-paper-{pn}"), gen)
+        for i, p in enumerate(parts):
+            q = by[f"PT{pn}-{n:02d}{'abc'[i]}"]
+            q.update(q=texts[i], a=p[1], s=p[2], skill="money", k=NAME, t=NAME, tab=NAME, wp=True); q.pop("wrong", None); q.pop("pic", None)
+            if len(p) > 3: q["wrong"] = [w for w in p[3] if w != p[1]][:3]
+    R = random.Random("pct-practice"); k = 0
+    for j in range(150):
+        texts, parts = make(R, P.PCT[j % len(P.PCT)]); k += 1
+        for i, p in enumerate(parts):
+            d = dict(id=f"SK-money-P{k:03d}{'abc'[i]}", q=texts[i], a=p[1], s=p[2], m=1, wp=True, yr=5, skill="money", set=f"money-P{k:03d}",
+                     lv=["Easy", "Hard", "Challenge"][i], k=NAME, t=NAME, tab=NAME, src="Written for this app in the CSSE style")
+            if len(p) > 3: d["wrong"] = [w for w in p[3] if w != p[1]][:3]
+            Q.append(d)
+    for q in Q:
+        if q.get("skill") == "money": q.update(k=NAME, t=NAME, tab=NAME)
+    # choice questions written by our families show only their own options (no extra made-up ones)
+    for q in Q:
+        p = str(q.get("paper", ""))
+        if q.get("wrong") and ((p.startswith("PT") and 11 <= int(p[2:]) <= 30) or q["id"].startswith("SK-money-P")): q["fixed"] = True
+    json.dump(Q, open(qp, "w"), ensure_ascii=False)
+    S = json.load(open(sp))
+    for s in S["sk56"]:
+        if s["id"] == "money": s["name"] = s["topic"] = NAME
+    json.dump(S, open(sp, "w"), ensure_ascii=False)
+    print(k, "practice sets;", sum(1 for q in Q if q.get("skill") == "money" and not q.get("paper")), "practice questions in", NAME)
+
+if __name__ == "__main__":
+    main(*sys.argv[1:3])
