@@ -1,0 +1,35 @@
+"""24 Nov: question quality. (1) No repeated questions in practice: a question that already appears elsewhere is removed;
+the remaining parts of a linked set are re-lettered a), b), c). (2) Every worked solution ends by stating the answer.
+Run last (after data_update.py). Safe to re-run."""
+import json, re, sys, collections
+
+def main(qp):
+    Q = json.load(open(qp))
+    seen, drop = set(), set()
+    for q in Q:
+        if q.get("paper") or not q.get("skill"): continue
+        key = re.sub(r"\s+", " ", q["q"]).strip().lower()
+        if key in seen: drop.add(q["id"])
+        else: seen.add(key)
+    Q = [q for q in Q if q["id"] not in drop]
+    sets = collections.defaultdict(list)
+    for q in Q:
+        if q.get("set") and not q.get("paper"): sets[q["set"]].append(q)
+    for v in sets.values():   # re-letter linked parts so a set never reads a), c)
+        v.sort(key=lambda q: q["id"])
+        for i, q in enumerate(v):
+            q["q"] = re.sub(r"\n[a-e]\) ", "\n" + "abcde"[i] + ") ", q["q"], count=1)
+    def plain(x): return re.sub(r"[\s,]", "", str(x)).lower()
+    added = 0
+    for q in Q:
+        a, s = str(q.get("a", "")), str(q.get("s", ""))
+        if not s or not a: continue
+        core = re.sub(r"^£|[a-z ]+$", "", a, flags=re.I).strip() or a
+        if plain(a) in plain(s) or plain(core) in plain(s): continue
+        q["s"] = s.rstrip() + ("" if s.rstrip().endswith((".", "!", "?")) else ".") + f" So the answer is {a}."
+        added += 1
+    json.dump(Q, open(qp, "w"), ensure_ascii=False)
+    print("repeats removed:", len(drop), "| answers added to worked solutions:", added)
+
+if __name__ == "__main__":
+    main(sys.argv[1])

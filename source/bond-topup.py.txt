@@ -1,9 +1,9 @@
 """23 Nov: tops up the thinnest parts with Bond-style question types (bond_families.py). Run after pct_update.py. Safe to re-run."""
 import json, re, random, sys
 sys.path.insert(0, "/home/claude/scripts")
-import bond_families as B, variety_families as V
-PLAN = {"roman": (B.ROMAN, 30), "mach": (B.MACH, 32), "seq": (B.SEQ, 30), "as": (B.ADDSUB, 32), "puz1": (B.PUZ1, 32), "puz2": (B.PUZ2, 35), "asn": ([V.asn], 16), "eq": (B.ALG, 40)}
-PLAIN = {"Roman numerals.", "Signs puzzles.", "Remainders.", "Products.", "Halfway numbers.", "Numbers in words and figures."}
+import bond_families as B, variety_families as V, new_parts as NP
+PLAN = {"roman": (B.ROMAN, 30), "mach": (B.MACH, 32), "seq": (B.SEQ, 30), "as": (B.ADDSUB, 32), "puz1": (B.PUZ1, 32), "puz2": (B.PUZ2, 35), "asn": ([V.asn], 22), "eq": (B.ALG, 40), "cash": (B.MONEY, 14), "shape": (B.SHAPES, 12), "prime": (B.PRIMES, 12), "pow": (B.POWERS, 12), "fdp": (B.FDP, 12), "count": (B.COUNT, 12), "frac": (B.FRAC, 6), "fact": ([NP.fact], 6), "place": ([NP.place], 6), "rates": ([NP.rates], 6), "unitc": ([NP.unitc], 6)}
+PLAIN = {"Roman numerals.", "Signs puzzles.", "Remainders.", "Products.", "Halfway numbers.", "Numbers in words and figures.", "Prime puzzles.", "Triangles.", "Comparing powers.", "Adding and subtracting fractions. Give answers in their simplest form."}
 
 def main(qp, sp):
     Q = [q for q in json.load(open(qp)) if not re.match(r"SK-\w+-Y\d", q["id"])]
@@ -26,6 +26,16 @@ def main(qp, sp):
         print(f"{NAME[sk]:30} +{k} sets, now {sum(1 for q in Q if q.get('skill') == sk and not q.get('paper'))}")
     for q in Q:   # clock-hand angles belong in Angles, not Time
         if q.get("skill") == "time" and not q.get("paper") and "angle between the hands" in q["q"]: q.update(skill="ang", k=NAME["ang"], t=NAME["ang"], tab=NAME["ang"])
+    # 24 Nov: sets with × or ÷ of fractions -> Fraction of a number; money sets that are mostly percentages -> Percentages and word problems
+    import collections
+    sets = collections.defaultdict(list)
+    for q in Q:
+        if q.get("set") and not q.get("paper"): sets[q["set"]].append(q)
+    for v in sets.values():
+        if v[0].get("skill") == "frac" and any(re.search("[×÷]", q["q"]) for q in v): new = "famt"
+        elif v[0].get("skill") == "cash" and sum(1 for q in v if re.search("%|percent", q["q"], re.I)) >= 2: new = "money"
+        else: continue
+        for q in v: q.update(skill=new, k=NAME[new], t=NAME[new], tab=NAME[new])
     json.dump(Q, open(qp, "w"), ensure_ascii=False)
 
 if __name__ == "__main__":

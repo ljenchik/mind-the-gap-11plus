@@ -1,0 +1,55 @@
+"""24 Nov: no probability (not taught for this exam): probability practice sets removed, papers keep counting only;
+part 'count' becomes "Counting and combinations" (Problem solving); topic 7 is "Data and charts";
+no commas in numbers (2634, not 2,634). Run last, after bond_topup.py. Safe to re-run."""
+import json, re, random, sys, collections
+sys.path.insert(0, "/home/claude/scripts")
+import extra_families as EF, creative_families as C
+PROB = re.compile(r"probabilit|likely|chance|fair (dice|spinner|coin)|spinner|at random", re.I)
+COMMA = re.compile(r"(?<=\d),(?=\d{3}(?!\d))")
+def nocomma(x): return COMMA.sub("", x) if isinstance(x, str) else [nocomma(v) for v in x] if isinstance(x, list) else x
+
+def main(qp, sp):
+    Q = json.load(open(qp)); S = json.load(open(sp))
+    for s in S["sk56"]:
+        if s["id"] == "count": s["name"] = s["topic"] = "Counting and combinations"
+    NAME = {s["id"]: s["name"] for s in S["sk56"]}
+    sets = collections.defaultdict(list)
+    for q in Q:
+        if q.get("skill") == "count" and not q.get("paper"): sets[q.get("set") or q["id"]].append(q)
+    drop = {q["id"] for v in sets.values() if any(PROB.search(q["q"]) for q in v) for q in v}
+    Q = [q for q in Q if q["id"] not in drop]
+    # papers: a probability question becomes a counting question
+    by = {q["id"]: q for q in Q}; fams = [EF.count_cards, EF.count_outfits, C.FAMS["dice"]]; seen = {q["q"] for q in Q}
+    for pid in sorted({q["paper"] for q in Q if q.get("paper") and PROB.search(q["q"])}):
+        n = int(next(q["id"] for q in Q if q.get("paper") == pid and PROB.search(q["q"]))[len(pid) + 1:len(pid) + 3])
+        R = random.Random("count-" + pid)
+        while True:
+            stem, parts = fams[R.randrange(3)](R)[:2]
+            texts = [p[0] if stem == "Counting the ways." else f"{stem}\n{'abc'[i]}) {p[0]}" for i, p in enumerate(parts)]
+            if texts[0] not in seen and len(parts) == 3: break
+        seen.update(texts)
+        for i, p in enumerate(parts):
+            q = by[f"{pid}-{n:02d}{'abc'[i]}"]; q.update(q=texts[i], a=p[1], s=p[2], skill="count"); q.pop("wrong", None); q.pop("pic", None)
+    # papers 1-10 had no part labels: label them by question number (all ten share one order), so twins and "fix my mistakes" can find similar questions
+    SLOT10 = {1: "as", 2: "frac", 4: "units", 5: "money", 6: "ratio", 7: "puz2", 8: "time", 9: "rates", 10: "chart", 11: "mean", 12: "ang", 13: "coord",
+              14: "wp", 15: "asn", 16: "seq", 17: "rect", 18: "dec", 20: "mach"}
+    for q in Q:
+        m = re.match(r"PT(\d+)-0?(\d+)[a-z]?$", q["id"])
+        if not m or int(m.group(1)) > 10: continue
+        n = int(m.group(2))
+        sk = SLOT10.get(n) or ("round" if n == 3 and re.search(r"round", q["q"], re.I) else "pow" if n == 3 else "wp" if re.search(r"born|older|years old", q["q"]) else "count")
+        q.update(skill=sk, k=NAME[sk], t=NAME[sk], tab=NAME[sk])
+    for q in Q:
+        if q.get("skill") == "count": q.update(k=NAME["count"], t=NAME["count"], tab=NAME["count"])
+        for f in ("q", "a", "s", "wrong"):
+            if f in q: q[f] = nocomma(q[f])
+    def walk(o):   # assessment papers: every text
+        if isinstance(o, dict): return {k: walk(v) for k, v in o.items()}
+        if isinstance(o, list): return [walk(v) for v in o]
+        return nocomma(o)
+    S["papers"] = walk(S["papers"])
+    json.dump(Q, open(qp, "w"), ensure_ascii=False); json.dump(S, open(sp, "w"), ensure_ascii=False)
+    print("probability questions removed:", len(drop), "| counting left:", sum(1 for q in Q if q.get("skill") == "count" and not q.get("paper")))
+
+if __name__ == "__main__":
+    main(*sys.argv[1:3])

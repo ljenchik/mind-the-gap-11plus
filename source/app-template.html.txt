@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#0f7c8c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -27,7 +28,7 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme]) {
     --bg: #0f1c21; --surface: #172a31; --ink: #e6f0f2; --muted: #9db2b9;
     --accent: #3cb6c6; --accent-ink: #0c1a1f; --sun: #f5b93e; --line: #2a434c;
     --good: #5fd08f; --good-bg: #173a29; --bad: #f08a76; --bad-bg: #3d211c;
@@ -40,6 +41,49 @@
   --good: #5fd08f; --good-bg: #173a29; --bad: #f08a76; --bad-bg: #3d211c;
   color-scheme: dark;
 }
+/* profile pictures and the "me" dialog */
+.mebtn { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; } .mebtn .mini { width: 28px; height: 28px; flex: none; }
+.avatarbtn { width: 42px; height: 42px; padding: 0; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); overflow: hidden; display: grid; place-items: center; }
+.avatar { width: 100%; height: 100%; display: block; border-radius: 50%; object-fit: cover; }
+.av-pick { display: grid; grid-template-columns: repeat(4, 60px); gap: 10px; }
+.av-pick button { width: 60px; height: 60px; padding: 0; border-radius: 50%; border: 3px solid transparent; background: none; overflow: hidden; }
+.av-pick button[aria-pressed="true"] { border-color: var(--accent); }
+.medlg { border: none; border-radius: 18px; padding: 18px; width: min(440px, 94vw); max-height: 90vh; overflow: auto; background: var(--surface); color: var(--ink); }
+.medlg label { display: grid; gap: 4px; font-weight: 700; } .medlg input[type="text"] { font: inherit; padding: 10px 12px; border: 2px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); }
+.medlg::backdrop { background: rgba(0, 0, 0, .45); }
+.medlg .mehead { display: flex; align-items: center; gap: 12px; } .medlg .mehead .big { width: 64px; height: 64px; }
+.kidav { width: 34px; height: 34px; display: inline-block; vertical-align: middle; margin-right: 8px; }
+.ptile.locked { opacity: .55; cursor: default; }
+/* options for different needs */
+:root[data-font="easy"] { --body: Verdana, Tahoma, "Segoe UI", sans-serif; --display: Verdana, Tahoma, "Segoe UI", sans-serif; }
+:root[data-font="easy"] body { letter-spacing: .03em; word-spacing: .12em; line-height: 1.75; }
+:root[data-cb="1"] { --good: #0b5fa5; --good-bg: #dcebfa; --bad: #b85000; --bad-bg: #fde9d6; }
+:root[data-cb="1"][data-theme="dark"] { --good: #7cbcf2; --good-bg: #142c44; --bad: #f2a25c; --bad-bg: #3d2714; }
+:root[data-calm="1"] *, :root[data-calm="1"] *::before, :root[data-calm="1"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+.medlg label.opt, label.opt { display: flex; background: none; border: 0; padding: 4px 0; text-align: left; justify-content: flex-start; letter-spacing: normal; word-spacing: normal; gap: 10px; align-items: flex-start; font-weight: 400; } label.opt input { width: 22px; height: 22px; margin-top: 2px; flex: none; }
+/* paper review */
+#missed article.rv { display: grid; gap: 6px; border: 2px solid var(--line); border-left-width: 6px; border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
+#missed article.rv.ok { border-left-color: var(--good); } #missed article.rv.no { border-left-color: var(--bad); } #missed article.rv.none { border-left-color: var(--muted); }
+.rvhead { display: flex; gap: 8px; align-items: center; } .rvmark { font-weight: 800; width: 1.4em; text-align: center; }
+.rv.ok .rvmark { color: var(--good); } .rv.no .rvmark { color: var(--bad); } .rv details summary { cursor: pointer; color: var(--accent); font-weight: 700; }
+.ttwrap { overflow-x: auto; margin: 10px 0 4px; }
+table.tt { border-collapse: collapse; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--surface); min-width: 70%; }
+table.tt th, table.tt td { border: 1.5px solid var(--line); padding: 6px 12px; text-align: center; white-space: nowrap; }
+table.tt thead th { background: var(--bg); color: var(--accent); font-weight: 800; }
+table.tt tbody th { text-align: left; font-weight: 700; }
+table.tt tbody tr:nth-child(even) td, table.tt tbody tr:nth-child(even) th { background: color-mix(in srgb, var(--bg) 55%, transparent); }
+.ttafter { display: block; margin-top: 10px; }
+body.kb table.tt th, body.kb table.tt td { padding: 3px 8px; font-size: .92rem; }
+.wnote { white-space: pre-wrap; font: inherit; background: var(--bg); border-radius: 10px; padding: 10px 12px; margin: 8px 0; }
+details.weekly summary { cursor: pointer; }
+/* extra schemes: cream (soft, for easier reading) and high contrast */
+:root[data-theme="cream"] { --bg: #f7f0dc; --surface: #fffaf0; --ink: #2a2418; --muted: #5e5440; --line: #e2d6b5; --good-bg: #e6f2dc; --bad-bg: #f8e4da; color-scheme: light; }
+:root[data-theme="contrast"] { --bg: #ffffff; --surface: #ffffff; --ink: #000000; --muted: #222222; --line: #000000; --accent: #003a8c; --accent-ink: #ffffff;
+  --good: #005a1f; --good-bg: #d8f5e0; --bad: #9e0000; --bad-bg: #ffe0e0; color-scheme: light; }
+:root[data-theme="contrast"] button, :root[data-theme="contrast"] .topic, :root[data-theme="contrast"] .qtile { border-color: #000 !important; }
+/* text size */
+:root[data-size="l"], :root[data-size="l"] body { font-size: 19.5px; }
+:root[data-size="xl"], :root[data-size="xl"] body { font-size: 22px; }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.5; }
 main { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 20px; }
@@ -331,22 +375,22 @@ select.year { font: inherit; font-weight: 700; border: 0; border-radius: 999px; 
 
 /* colour themes */
 :root[data-accent="teal"] { --accent: #0f7c8c; --accent-ink: #ffffff; }
-@media (prefers-color-scheme: dark) { :root[data-accent="teal"]:not([data-theme="light"]) { --accent: #3cb6c6; --accent-ink: #0c1a1f; } }
+@media (prefers-color-scheme: dark) { :root[data-accent="teal"]:not([data-theme]) { --accent: #3cb6c6; --accent-ink: #0c1a1f; } }
 :root[data-theme="dark"][data-accent="teal"] { --accent: #3cb6c6; --accent-ink: #0c1a1f; }
 :root[data-accent="blue"] { --accent: #1d5fd1; --accent-ink: #ffffff; }
-@media (prefers-color-scheme: dark) { :root[data-accent="blue"]:not([data-theme="light"]) { --accent: #6aa3ff; --accent-ink: #0c1a1f; } }
+@media (prefers-color-scheme: dark) { :root[data-accent="blue"]:not([data-theme]) { --accent: #6aa3ff; --accent-ink: #0c1a1f; } }
 :root[data-theme="dark"][data-accent="blue"] { --accent: #6aa3ff; --accent-ink: #0c1a1f; }
 :root[data-accent="purple"] { --accent: #6b46c1; --accent-ink: #ffffff; }
-@media (prefers-color-scheme: dark) { :root[data-accent="purple"]:not([data-theme="light"]) { --accent: #b39bff; --accent-ink: #0c1a1f; } }
+@media (prefers-color-scheme: dark) { :root[data-accent="purple"]:not([data-theme]) { --accent: #b39bff; --accent-ink: #0c1a1f; } }
 :root[data-theme="dark"][data-accent="purple"] { --accent: #b39bff; --accent-ink: #0c1a1f; }
 :root[data-accent="green"] { --accent: #1f7a3a; --accent-ink: #ffffff; }
-@media (prefers-color-scheme: dark) { :root[data-accent="green"]:not([data-theme="light"]) { --accent: #62c98a; --accent-ink: #0c1a1f; } }
+@media (prefers-color-scheme: dark) { :root[data-accent="green"]:not([data-theme]) { --accent: #62c98a; --accent-ink: #0c1a1f; } }
 :root[data-theme="dark"][data-accent="green"] { --accent: #62c98a; --accent-ink: #0c1a1f; }
 :root[data-accent="orange"] { --accent: #c2510c; --accent-ink: #ffffff; }
-@media (prefers-color-scheme: dark) { :root[data-accent="orange"]:not([data-theme="light"]) { --accent: #ff9f5a; --accent-ink: #0c1a1f; } }
+@media (prefers-color-scheme: dark) { :root[data-accent="orange"]:not([data-theme]) { --accent: #ff9f5a; --accent-ink: #0c1a1f; } }
 :root[data-theme="dark"][data-accent="orange"] { --accent: #ff9f5a; --accent-ink: #0c1a1f; }
 :root[data-accent="pink"] { --accent: #c0306b; --accent-ink: #ffffff; }
-@media (prefers-color-scheme: dark) { :root[data-accent="pink"]:not([data-theme="light"]) { --accent: #ff86b5; --accent-ink: #0c1a1f; } }
+@media (prefers-color-scheme: dark) { :root[data-accent="pink"]:not([data-theme]) { --accent: #ff86b5; --accent-ink: #0c1a1f; } }
 :root[data-theme="dark"][data-accent="pink"] { --accent: #ff86b5; --accent-ink: #0c1a1f; }
 .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
 .swatch { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--surface); box-shadow: 0 0 0 2px var(--line); }
@@ -407,7 +451,14 @@ button, .chip, .opt, .tile, select { touch-action: manipulation; -webkit-tap-hig
   header.top .small { min-height: 40px; }
   .st-nav button { min-width: 44px; height: 44px; }
 }
-.tabbar { display: none; }
+/* bottom bar on every screen: Home, Papers, Progress, Parents */
+header.top #profileBtn, header.top #parentsBtn { display: none; }
+main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.tabbar { display: grid; grid-template-columns: repeat(4, minmax(0, 150px)); justify-content: center; position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line); padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
+.tabbar button { background: none; border: 0; border-radius: 10px; min-height: 52px; color: var(--muted); font-weight: 700; font-size: .85rem; display: grid; justify-items: center; align-content: center; gap: 2px; }
+.tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tabbar button[aria-current="page"] { color: var(--accent); background: var(--bg); }
+body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([hidden])) .tabbar, body[data-view="raceView"] .tabbar { display: none; }
 /* Phone */
 @media (max-width: 699px) {
   html, body { font-size: 16px; }
@@ -424,6 +475,14 @@ button, .chip, .opt, .tile, select { touch-action: manipulation; -webkit-tap-hig
   body[data-view="starterView"]:has(#stExam:not([hidden])) header.top, body[data-view="starterView"]:has(#stExam:not([hidden])) .tabbar, body[data-view="raceView"] .tabbar { display: none; }
   body[data-view="quiz"] main, body[data-view="starterView"]:has(#stExam:not([hidden])) main { padding-bottom: 24px; }
   .panel { padding: 14px; border-radius: 16px; }
+  /* phone keyboard open: keep only the question, picture and answer box on screen */
+  body.kb main { padding: 4px 4px 8px; gap: 6px; }
+  body.kb .panel { padding: 8px 10px; gap: 8px; border-width: 0; }
+  body.kb .topbar, body.kb #qreport, body.kb .progress, body.kb #qpaper, body.kb .quizfoot, body.kb #options > label.muted, body.kb .qhead #qtime { display: none !important; }
+  body.kb .qhead { font-size: .8rem; }
+  body.kb .question { font-size: 1.08rem; line-height: 1.35; }
+  body.kb .seq span { padding: 4px 8px; }
+  body.kb .picbox svg, body.kb .picbox img { max-height: 30vh; width: auto; max-width: 100%; }
   .today-btn, .starter-btn, .checkup-btn { margin-bottom: 0; }
   .quick { grid-template-columns: 1fr 1fr; gap: 8px; }
   .qtile { min-height: 72px; grid-template-columns: auto 1fr; justify-items: start; text-align: left; padding: 10px 12px; }
@@ -478,14 +537,16 @@ button, .chip, .opt, .tile, select { touch-action: manipulation; -webkit-tap-hig
     <h1>Mind the Gap 11+</h1>
     <div class="topright">
       <select class="year" id="yearSel" aria-label="School year" hidden><option value="5">Year 5</option></select>
+      <button class="mebtn ghost small" id="meBtn" type="button"></button>
       <button class="ghost small" id="profileBtn" type="button">My progress</button>
       <button class="ghost small" id="parentsBtn" type="button">Parents</button>
     </div>
   </header>
+  <dialog id="meDlg" class="medlg" aria-labelledby="meTitle"><div id="meBox"></div></dialog>
   <div class="assigned" id="assigned" hidden><div><strong>A test has been set for you</strong><br><span id="assignedInfo" class="muted"></span></div><button class="primary" id="assignedGo" type="button">Start test</button></div>
   <button class="starter-btn" id="starterBtn" type="button"><span class="t1" id="starterT1">Initial assessment</span><span class="t2" id="starterT2">Initial assessment A and B · finds your strong and weak skills</span></button>
   <button class="checkup-btn" id="checkupBtn" type="button" hidden><span class="t1" id="checkupT1">Starting check-up</span><span class="t2" id="checkupT2">20 harder questions like a real test · finds your strong and weak topics</span></button>
-  <p class="planline" id="planLine" hidden></p>
+  <p class="planline" id="planLine" hidden style="display:none"></p>
   <button class="today-btn" id="todayBtn" type="button"><span class="t1" id="todayT1">Today's practice</span><span class="t2" id="todayT2">About 10 minutes · mixed topics</span></button>
   <button class="checkup-btn" id="plan2Btn" type="button" hidden><span class="t1" id="plan2T1"></span><span class="t2" id="plan2T2"></span></button>
   <div class="homebar" id="homebar">
@@ -501,7 +562,7 @@ button, .chip, .opt, .tile, select { touch-action: manipulation; -webkit-tap-hig
 
   <section id="home" class="panel-wrap" style="display:grid;gap:18px">
     <button class="ghost" id="topicsToggle" type="button" hidden>Practise a topic</button>
-    <div class="sechead"><h2>Topics</h2><p class="muted small">Tap a topic to practise it. Tap more topics to practise them together, and tap a picked topic again to remove it. Your scores are in My progress.</p></div>
+    <div class="sechead"><h2>Topics</h2><p class="muted small">Tap topics to pick them; tap a picked topic again to remove it. Your scores are in My progress.</p></div>
     <div class="suggest" id="suggest" hidden><h3>Practise next</h3><div class="row" id="suggestBtns"></div></div>
     <div class="topics" id="topics"></div>
     <div class="panel" id="setup">
@@ -568,8 +629,9 @@ button, .chip, .opt, .tile, select { touch-action: manipulation; -webkit-tap-hig
       <div class="row"><input id="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Parent PIN"><button class="primary" id="pinGo" type="button">Open</button></div>
     </div>
     <div id="parentArea" hidden>
-      <div class="chips" id="ptabs"><button type="button" class="chip" data-tab="kids" aria-pressed="true">Children</button><button type="button" class="chip" data-tab="progress" aria-pressed="false">Practice log</button><button type="button" class="chip" data-tab="edit" aria-pressed="false">Questions</button><button type="button" class="chip" data-tab="setTest" aria-pressed="false">Tests</button><button type="button" class="chip" data-tab="reports" aria-pressed="false">Reported problems</button><button type="button" class="chip" data-tab="settings" aria-pressed="false">Settings</button></div>
+      <div class="chips" id="ptabs"><button type="button" class="chip" data-tab="kids" aria-pressed="true">Children</button><button type="button" class="chip" data-tab="plan" aria-pressed="false">Plan and access</button><button type="button" class="chip" data-tab="progress" aria-pressed="false">Practice log</button><button type="button" class="chip" data-tab="edit" aria-pressed="false">Questions</button><button type="button" class="chip" data-tab="setTest" aria-pressed="false">Tests</button><button type="button" class="chip" data-tab="reports" aria-pressed="false">Reported problems</button><button type="button" class="chip" data-tab="settings" aria-pressed="false">Settings</button></div>
       <div id="pSettings" hidden></div>
+      <div id="pPlan" hidden></div>
       <div id="pReports" hidden></div>
       <div id="pSet" hidden></div>
       <div id="pKids"></div>
@@ -681,6 +743,7 @@ button, .chip, .opt, .tile, select { touch-action: manipulation; -webkit-tap-hig
   </section>
   <nav class="tabbar" id="tabbar" aria-label="Main"><button type="button" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</button><button type="button" data-tab="pastView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Papers</button><button type="button" data-tab="profileView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progress</button><button type="button" data-tab="parents"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg>Parents</button></nav>
 </main>
+<script src="config.js"></script>
 <script>
 const QUESTIONS = __DATA__;
 const HELP = __HELP__;
@@ -692,17 +755,15 @@ const MIXED = "Mixed topics";
 const SKILLS = STARTER.sk56, SKILL_BY_NAME = Object.fromEntries(SKILLS.map(s => [s.name, s.id]));
 /* curriculum topics (Years 4 and 6): ["Number", "Add and subtract", "Multiply and divide", "Fractions", "Decimals", "Money & Time", MIXED] */
 /* the 20 exam skills grouped into 7 main topics; each skill is a part (subtopic) of its topic */
-const MAIN = {   /* the 10-topic main page (23 Nov) */
-  "Numbers": ["as", "md", "round", "roman"],
-  "Factors, primes and powers": ["fact", "prime", "pow", "asn"],
-  "Fractions": ["frac", "famt", "order"],
-  "Decimals and percentages": ["dec", "place", "fdp", "money"],
+const MAIN = {   /* the 8-topic main page (24 Nov) */
+  "Number": ["as", "md", "roman", "round", "pow", "fact", "prime", "asn"],
+  "Fractions, decimals and percentages": ["frac", "dec", "famt", "place", "money", "order", "fdp"],
   "Ratio and proportion": ["ratio", "unitc", "rates"],
   "Money, time and units": ["cash", "time", "units"],
-  "Algebra and sequences": ["eq", "seq", "mach"],
-  "Shape and space": ["ang", "rect", "shape", "coord"],
-  "Data and probability": ["chart", "mean", "count"],
-  "Problem solving": ["wp", "puz1", "puz2"]
+  "Algebra": ["eq", "seq", "mach"],
+  "Geometry": ["ang", "rect", "shape", "coord"],
+  "Data and charts": ["chart", "mean"],
+  "Problem solving": ["wp", "puz1", "puz2", "count"]
 };
 const MIXED_ONLY = [];
 const SKILL_NAME = Object.fromEntries(SKILLS.map(s => [s.id, s.name])), MAIN_OF = {};
@@ -788,13 +849,14 @@ function inSub(topicName, sub, q) {
 const $ = id => document.getElementById(id);
 /* each child has their own progress; a few things are shared by the family */
 const SHARED_KEYS = new Set(["children", "activeChild", "settings", "parentPin", "localEdits", "printPicks", "reports"]);
+const CFG = window.MTG_CONFIG || {};   /* site settings from config.js: database keys, payment links, paywall */
 const CHILD = (() => { try { return JSON.parse(localStorage.getItem("y4maths:activeChild")) || ""; } catch (e) { return ""; } })();
 let STORE_CHILD = CHILD;
 const storeKey = k => "y4maths:" + (STORE_CHILD && !SHARED_KEYS.has(k.split(":")[0]) ? "c:" + STORE_CHILD + ":" : "") + k;
 function asChild(id, fn) { const k = STORE_CHILD; STORE_CHILD = id; try { return fn(); } finally { STORE_CHILD = k; } }
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(storeKey(k))); } catch (e) { return null; } },
-  set(k, v) { try { localStorage.setItem(storeKey(k), JSON.stringify(v)); } catch (e) {} }
+  set(k, v) { try { localStorage.setItem(storeKey(k), JSON.stringify(v)); } catch (e) {} if (window.__cloudDirty) window.__cloudDirty(); }
 };
 const children = () => store.get("children") || [{ id: "", name: "" }];
 const childName = () => (children().find(c => c.id === CHILD) || {}).name || "";
@@ -949,7 +1011,8 @@ function buildQuestion(q) {
     if (shown.length === items.length && [...shown].sort().join("|") === [...items].sort().join("|")) return { text: q.q.split("\n")[0], order: true, items: shown };
   }
   const typed = TYPEABLE.test(q.a) && Math.random() < TYPE_SHARE;
-  return { text: q.q, typed, options: typed ? [] : shuffle([q.a, ...wrongAnswersFor(q)]) };
+  const ord = o => o.replace(/^(\d+)(st|nd|rd|th)$/, (m, k) => k + (k % 100 >= 10 && k % 100 <= 20 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" })[k % 10] || "th"));   /* 42nd, not 42st */
+  return { text: q.q, typed, options: typed ? [] : shuffle([...new Set([q.a, ...wrongAnswersFor(q).map(ord)])]) };
 }
 
 /* ---------- pictures drawn in code (SVG) ---------- */
@@ -1709,6 +1772,12 @@ function makeGenerated(count, topicName, sub, avoid) { const g = generatorsFor(t
 function topicPool(t, ty) {
   return QUESTIONS.filter(q => (q.yr || 4) === YEAR && !q.paper && inSub(t, ty, q) && levelOk(q));
 }
+function picksLabel(set, all) {   /* short title for several picks: "Number + Algebra", "4 topics", "All topics" */
+  const a = [...set];
+  if (all && a.length === all) return "All topics";
+  if (a.length <= 2) return a.join(" + ");
+  return `${a.length} ${set === PARTS ? "parts" : "topics"}`;
+}
 function pickedSkills() { return PARTS.size ? [...PARTS].map(p => SKILL_BY_NAME[p]) : [...PICKS].flatMap(t => MAIN[t] || []); }
 function pool() {   /* a run started from the topic panel uses every topic and part that was picked */
   if (YEAR !== 5 || !run || !run.sks) return topicPool(topic, type);
@@ -1724,7 +1793,7 @@ function renderTopics() {
   const box = $("topics"); box.innerHTML = "";
   const live = TOPICS.filter(t => t !== MIXED && (withLevel("All", () => topicPool(t, "All").length) || generatorsFor(t, "All").length));
   if (!live.includes(topic)) { topic = live[0]; type = "All"; }
-  [...PICKS].forEach(t => { if (!live.includes(t)) PICKS.delete(t); }); if (!PICKS.size) PICKS.add(topic);
+  [...PICKS].forEach(t => { if (!live.includes(t)) PICKS.delete(t); });
   live.forEach(t => {
     const bk = "bestPct:" + t + (YEAR === 4 ? "" : ":Y" + YEAR), best = store.get(bk);
     const b = document.createElement("button");
@@ -1734,10 +1803,9 @@ function renderTopics() {
     b.innerHTML = `<h3></h3><div class="meta"><span class="parts"></span></div>`;
     b.querySelector("h3").textContent = t;
     b.querySelector(".parts").textContent = hr ? hr.cells.length + " part" + (hr.cells.length > 1 ? "s" : "") : "";
-    b.onclick = () => {   /* tap to pick a topic, tap a picked topic to remove it; one always stays picked */
-      if (PICKS.has(t)) { if (PICKS.size < 2) return; PICKS.delete(t); }
-      else PICKS.add(t);
-      topic = PICKS.has(t) ? t : [...PICKS][0]; type = "All"; PARTS.clear(); renderTopics(); renderSetup();
+    b.onclick = () => {   /* tap to pick a topic, tap a picked topic to remove it */
+      if (PICKS.has(t)) PICKS.delete(t); else PICKS.add(t);
+      topic = PICKS.has(t) ? t : [...PICKS][0] || topic; type = "All"; PARTS.clear(); renderTopics(); renderSetup();
       if (isPhone() && PICKS.size === 1) $("setup").scrollIntoView({ behavior: "smooth", block: "start" });
     };
     box.appendChild(b);
@@ -1745,10 +1813,13 @@ function renderTopics() {
 }
 
 function renderSetup() {
+  const none = YEAR === 5 && !PICKS.size;
+  $("setup").classList.toggle("empty", none); $("start").disabled = none;
+  if (none) { $("setupTitle").textContent = "Pick a topic"; $("setupNote").textContent = "Tap one or more topics above to practise them."; $("types").innerHTML = ""; $("levels").hidden = true; return; }
   const many = YEAR === 5 && PICKS.size > 1;
-  $("setupTitle").textContent = many ? [...PICKS].join(" + ") : topic;
+  $("setupTitle").textContent = many ? picksLabel(PICKS, Object.keys(MAIN).length) : topic;
   const box = $("types"); box.innerHTML = "";
-  $("setupNote").textContent = many ? `${PICKS.size} topics mixed together. Tap parts to practise only those, or tap a picked topic to remove it.` : "Practise the whole topic, or tap one or more parts of it.";
+  $("setupNote").textContent = many ? (PICKS.size > 2 && PICKS.size < Object.keys(MAIN).length ? [...PICKS].join(" · ") + ". " : "") + "Questions from these topics, mixed together. Tap parts below to practise only those." : "Practise the whole topic, or tap one or more parts of it.";
   const lb = $("levels"); lb.innerHTML = '<span class="muted">Level:</span>';
   LEVELS.forEach(l => {
     const c = document.createElement("button");
@@ -1819,9 +1890,14 @@ function wireReport(box) {
   r.querySelector("[data-rsave]").onclick = () => {
     const t = ta.value.trim(); if (!t) { ta.focus(); return; }
     const list = store.get("reports") || []; list.push({ id: r.dataset.qid, note: t.slice(0, 1000), at: Date.now(), child: childName() || "", screen: innerWidth + "×" + innerHeight });
-    store.set("reports", list); ta.value = ""; rb.hidden = true;
+    store.set("reports", list); ta.value = ""; rb.hidden = true; if (typeof Cloud !== "undefined") Cloud.bump(r.dataset.qid, false, true);
     r.querySelector("[data-report]").textContent = "Reported – thank you";
   };
+}
+function hardHTML() {
+  const h = hardQuestions();
+  return `<h3>Questions most often got wrong</h3><p class="muted small">On this device: questions tried 3 or more times and missed at least 7 times in 10. Worth checking the wording and the answer.</p>` +
+    (h.length ? `<table class="ptable"><tr><th>ID</th><th>Question</th><th>Answer</th><th class="n">Missed</th></tr>${h.map(x => `<tr><td>${escH(x.id)}</td><td>${escH(x.q.q.slice(0, 90))}</td><td>${escH(x.q.a)}</td><td class="n">${x.wrong}/${x.tries}</td></tr>`).join("")}</table>` : '<p class="muted">None yet.</p>');
 }
 function renderReports() {
   const list = store.get("reports") || [], box = $("pReports");
@@ -1829,7 +1905,7 @@ function renderReports() {
   box.innerHTML = `<p class="muted small">Problems reported from the question screens. Turn on Checking mode in Settings to see each question's number while you check. Copy the list and send it to have the questions fixed.</p>
     ${list.length ? `<table class="ptable"><tr><th>Question</th><th>Problem</th><th>Date</th></tr>${list.map(x => `<tr><td><b>${stEsc(x.id)}</b></td><td>${stEsc(x.note)}</td><td class="muted small">${new Date(x.at).toLocaleDateString("en-GB")}${x.screen ? "<br>" + x.screen : ""}</td></tr>`).join("")}</table>
     <div class="row"><button class="primary" id="rCopy" type="button">Copy all (${list.length})</button><button class="ghost" id="rClear" type="button">Clear the list</button><span class="muted small" id="rMsg"></span></div>
-    <textarea id="rText" rows="6" readonly style="width:100%;margin-top:8px">${stEsc(text)}</textarea>` : `<p>No problems reported yet.</p>`}`;
+    <textarea id="rText" rows="6" readonly style="width:100%;margin-top:8px">${stEsc(text)}</textarea>` : `<p>No problems reported yet.</p>`}` + hardHTML();
   if (!list.length) return;
   $("rCopy").onclick = async () => { try { await navigator.clipboard.writeText(text); $("rMsg").textContent = "Copied."; } catch (e) { $("rText").select(); $("rMsg").textContent = "Select all the text in the box and copy it."; } };
   $("rClear").onclick = () => { if (confirm("Clear all reported problems?")) { store.set("reports", []); renderReports(); } };
@@ -1886,9 +1962,11 @@ const autoKey = () => "autoLevel:" + topic;
 function withLevel(lv, f) { const keep = level; level = lv; try { return f(); } finally { level = keep; } }
 let FROM_SETUP = false;
 function start() {
+  if (FROM_SETUP && YEAR === 5 && !PICKS.size) { $("setupNote").textContent = "Tap one or more topics above first."; return; }
+  if (!hasFull() && sessionsToday() >= FREE.sessionsPerDay) { $("setupNote").textContent = `That's ${FREE.sessionsPerDay} sessions today on the free plan. A parent can open everything in Parents → Plan and access.`; return; }
   TARGET = readCount();
   newRun(false);
-  if (FROM_SETUP && YEAR === 5) { run.sks = pickedSkills(); if (PICKS.size > 1 || PARTS.size > 1) run.label = PARTS.size > 1 ? [...PARTS].join(" + ") : [...PICKS].join(" + "); }
+  if (FROM_SETUP && YEAR === 5) { run.sks = pickedSkills(); if (PICKS.size > 1 || PARTS.size > 1) run.label = PARTS.size > 1 ? picksLabel(PARTS) : picksLabel(PICKS, Object.keys(MAIN).length); }
   let list;
   if (level === AUTO) {
     const lv = store.get(autoKey()) || "Easy";
@@ -1925,6 +2003,16 @@ function startMistakes(missed) {
   show("quiz"); renderQ();
 }
 
+/* lines written "Station | Train A | Train B" are shown as a proper table (timetables, price lists) */
+function splitTable(lines) {
+  const rows = lines.filter(l => l.includes(" | ")), other = lines.filter(l => !l.includes(" | "));
+  return rows.length >= 2 ? { rows, other } : null;
+}
+function tableHTML(rows) {
+  const cells = r => r.split(" | ").map(c => fracHTML(c.trim()));
+  const [h, ...b] = rows;
+  return `<div class="ttwrap"><table class="tt"><thead><tr>${cells(h).map(c => `<th scope="col">${c}</th>`).join("")}</tr></thead><tbody>${b.map(r => `<tr>${cells(r).map((c, i) => i ? `<td>${c}</td>` : `<th scope="row">${c}</th>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
 function renderQ() {
   if (run.i >= run.items.length) return finish();
   const total = run.items.length;
@@ -1943,7 +2031,9 @@ function renderQ() {
     const task = shownText.match(/^(.*[.!?])\s+((?:What|How|Which|Who|If|Is|Are|Can|Does|Do|Will|Write|Work|Round|Give|Find|Estimate|Use|Fill|Choose)\b[^.?!]*[?.])$/);
     if (task) shownText = task[1] + "\n" + task[2];
   }
-  $("qtext").innerHTML = fracHTML(shownText).replace(/\n/g, "<br>");
+  const tbl = splitTable(rest);
+  if (tbl) rest.splice(0, rest.length);
+  $("qtext").innerHTML = fracHTML(shownText).replace(/\n/g, "<br>") + (tbl ? tableHTML(tbl.rows) + tbl.other.map(l => `<span class="ttafter">${fracHTML(l)}</span>`).join("") : "");
   if (run.items[run.i].skipped) $("qtext").insertAdjacentHTML("afterbegin", '<span class="muted" style="display:block;font-size:.85em">You skipped this one earlier – have a go now.</span>');
   const seq = $("qseq"); seq.innerHTML = ""; seq.hidden = !rest.length;
   rest.join("   ").split(/\s{3,}/).filter(Boolean).forEach(t => { const sp = document.createElement("span"); sp.innerHTML = fracHTML(t); if (t === "___") sp.className = "blank"; seq.appendChild(sp); });
@@ -2037,13 +2127,14 @@ function answer(btn, choice) {
   }
   run.times.push(Math.min(600, (Date.now() - run.shownAt) / 1000));
   const firstGo = !item.tried, earned = ok && firstGo;
+  qStat(q.id, earned);
   (run.log = run.log || []).push({ tab: q.tab, t: q.t, ok: earned });
   reviewMark(q, earned);
   if (ordered) { document.querySelectorAll("#options .tile, #orderCheck, #orderClear").forEach(b => b.disabled = true); $("orderPicked").classList.add(ok ? "right" : "wrong"); }
   if (typed) { const inp = $("typedAnswer"); inp.disabled = true; $("checkTyped").disabled = true; inp.classList.add(ok ? "right" : "wrong"); document.querySelectorAll(".fracin input").forEach(i => { i.disabled = true; i.classList.add(ok ? "right" : "wrong"); }); }
   run.answered++; run.totalMarks += (q.m || 1); if (earned) run.marks += (q.m || 1);
   if (!q.gen) { const seen = new Set(store.get("seen") || []); seen.add(q.id); store.set("seen", [...seen]); }
-  if (run.mock) { if (earned) run.score++; else run.missed.push(q); run.i++; renderQ(); return; }
+  if (run.mock) { (run.given = run.given || {})[q.id] = { a: String(choice == null ? "" : choice), ok: earned }; if (earned) run.score++; else run.missed.push(q); run.i++; renderQ(); return; }
   const levelMsg = adapt(earned);
   [...$("options").children].forEach(b => { b.disabled = true; if ((b.dataset.value || b.textContent) === q.a) b.classList.add("right"); });
   const fb = $("feedback"); fb.hidden = false;
@@ -2075,6 +2166,7 @@ function answer(btn, choice) {
 
 function finish() {
   const answered = run.answered;
+  if (run.mock && run.paperName) run.totalMarks = run.items.reduce((a, x) => a + (x.q.m || 1), 0);   /* a paper is marked out of all its marks, not just the ones answered */
   const pctNow = run.totalMarks ? Math.round(run.marks / run.totalMarks * 100) : 0;
   if (!run.fromMistakes && !run.mock && answered >= MIN_FOR_BEST) {
     const best = run.label ? 101 : store.get("bestPct:" + topic + (YEAR === 4 ? "" : ":Y" + YEAR));
@@ -2082,7 +2174,8 @@ function finish() {
   }
   if (run.answered) logHistory();
   if (run.today && run.answered) store.set("todayDone", dayKey(Date.now()));
-  $("doneTitle").textContent = run.today ? "Today's practice" : run.paperName ? run.paperName : run.assignedAt ? "Your set test" : run.mock ? "Mock test" : run.fromMistakes ? topic + ": mistakes practice" : topic;
+  if (run.fixFor && run.answered >= Math.ceil(run.items.length * 0.8)) { const f = fixedPapers(); if (!f.includes(run.fixFor)) store.set("fixedPapers", [...f, run.fixFor]); }
+  $("doneTitle").textContent = run.fixFor ? run.fixFor.replace("Practice test", "Paper") + ": fix my mistakes" : run.today ? "Today's practice" : run.paperName ? run.paperName : run.assignedAt ? "Your set test" : run.mock ? "Mock test" : run.fromMistakes ? topic + ": mistakes practice" : topic;
   $("doneScore").textContent = `${run.marks} / ${run.totalMarks} marks` + (run.totalMarks ? `  (${pctNow}%)` : "");
   const pct = run.totalMarks ? run.marks / run.totalMarks : 0;
   clearInterval(window.__tick);
@@ -2095,9 +2188,32 @@ function finish() {
   }
   $("doneTime").textContent = `${run.score} of ${answered} questions right. ` + timeMsg;
   $("doneMsg").textContent = pct === 1 ? "Perfect score!" : pct >= .8 ? "Great work. Have a look at the ones you missed." : pct >= .5 ? "Good effort. Practising your mistakes will help most." : "Keep going. Read each worked solution, then practise your mistakes.";
+  if (run.fixFor) $("doneMsg").textContent = fixedPapers().includes(run.fixFor) ? "Well done. The next paper is now open." : "Answer at least most of the questions to open the next paper.";
   $("retryMissed").hidden = run.missed.length === 0;
   const box = $("missed"); box.innerHTML = run.missed.length ? "<h3>Questions to look at again</h3>" : "";
-  run.missed.forEach(q => {
+  if (run.mock) {   /* papers and tests: every question, with the child's answer, the right answer and how to work it out */
+    const g = run.given || {}, all = run.items.map(x => x.q).slice().sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
+    const right = all.filter(q => g[q.id] && g[q.id].ok).length, wrong = all.filter(q => g[q.id] && !g[q.id].ok).length, none = all.length - right - wrong;
+    box.innerHTML = `<h3>Paper review</h3><p class="muted small">${right} right · ${wrong} wrong · ${none} not answered. Read the working for each one you missed.</p>`;
+    all.forEach((q, i) => {
+      const r = g[q.id], st = r ? (r.ok ? "ok" : "no") : "none", a = document.createElement("article");
+      a.className = "rv " + st;
+      a.innerHTML = `<div class="rvhead"><span class="rvmark">${st === "ok" ? "✓" : st === "no" ? "✗" : "–"}</span><b>Question ${stEsc(q.pq || String(i + 1))}</b></div>
+        <div class="rvq">${(() => { const [f0, ...r0] = q.q.split(SPLIT)[0].split("\n"), tb = splitTable(r0);
+          return tb ? fracHTML(f0) + tableHTML(tb.rows) + tb.other.map(l => " " + fracHTML(l)).join("") : fracHTML(q.q.split(SPLIT)[0].replace(/\n/g, " ").replace(/\s{3,}/g, "  ·  ")); })()}</div>
+        <div>Your answer: <b>${r ? fracHTML(stEsc(r.a)) : "not answered"}</b></div>
+        ${st === "ok" ? "" : `<div>Correct answer: <b>${fracHTML(q.a)}</b></div>`}
+        ${q.s ? `<details${st === "ok" ? "" : " open"}><summary>How to work it out</summary><div class="muted">${fracHTML(q.s)}</div></details>` : ""}`;
+      box.appendChild(a);
+    });
+    run.missed = all.filter(q => !(g[q.id] && g[q.id].ok));
+    $("retryMissed").hidden = run.missed.length === 0;
+    if (run.paperName) {
+      const nm = run.paperName.replace(/ · retake$/, ""), f = firstTry(nm), passed = f && f.marks / f.total >= 0.55;
+      $("retryMissed").textContent = "Fix my mistakes (new questions)";
+      box.insertAdjacentHTML("afterbegin", `<p class="planline">${run.retake ? "This was a retake with new questions, so it doesn't change your first-try score." : passed ? "55% or more: the next paper is open." : fixedPapers().includes(nm) ? "The next paper is open." : "To open the next paper, read the working below, then do <b>Fix my mistakes</b>: new questions like the ones you missed."}</p>`);
+    } else $("retryMissed").textContent = "Practise my mistakes";
+  } else run.missed.forEach(q => {
     const a = document.createElement("article");
     a.innerHTML = `<strong></strong><span></span><span class="muted"></span>`;
     a.children[0].innerHTML = fracHTML(q.q.split(SPLIT)[0].replace(/\n/, " ").replace(/\s{3,}/g, "  ·  "));
@@ -2122,7 +2238,7 @@ $("count").onkeydown = e => { if (e.key === "Enter") $("start").onclick(); };
 $("skip").onclick = () => { if (run.i >= run.items.length - 1) return; const it = run.items.splice(run.i, 1)[0]; it.skipped = (it.skipped || 0) + 1; run.items.push(it); renderQ(); };
 $("next").onclick = () => { if (Date.now() - (run.answeredAt || 0) < 400) return; run.i++; renderQ(); };
 $("quit").onclick = finish;
-$("retryMissed").onclick = () => startMistakes(run.missed.slice());
+$("retryMissed").onclick = () => run.paperName && run.mock ? startFix(run.paperName.replace(/ · retake$/, ""), run.missed.slice()) : startMistakes(run.missed.slice());
 const againDefault = () => (run && run.checkup ? show("home") : run && run.mock && !run.assignedAt ? startMock() : run && run.assignedAt ? show("home") : run && run.sks ? $("start").onclick() : start());
 $("again").onclick = againDefault;
 $("home2").onclick = () => show("home");
@@ -2203,7 +2319,7 @@ function logHistory() {
   (run.log || []).forEach(l => { const k = l.tab + " · " + l.t; types[k] = types[k] || [0, 0]; types[k][1]++; if (l.ok) types[k][0]++; });
   const h = getHistory();
   if (run.assignedAt) { store.set("assignedDone", run.assignedAt); if (DB) DB.doc("assigned/current").update({ doneAt: Date.now(), marks: run.marks, total: run.totalMarks }).catch(() => {}); }
-  h.push({ at: Date.now(), topic: run.assignedAt ? "Set test" : run.paperName ? run.paperName : run.mock ? "Mock test" : run.label || topic, level: run.mock ? "All" : level, mock: !!run.mock, marks: run.marks, total: run.totalMarks, right: run.score, answered: run.answered, secs: Math.round(run.times.reduce((a, b) => a + b, 0)), types });
+  h.push({ retake: run.retake || undefined, at: Date.now(), topic: run.assignedAt ? "Set test" : run.paperName ? run.paperName + (run.retake ? " · retake" : "") : run.mock ? "Mock test" : run.label || topic, level: run.mock ? "All" : level, mock: !!run.mock, marks: run.marks, total: run.totalMarks, right: run.score, answered: run.answered, secs: Math.round(run.times.reduce((a, b) => a + b, 0)), types });
   store.set("history", h.slice(-300));
   saveProgress(); renderStreak();
 }
@@ -2236,6 +2352,7 @@ function paperHTML(list) {
     const parts = q.q.split(SPLIT), [first, ...rest] = parts[0].split("\n");
     let t = first; const calc = t.match(/^([^\n]*?[:.])\s+((?:[−\d(IVXLC]|___)[^:\n]*(?:=|___)[^:\n]*)$/); if (calc) t = calc[1] + "\n" + calc[2];
     html += `<div class="pq"><b>${i + 1}.</b> <span class="muted">(${q.m || 1} mark${(q.m || 1) > 1 ? "s" : ""})</span><div>${fracHTML(t).replace(/\n/g, "<br>")}</div>`;
+    const ptb = splitTable(rest); if (ptb) { html += tableHTML(ptb.rows) + ptb.other.map(l => `<div>${fracHTML(l)}</div>`).join(""); rest.length = 0; }
     if (rest.length) html += `<div class="seq">${rest.join("   ").split(/\s{3,}/).filter(Boolean).map(x => `<span class="${x === "___" ? "blank" : ""}">${fracHTML(x)}</span>`).join("")}</div>`;
     if (q.pic) html += `<div class="picbox">${drawPic(q.pic)}</div>`;
     if (parts.length > 2) html += `<div class="seq">${parts.slice(1).map(o => `<span>${fracHTML(o)}</span>`).join("")}</div>`;
@@ -2284,8 +2401,8 @@ function checkPin() {
 }
 function parentTab(t) {
   [...$("ptabs").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.tab === t));
-  $("pKids").hidden = t !== "kids"; $("pProgress").hidden = t !== "progress"; $("pEdit").hidden = t !== "edit"; $("pSet").hidden = t !== "setTest"; $("pSettings").hidden = t !== "settings"; $("pReports").hidden = t !== "reports";
-  if (t === "kids") renderKids(); else if (t === "progress") renderProgress(); else if (t === "edit") renderEditor(); else if (t === "settings") renderSettings(); else if (t === "reports") renderReports(); else renderSetTest();
+  $("pKids").hidden = t !== "kids"; $("pProgress").hidden = t !== "progress"; $("pEdit").hidden = t !== "edit"; $("pSet").hidden = t !== "setTest"; $("pSettings").hidden = t !== "settings"; $("pReports").hidden = t !== "reports"; $("pPlan").hidden = t !== "plan";
+  if (t === "kids") renderKids(); else if (t === "progress") renderProgress(); else if (t === "edit") renderEditor(); else if (t === "settings") renderSettings(); else if (t === "reports") renderReports(); else if (t === "plan") renderPlan(); else renderSetTest();
 }
 function renderProgress() {
   const h = getHistory().filter(x => x.answered > 0), box = $("pProgress");
@@ -2442,15 +2559,65 @@ function renderPast() {
   box.innerHTML = `<table class="ptable"><tr><th>Date</th><th>Paper</th><th class="n">Score</th><th class="n">%</th><th class="n">Time</th></tr>${h.map(x => `<tr><td>${d(x.at)}</td><td>${escH(x.topic)}</td><td class="n">${x.marks}/${x.total}</td><td class="n">${Math.round(x.marks / x.total * 100)}%</td><td class="n">${x.secs ? Math.round(x.secs / 60) + " min" : ""}</td></tr>`).join("")}</table>`;
 }
 const PRACTICE_TESTS = Array.from({ length: 50 }, (_, i) => ["PT" + (i + 1), "Practice test " + (i + 1)]);
+/* papers open one after another: the next opens after 55% or more on the FIRST try of this one,
+   or after the child has done "Fix my mistakes" for it (new questions of the same kinds, so nothing can be copied).
+   Retakes use a twin paper (same order, new questions) and never count as the score. */
+const firstTry = name => getHistory().find(h => h.topic === name && h.total && !h.retake);
+const fixedPapers = () => store.get("fixedPapers") || [];
+function paperPassed(name) { const f = firstTry(name); return !!f && (f.marks / f.total >= 0.55 || fixedPapers().includes(name)); }
+let SETS_BY_SKILL = null;
+function similarSets(sk) {   /* practice sets of one part, each as a list of questions in a-b-c order */
+  if (!SETS_BY_SKILL) { SETS_BY_SKILL = {}; const g = {};
+    QUESTIONS.forEach(q => { if ((q.yr || 4) !== 5 || q.paper || !q.skill) return; const k = q.set || q.id; (g[k] = g[k] || []).push(q); });
+    Object.values(g).forEach(v => { v.sort((a, b) => String(a.id).localeCompare(String(b.id))); (SETS_BY_SKILL[v[0].skill] = SETS_BY_SKILL[v[0].skill] || []).push(v); }); }
+  return SETS_BY_SKILL[sk] || [];
+}
+function twinPaper(code) {   /* same questions in the same order, each swapped for a fresh one of the same part */
+  const seen = new Set(store.get("seen") || []), used = new Set(), groups = {};
+  QUESTIONS.filter(q => q.paper === code).sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }))
+    .forEach(q => { const n = String(q.id).replace(/[a-z]$/, ""); (groups[n] = groups[n] || []).push(q); });
+  const out = [];
+  Object.values(groups).forEach((grp, gi) => {
+    const mixed = grp.some(q => q.skill !== grp[0].skill);   /* a question that mixes parts: match each part on its own */
+    const sets = mixed ? [] : shuffle(similarSets(grp[0].skill).filter(v => v.every(q => q.skill === grp[0].skill) && !v.some(q => used.has(q.id))));
+    const pick = mixed ? null : sets.find(v => v.length === grp.length && !v.some(q => seen.has(q.id))) || sets.find(v => v.length === grp.length) || sets.find(v => v.length >= grp.length) || null;
+    if (pick) pick.forEach(q => used.add(q.id));
+    grp.forEach((orig, k) => {
+      const q = pick ? pick[k] : shuffle(similarSets(orig.skill).flat()).find(x => !used.has(x.id));
+      if (q) { used.add(q.id); out.push({ ...q, pq: (gi + 1) + "abcde"[k], m: orig.m || 1 }); } else out.push({ ...orig });
+    });
+  });
+  return out;
+}
+function startFix(name, missed) {   /* new questions of the same kinds as the ones missed; finishing it opens the next paper */
+  const seen = new Set(store.get("seen") || []), used = new Set(missed.map(q => q.id)), list = [];
+  missed.slice(0, 20).forEach(q => {
+    const pool = shuffle(similarSets(q.skill).flat().filter(x => !used.has(x.id)));
+    const x = pool.find(x => !seen.has(x.id)) || pool[0]; if (x) { used.add(x.id); list.push(x); }
+  });
+  if (!list.length) return;
+  newRun(true); run.fixFor = name; addItems(list); show("quiz"); renderQ();
+}
+function papersOpenTo() {   /* highest paper number that is open; remembered so it never closes again */
+  const list = PRACTICE_TESTS.filter(([c]) => QUESTIONS.some(q => q.paper === c));
+  let n = 1; while (n < list.length && paperPassed(list[n - 1][1])) n++;
+  n = Math.max(n, store.get("ptOpen") || 1); store.set("ptOpen", n);
+  return hasFull() ? n : Math.min(n, FREE.papers);
+}
 function renderPracticeTests() {
   const box = $("ptList"); box.innerHTML = ""; box.className = "ptgrid";
+  const openTo = papersOpenTo();
+  let i = 0;
   PRACTICE_TESTS.forEach(([code, name]) => {
     const items = QUESTIONS.filter(q => q.paper === code); if (!items.length) return;
-    const b = document.createElement("button"); b.type = "button"; b.className = "ptile";
-    const done = getHistory().filter(h => h.topic === name && h.total), best = done.length ? Math.max(...done.map(h => h.marks)) : null;
-    b.innerHTML = `<b>${name.replace("Practice test", "Paper")}</b><span class="muted small">${best != null ? "Best " + best + " / " + items.reduce((a, q) => a + (q.m || 1), 0) : "60 marks · 60 min"}</span>`;
-    if (best != null) b.classList.add("done");
-    b.onclick = () => { startMock({ items, minutes: 60 }); run.paperName = name; renderQ(); };
+    i++; const locked = i > openTo, prev = "Paper " + (i - 1);
+    const b = document.createElement("button"); b.type = "button"; b.className = "ptile" + (locked ? " locked" : "");
+    const f = firstTry(name), tot = items.reduce((a, q) => a + (q.m || 1), 0);
+    const lockMsg = !hasFull() && i > FREE.papers ? "Full access" : `Opens after 55% on ${prev}, or after fixing its mistakes`;
+    b.innerHTML = `<b>${name.replace("Practice test", "Paper")}</b><span class="muted small">${locked ? lockMsg : f ? `First try ${f.marks} / ${tot} · retake has new questions` : "60 marks · 60 min"}</span>`;
+    if (f) b.classList.add("done");
+    if (locked) { b.disabled = true; b.setAttribute("aria-disabled", "true"); }
+    else b.onclick = () => { const retake = !!f; startMock({ items: retake ? twinPaper(code) : items, minutes: 60 }); run.paperName = name; run.retake = retake; renderQ(); };
     box.appendChild(b);
   });
 }
@@ -2551,11 +2718,24 @@ function hintFor(q) {
 
 /* help cards */
 function subOf(q) { for (const tp of Object.keys(TREE)) for (const sub of Object.keys(TREE[tp])) if (TREE[tp][sub].some(x => x.tab === q.tab && (x.wp ? !!q.wp : x.types.includes(q.t)))) return tp + "|" + sub; return null; }
-function helpFor(q) { const k = subOf(q); return (k && HELP[k]) || null; }
+const HELP5 = HELP.__y5 || {};
+function helpFor(q) { if (q.skill && HELP5[q.skill]) return HELP5[q.skill]; const k = subOf(q); return (k && HELP[k]) || null; }
 function helpBack(h) {
   return `<span class="hintro">${fracHTML(h.intro)}</span>${h.pic ? `<span class="hpic">${drawPic(h.pic)}</span>` : ""}<span class="hex">${h.examples.map(([q, a, p]) => `<span class="hq">${fracHTML(q)}</span><span class="ha">${fracHTML(a)}</span>${p ? `<span class="hpic">${drawPic(p)}</span>` : ""}`).join("")}</span>`;
 }
 function openHelp(tp, sub, back) {
+  if (YEAR === 5) {   /* one card per part of the picked topics (or every part) */
+    const sks = PARTS.size ? [...PARTS].map(p => SKILL_BY_NAME[p]) : PICKS.size ? [...PICKS].flatMap(t => MAIN[t] || []) : Object.values(MAIN).flat();
+    $("helpTitle").textContent = "Help cards: " + (PICKS.size === 1 && !PARTS.size ? [...PICKS][0] : PICKS.size ? "your topics" : "all topics");
+    const box = $("helpCards"); box.innerHTML = "";
+    sks.filter(k => HELP5[k]).forEach(k => {
+      const h = HELP5[k], tp5 = Object.keys(MAIN).find(t => MAIN[t].includes(k)) || "", b = document.createElement("button"); b.type = "button"; b.className = "card-flip";
+      b.innerHTML = `<span class="sub">${escH(tp5)}</span><span class="front">${escH(SKILL_NAME[k] || k)}</span><span class="peek">Tap to see how it works</span><span class="back">${helpBack(h)}</span>`;
+      b.onclick = () => b.classList.toggle("open"); box.appendChild(b);
+    });
+    if (box.children.length === 1) box.firstChild.classList.add("open");
+    window.__helpBack = back; showPanel("helpView"); return;
+  }
   const live = k => { const [t, sb] = k.split("|"); return !TREE[t] || !TREE[t][sb] || withLevel("All", () => topicPool(t, sb).length) || generatorsFor(t, sb).length; };
   const keys = Object.keys(HELP).filter(k => (tp === MIXED || (k.startsWith(tp + "|") && (sub === "All" || k === tp + "|" + sub))) && live(k));
   $("helpTitle").textContent = "Help cards: " + (tp === MIXED ? "all topics" : sub === "All" ? tp : sub);
@@ -3033,8 +3213,11 @@ function planTopicWeights() {
   return W;
 }
 function weakestTopic() { const map = stMap(stDefaultLevel()); if (!map) return null; const r = stMapRows(map).filter(x => x.topic in MAIN).sort((a, b) => a.pct - b.pct)[0]; return r ? r.topic : null; }
-function nextPaper() { const done = new Set(getHistory().map(h => h.topic)); return PRACTICE_TESTS.find(([c, n]) => !done.has(n) && QUESTIONS.some(q => q.paper === c)); }
-function startPaper() { const p = nextPaper(); if (!p) return openPapers("past"); const items = QUESTIONS.filter(q => q.paper === p[0]); startMock({ items, minutes: 60 }); run.paperName = p[1]; renderQ(); }
+function nextPaper() {   /* the first open paper not yet tried; if all open ones are tried, the open one with the lowest best score */
+  const done = new Set(getHistory().map(h => h.topic)), open = PRACTICE_TESTS.filter(([c]) => QUESTIONS.some(q => q.paper === c)).slice(0, papersOpenTo());
+  return open.find(([c, n]) => !done.has(n)) || open[open.length - 1];
+}
+function startPaper() { const p = nextPaper(); if (!p) return openPapers("pt"); const retake = !!firstTry(p[1]); startMock({ items: retake ? twinPaper(p[0]) : QUESTIONS.filter(q => q.paper === p[0]), minutes: 60 }); run.paperName = p[1]; run.retake = retake; renderQ(); }
 function startTopicTest(tp) {
   const keep = YEAR, items = [];   /* the Year 5 bank is thin in places: top up from Year 6, then Year 4 */
   try { [YEAR, YEAR + 1, YEAR - 1].forEach(y => { if (items.length >= 15) return; YEAR = y; items.push(...withTopic(tp, "All", () => withLevel("All", () => pickSet(15 - items.length, new Set(items.map(q => q.id)))))); }); } finally { YEAR = keep; }
@@ -3071,7 +3254,7 @@ $("topicsToggle").onclick = () => { document.body.classList.toggle("show-topics"
 function profResults() {
   const out = [];
   stAttempts().forEach(a => out.push({ at: a.at, name: "Initial assessment " + a.sit, marks: a.marks, total: a.total, secs: a.secs, att: a }));
-  getHistory().filter(h => h.mock && !/^Initial assessment|^Starter/.test(h.topic)).forEach(h => out.push({ at: h.at, name: h.topic, marks: h.marks, total: h.total, secs: h.secs, exam: !!h.paper || /^Practice test|^Exam-like/.test(h.topic) }));
+  getHistory().filter(h => h.mock && !h.retake && !/^Initial assessment|^Starter/.test(h.topic)).forEach(h => out.push({ at: h.at, name: h.topic, marks: h.marks, total: h.total, secs: h.secs, exam: !!h.paper || /^Practice test|^Exam-like/.test(h.topic) }));
   return out.sort((a, b) => b.at - a.at);
 }
 /* estimate like a school predicted grade: exam-level results give a score out of 60; otherwise use year-level work */
@@ -3149,32 +3332,69 @@ const ACCENTS = { teal: "#0f7c8c", blue: "#1d5fd1", purple: "#6b46c1", green: "#
 function applyTheme() {
   const t = store.get("theme") || {}, r = document.documentElement;
   if (t.accent && ACCENTS[t.accent]) r.dataset.accent = t.accent; else delete r.dataset.accent;
-  if (t.mode === "light" || t.mode === "dark") r.dataset.theme = t.mode; else delete r.dataset.theme;
+  if (["light", "dark", "cream", "contrast"].includes(t.mode)) r.dataset.theme = t.mode; else delete r.dataset.theme;
+  if (t.size === "l" || t.size === "xl") r.dataset.size = t.size; else delete r.dataset.size;
+  if (t.font === "easy") r.dataset.font = "easy"; else delete r.dataset.font;
+  if (t.cb) r.dataset.cb = "1"; else delete r.dataset.cb;
+  if (t.calm) r.dataset.calm = "1"; else delete r.dataset.calm;
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = ACCENTS[t.accent] || ACCENTS.teal;
 }
 function themeHTML() {
   const t = store.get("theme") || {};
   return `<div style="display:grid;gap:8px"><span><b>Colours</b></span>
     <div class="swatches" role="group" aria-label="Colour">${Object.entries(ACCENTS).map(([k, c]) => `<button type="button" class="swatch" data-accent="${k}" style="background:${c}" aria-label="${k}" aria-pressed="${(t.accent || "teal") === k}"></button>`).join("")}</div>
-    <div class="chips" role="group" aria-label="Light or dark">${[["", "Automatic"], ["light", "Light"], ["dark", "Dark"]].map(([k, l]) => `<button type="button" class="chip" data-mode="${k}" aria-pressed="${(t.mode || "") === k}">${l}</button>`).join("")}</div></div>`;
+    <span><b>Background</b></span>
+    <div class="chips" role="group" aria-label="Background">${[["", "Automatic"], ["light", "Light"], ["dark", "Dark"], ["cream", "Cream"], ["contrast", "High contrast"]].map(([k, l]) => `<button type="button" class="chip" data-mode="${k}" aria-pressed="${(t.mode || "") === k}">${l}</button>`).join("")}</div>
+    <span><b>Text size</b></span>
+    <div class="chips" role="group" aria-label="Text size">${[["", "Normal"], ["l", "Large"], ["xl", "Extra large"]].map(([k, l]) => `<button type="button" class="chip" data-size="${k}" aria-pressed="${(t.size || "") === k}">${l}</button>`).join("")}</div>
+    <span><b>Letters</b></span>
+    <div class="chips" role="group" aria-label="Letters">${[["", "Standard"], ["easy", "Easy to read (wider spacing)"]].map(([k, l]) => `<button type="button" class="chip" data-font="${k}" aria-pressed="${(t.font || "") === k}">${l}</button>`).join("")}</div>
+    <label class="opt"><input type="checkbox" data-flag="cb"${t.cb ? " checked" : ""}> Colour-blind friendly (blue for right, orange for wrong)</label>
+    <label class="opt"><input type="checkbox" data-flag="calm"${t.calm ? " checked" : ""}> Less movement on screen</label></div>`;
 }
 function wireTheme(box, after) {
   box.querySelectorAll("[data-accent]").forEach(b => b.onclick = () => { store.set("theme", { ...(store.get("theme") || {}), accent: b.dataset.accent }); applyTheme(); after(); });
   box.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { store.set("theme", { ...(store.get("theme") || {}), mode: b.dataset.mode }); applyTheme(); after(); });
+  box.querySelectorAll("[data-size]").forEach(b => b.onclick = () => { store.set("theme", { ...(store.get("theme") || {}), size: b.dataset.size }); applyTheme(); after(); });
+  box.querySelectorAll("[data-font]").forEach(b => b.onclick = () => { store.set("theme", { ...(store.get("theme") || {}), font: b.dataset.font }); applyTheme(); after(); });
+  box.querySelectorAll("[data-flag]").forEach(b => b.onchange = () => { store.set("theme", { ...(store.get("theme") || {}), [b.dataset.flag]: b.checked }); applyTheme(); after(); });
 }
 applyTheme();
 /* ----- parents: one card per child ----- */
+/* weekly note for parents: what was done, first-try paper scores, what to practise next */
+function weeklyNote(k) {
+  return asChild(k.id, () => {
+    const now = Date.now(), week = getHistory().filter(h => h.at > now - 7 * 864e5 && h.answered > 0);
+    const mins = Math.round(week.reduce((a, h) => a + (h.secs || 0), 0) / 60), qs = week.reduce((a, h) => a + (h.answered || 0), 0);
+    const right = week.filter(h => !h.mock).reduce((a, h) => a + (h.right || 0), 0), tried = week.filter(h => !h.mock).reduce((a, h) => a + (h.answered || 0), 0);
+    const days = new Set(week.map(h => dayKey(h.at))).size, papers = week.filter(h => h.paper && !h.retake && h.total);
+    const weak = getHistory().length || stAttempts().length ? weakSkills(3).map(c => c.name) : [], nm = k.name || "Your child";
+    const lines = [`${nm}: this week in Mind the Gap 11+`,
+      `${days} day${days === 1 ? "" : "s"} of practice, about ${mins} minutes, ${qs} questions answered${tried ? `, ${Math.round(right / tried * 100)}% right in topic practice` : ""}.`,
+      papers.length ? "Practice papers (first try): " + papers.map(h => `${h.topic.replace("Practice test", "Paper")} ${h.marks}/${h.total} (${Math.round(h.marks / h.total * 100)}%)`).join("; ") + "." : "No practice paper this week.",
+      weak.length ? "Practise next: " + weak.join(", ") + "." : "",
+      days < 3 ? "Tip: short sessions on 4 or 5 days a week work better than one long one." : "Good habit: keep the short daily sessions going."].filter(Boolean);
+    return lines.join("\n");
+  });
+}
 function renderKids() {
   const box = $("pKids"), kids = children();
   box.innerHTML = `<p class="muted small">Each child's estimated score, this week's practice and scores for every topic. Tap a child to open their full progress and plan.</p>` + kids.map(k => asChild(k.id, () => {
     const res = profResults(), hist = getHistory(), week = hist.filter(h => h.at > Date.now() - 7 * 864e5), mins = Math.round(week.reduce((a, h) => a + (h.secs || 0), 0) / 60);
     const weak = weakSkills(3).map(c => c.name), g = planGroup();
-    return `<div class="kidcard"><h3>${stEsc(k.name || "Child 1")}</h3>${profPredict(res) || '<p class="muted">No results yet. Start with the Initial assessment.</p>'}
+    return `<div class="kidcard"><h3>${avatarHTML(k, "kidav")}${stEsc(k.name || "Child 1")}</h3>${profPredict(res) || '<p class="muted">No results yet. Start with the Initial assessment.</p>'}
       <p>${mins} minutes this week · ${(n => n + " day" + (n === 1 ? "" : "s"))(new Set(hist.map(h => dayKey(h.at))).size)} practised${g ? " · plan: " + PLANS[g][0] : ""}</p>
       ${heatHTML(heatData(), true)}
+      <details class="weekly"><summary><b>This week</b> (a short note you can share)</summary><pre class="wnote">${stEsc(weeklyNote(k))}</pre>
+        <div class="row"><button class="ghost" type="button" data-share="${stEsc(k.id)}">Share or copy</button><a class="ghost linkbtn" href="mailto:?subject=${encodeURIComponent("This week in Mind the Gap 11+")}&body=${encodeURIComponent(weeklyNote(k))}">Email it</a></div></details>
       <div class="row"><button class="ghost" type="button" data-open="${stEsc(k.id)}">Open full progress and plan</button></div></div>`;
   })).join("") + `<button class="ghost" id="kidAdd" type="button">Add another child</button>`;
   box.querySelectorAll("[data-open]").forEach(b => b.onclick = () => switchChild(b.dataset.open));
+  box.querySelectorAll("[data-share]").forEach(b => b.onclick = async () => {
+    const k = children().find(c => c.id === b.dataset.share) || { id: b.dataset.share }, text = weeklyNote(k);
+    try { if (navigator.share) { await navigator.share({ title: "This week in Mind the Gap 11+", text }); return; } } catch (e) { return; }
+    try { await navigator.clipboard.writeText(text); b.textContent = "Copied"; } catch (e) { b.textContent = "Select the note and copy it"; }
+  });
   $("kidAdd").onclick = () => {
     const nm = prompt("Child's name"); if (!nm || !nm.trim()) return;
     const ks = children().slice(); if (!ks.some(c => c.id === CHILD)) ks.unshift({ id: CHILD, name: childName() });
@@ -3189,8 +3409,8 @@ function renderProfile() {
   const ready = res.filter(r => r.total).slice(0, 3), readiness = ready.length ? Math.round(ready.reduce((a, r) => a + r.marks / r.total, 0) / ready.length * 100) : null;
   const tr = profSkillTrend(lv), d = t => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   box.innerHTML = `<div class="prof" style="display:grid;gap:12px">
-    ${kids.length > 1 ? `<div class="kids" role="group" aria-label="Choose a child">${kids.map(c => `<button type="button" class="ghost" data-kid="${stEsc(c.id)}" aria-pressed="${c.id === CHILD}">${stEsc(c.name || "Child 1")}</button>`).join("")}</div>` : ""}
-    <h2>${me.name ? stEsc(me.name) + "'s progress" : "My progress"}</h2>
+    ${kids.length > 1 ? `<div class="kids" role="group" aria-label="Choose a child">${kids.map(c => `<button type="button" class="ghost" data-kid="${stEsc(c.id)}" aria-pressed="${c.id === CHILD}">${avatarHTML(c, "kidav")}${stEsc(c.name || "Child 1")}</button>`).join("")}</div>` : ""}
+    <h2>My progress</h2>
     <p class="muted">Year ${YEAR}${plan.testDate ? " · test on " + new Date(plan.testDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) + " (" + Math.max(0, Math.ceil((new Date(plan.testDate) - Date.now()) / (7 * 864e5))) + " weeks to go)" : ""}</p>
     ${profPredict(res)}
     <div class="stats"><div class="stat"><b>${n}</b>day${n === 1 ? "" : "s"} in a row</div><div class="stat"><b>${mins}</b>minutes this week</div><div class="stat"><b>${days}</b>days practised</div><div class="stat"><b>${missed}</b>mistakes to review</div></div>
@@ -3206,9 +3426,9 @@ function renderProfile() {
     <h3>Results</h3>
     ${profTrendSVG(res)}
     ${res.length ? `<table><thead><tr><th>Date</th><th>Test</th><th>Score</th><th>Time</th><th></th></tr></thead><tbody>${res.slice(0, 30).map((r, i) => `<tr><td>${d(r.at)}</td><td>${stEsc(r.name)}</td><td>${r.marks} / ${r.total}${r.total ? " (" + Math.round(r.marks / r.total * 100) + "%)" : ""}</td><td>${r.secs ? fmtTime(r.secs) : ""}</td><td>${r.att ? `<button class="ghost" type="button" data-rev="${i}">Answers</button>` : ""}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No tests yet. Results from the Initial assessment, practice tests and mock tests appear here.</p>`}
-    <details><summary><strong>Settings for this child</strong> (name, test date, plan, colours)</summary>
+    <details><summary><strong>Settings for this child</strong> (username, picture, test date, plan, colours, text size)</summary>
       <div style="display:grid;gap:10px;margin-top:10px">
-        <label>Name <input id="pfName" type="text" value="${stEsc(me.name || "")}" maxlength="30"></label>
+        <label>Username <input id="pfName" type="text" value="${stEsc(me.name || "")}" maxlength="20"></label><button class="ghost" id="pfLook" type="button">Picture, colours and text size</button>
         <label>Test date <input id="pfDate" type="date" value="${plan.testDate || ""}"></label>
         <label>Plan <select id="pfPlan"><option value="">Automatic, from results${planAuto() ? " (" + PLANS[planAuto()][0] + ")" : ""}</option>${Object.entries(PLANS).map(([k, v]) => `<option value="${k}" ${plan.group === k ? "selected" : ""}>${v[0]}</option>`).join("")}</select></label>
         <label>Minutes a day <select id="pfMins">${[10, 15, 20, 30].map(m => `<option ${(plan.mins || 20) === m ? "selected" : ""}>${m}</option>`).join("")}</select></label>
@@ -3228,14 +3448,258 @@ function renderProfile() {
     store.set("plan", { ...plan, testDate: $("pfDate").value || null, mins: +$("pfMins").value, group: $("pfPlan").value || null });
     renderProfile(); renderProfileBtn();
   };
+  $("pfLook").onclick = openMe;
   $("pfAdd").onclick = () => {
     const nm = prompt("Child's name"); if (!nm || !nm.trim()) return;
     const ks = children().slice(); if (!ks.some(c => c.id === CHILD)) ks.unshift({ id: CHILD, name: me.name || "" });
     const id = "k" + Date.now().toString(36); ks.push({ id, name: nm.trim().slice(0, 30) }); store.set("children", ks); switchChild(id);
   };
 }
+
+
+
+/* ----- cloud: Supabase, used only when config.js has the keys (parents sign in with an email link; no passwords, no child accounts) ----- */
+const Cloud = (() => {
+  const U = (CFG.supabaseUrl || "").replace(/\/$/, ""), K = CFG.supabaseKey || "", on = !!(U && K);
+  let ses = null; try { ses = JSON.parse(localStorage.getItem("mtg:session")); } catch (e) {}
+  const keep = x => { ses = x; try { x ? localStorage.setItem("mtg:session", JSON.stringify(x)) : localStorage.removeItem("mtg:session"); } catch (e) {} };
+  const H = auth => ({ apikey: K, "Content-Type": "application/json", Authorization: "Bearer " + (auth && ses ? ses.access_token : K) });
+  async function refresh() {
+    if (!ses || !ses.refresh_token) return false;
+    const r = await fetch(U + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: H(false), body: JSON.stringify({ refresh_token: ses.refresh_token }) });
+    if (!r.ok) { keep(null); return false; }
+    const d = await r.json(); keep({ access_token: d.access_token, refresh_token: d.refresh_token, exp: Date.now() + (d.expires_in || 3600) * 1000, uid: d.user && d.user.id, email: d.user && d.user.email }); return true;
+  }
+  async function api(path, opt = {}, again) {
+    if (ses && ses.exp && ses.exp < Date.now() + 60000) await refresh();
+    const r = await fetch(U + path, { ...opt, headers: { ...H(true), ...(opt.headers || {}) } });
+    if (r.status === 401 && !again && await refresh()) return api(path, opt, true);
+    return r;
+  }
+  function fromLink() {   /* the sign-in link comes back with the session in the address */
+    const h = new URLSearchParams(location.hash.slice(1));
+    if (!h.get("access_token")) return false;
+    keep({ access_token: h.get("access_token"), refresh_token: h.get("refresh_token"), exp: Date.now() + (+h.get("expires_in") || 3600) * 1000 });
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    return true;
+  }
+  async function who() {
+    if (!ses) return null;
+    if (!ses.uid) { const r = await api("/auth/v1/user"); if (!r.ok) return null; const u = await r.json(); keep({ ...ses, uid: u.id, email: u.email }); }
+    return ses;
+  }
+  async function sendLink(email) {
+    const r = await fetch(U + "/auth/v1/otp", { method: "POST", headers: H(false), body: JSON.stringify({ email, create_user: true, options: { email_redirect_to: location.origin + location.pathname } }) });
+    return r.ok;
+  }
+  /* everything the app keeps (all children) goes up as one family record */
+  const mine = k => k.startsWith("y4maths:") && !/^y4maths:(access|cloudAccess)$/.test(k);
+  function snapshot() {   /* children's photos stay on the device; everything else is saved to the parent's account */
+    const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (mine(k)) o[k] = localStorage.getItem(k); }
+    Object.keys(o).filter(k => /(^|:)children$/.test(k)).forEach(k => { try { o[k] = JSON.stringify((JSON.parse(o[k]) || []).map(c => ({ ...c, photo: null }))); } catch (e) {} });
+    return o;
+  }
+  function merge(remote) {
+    Object.entries(remote || {}).forEach(([k, v]) => {
+      if (!mine(k)) return;
+      const local = localStorage.getItem(k);
+      if (local == null) { localStorage.setItem(k, v); return; }
+      if (/(^|:)history$/.test(k)) {   /* keep every session from both devices */
+        try { const a = JSON.parse(local) || [], b = JSON.parse(v) || [], seen = new Set(), all = [];
+          [...a, ...b].sort((x, y) => x.at - y.at).forEach(h => { if (!seen.has(h.at)) { seen.add(h.at); all.push(h); } });
+          localStorage.setItem(k, JSON.stringify(all.slice(-300))); } catch (e) {}
+      }
+    });
+  }
+  let timer = null, busy = false;
+  async function push() {
+    if (!on || !ses || busy) return; busy = true;
+    try { const me = await who(); if (me) await api("/rest/v1/family", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" }, body: JSON.stringify({ user_id: me.uid, data: snapshot(), updated_at: new Date().toISOString() }) }); }
+    catch (e) {} finally { busy = false; }
+  }
+  window.__cloudDirty = () => { if (!on || !ses) return; clearTimeout(timer); timer = setTimeout(push, 4000); };
+  async function pull() {
+    const me = await who(); if (!me) return false;
+    try {
+      const r = await api(`/rest/v1/family?user_id=eq.${me.uid}&select=data`); if (r.ok) { const rows = await r.json(); if (rows[0]) merge(rows[0].data); }
+      const a = await api(`/rest/v1/access?user_id=eq.${me.uid}&select=plan,until`); if (a.ok) { const rows = await a.json(); localStorage.setItem("y4maths:cloudAccess", JSON.stringify(rows[0] || null)); }
+    } catch (e) { return false; }
+    push(); return true;
+  }
+  const queue = [];
+  function bump(qid, wrong, report) {   /* shared, anonymous: only the question id and whether it was missed */
+    if (!on || !qid) return; queue.push({ qid: String(qid), wrong: !!wrong, report: !!report });
+    if (queue.length === 1) setTimeout(async () => { const batch = queue.splice(0); try { await fetch(U + "/rest/v1/rpc/bump_questions", { method: "POST", headers: H(false), body: JSON.stringify({ items: batch }) }); } catch (e) {} }, 8000);
+  }
+  function signOut() { keep(null); try { localStorage.removeItem("y4maths:cloudAccess"); } catch (e) {} }
+  async function wipe() { const me = await who(); if (me) await api(`/rest/v1/family?user_id=eq.${me.uid}`, { method: "DELETE" }); signOut(); }
+  return { on, wipe, fromLink, who, sendLink, pull, push, bump, signOut, get email() { return ses && ses.email; }, get signedIn() { return !!ses; }, get uid() { return ses && ses.uid; } };
+})();
+/* phone keyboard: when it covers the screen, switch to the compact layout above */
+(() => {
+  const vv = window.visualViewport; if (!vv) return;
+  const typing = () => { const a = document.activeElement; return a && a.tagName === "INPUT" && !/^(checkbox|radio|button|range|color|file)$/.test(a.type) && a.closest("#quiz, #starterView, #raceView"); };
+  const full = () => matchMedia("(orientation: landscape)").matches ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+  let was = false;
+  const check = () => {
+    const on = !!typing() && vv.height < full() * 0.72;
+    document.body.classList.toggle("kb", on);
+    if (on && !was) setTimeout(() => { const a = document.activeElement, q = $("qtext");
+      if (q && !q.closest("[hidden]") && a.closest("#quiz")) q.scrollIntoView({ block: "start" }); a.scrollIntoView({ block: "nearest" }); }, 60);
+    was = on;
+  };
+  vv.addEventListener("resize", check); addEventListener("focusin", () => setTimeout(check, 50)); addEventListener("focusout", () => setTimeout(check, 50));
+})();
+if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude|anthropic/.test(location.hostname)) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+if (Cloud.on) (async () => { const back = Cloud.fromLink(); if (Cloud.signedIn && await Cloud.pull() && back) location.reload(); })();
+/* ----- learning from real use: how often each question is got wrong ----- */
+function qStat(id, ok) {
+  if (!id || String(id).startsWith("gen")) return;
+  const st = store.get("qstats") || {}; const r = st[id] || [0, 0]; r[0]++; if (!ok) r[1]++; st[id] = r; store.set("qstats", st);
+  if (typeof Cloud !== "undefined") Cloud.bump(id, !ok);
+}
+function hardQuestions() {   /* questions tried 3+ times and missed 70%+ of the time on this device */
+  const st = store.get("qstats") || {};
+  return Object.entries(st).filter(([, r]) => r[0] >= 3 && r[1] / r[0] >= 0.7).sort((a, b) => b[1][1] / b[1][0] - a[1][1] / a[1][0]).slice(0, 40)
+    .map(([id, r]) => ({ id, tries: r[0], wrong: r[1], q: QUESTIONS.find(q => q.id === id) })).filter(x => x.q);
+}
+/* ----- plans and access -----
+   PAYWALL false: everything is free while the app is tested. To charge, create two Stripe Payment Links,
+   put them in PAY_LINKS and set PAYWALL to true. Codes give full access on this device (stored as SHA-256 hashes). */
+const PAYWALL = !!CFG.paywall;
+const PAY_LINKS = { monthly: CFG.payMonthly || "", oneoff: CFG.payOneoff || "" };
+const FREE = { papers: 2, sessionsPerDay: 3 };
+const CODE_HASHES = ["e9837c8bc91ebbb254c93a20b1110f6f3428ed265423166d0fb0c92389823940", "62fba173617763b00cb3d5b8a4e31c4e07c0ba4538b7743639fbc020c118e2fe", "20f745b1197959bbd232d3bb9a73523a454e5b9ae8a3fe39eabfa948eb0adb2d"];
+const access = () => { try { return JSON.parse(localStorage.getItem("y4maths:access")) || null; } catch (e) { return null; } };
+const cloudAccess = () => { try { const a = JSON.parse(localStorage.getItem("y4maths:cloudAccess")); return a && a.until && new Date(a.until) > new Date() ? a : null; } catch (e) { return null; } };
+const hasFull = () => !PAYWALL || !!access() || !!cloudAccess();
+function sessionsToday() { const d = dayKey(Date.now()); return getHistory().filter(h => dayKey(h.at) === d && !h.mock).length; }
+async function sha256(t) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join(""); }
+function renderPlan() {
+  const a = access(), box = $("pPlan"), d = t => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const card = (k, title, price, lines) => `<div class="kidcard"><h3>${title}</h3><p style="font-size:1.4rem;margin:0"><b>${price}</b></p><ul>${lines.map(l => `<li>${l}</li>`).join("")}</ul>
+    ${k ? `<button class="primary" type="button" data-buy="${k}">Choose</button>` : ""}</div>`;
+  box.innerHTML = `<div style="display:grid;gap:12px">
+    <p>${cloudAccess() ? `<b>Full access</b> until ${d(cloudAccess().until)} (${stEsc(cloudAccess().plan || "paid")}).` : a ? `<b>Full access</b> on this device since ${d(a.at)}${a.kind === "code" ? " (access code)" : ""}.` : PAYWALL ? "<b>Free plan</b> on this device." : "<b>Everything is free</b> while the app is being tested."}</p>
+    ${card("", "Free", "£0", ["Initial assessment A and B, with results for every topic", `Practice papers 1 and ${FREE.papers}`, `${FREE.sessionsPerDay} topic practice sessions a day`])}
+    ${card("monthly", "Monthly", "£6 a month", ["Everything in the app for one child", "All 50 practice papers and every topic", "Cancel any time"])}
+    ${card("oneoff", "Until the test", "£39 once", ["Everything in the app for one child", "Lasts until the end of September of the test year", "No subscription"])}
+    <p class="muted small">Brothers and sisters: each extra child is half price.</p>
+    <h3>Your account</h3><div id="acctBox"></div>
+    <p class="muted small"><a href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a> · we keep as little about children as we can, and never sell or share it.</p>
+    <p class="muted" id="planMsg"></p>
+    <h3>Have an access code?</h3>
+    <div class="row"><input id="codeIn" type="text" autocomplete="off" autocapitalize="characters" placeholder="Access code" style="max-width:220px;font:inherit;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)"><button class="ghost" id="codeGo" type="button">Use code</button></div></div>`;
+  box.querySelectorAll("[data-buy]").forEach(b => b.onclick = () => {
+    const url = PAY_LINKS[b.dataset.buy];
+    if (!url) { $("planMsg").textContent = PAYWALL ? "Payments are not set up yet." : "Payments are not switched on yet: everything is free for now."; return; }
+    if (Cloud.on && !Cloud.uid) { $("planMsg").textContent = "Sign in below first, so the payment is linked to your account on every device."; return; }
+    location.href = url + (url.includes("?") ? "&" : "?") + "client_reference_id=" + encodeURIComponent(Cloud.uid || "") + (Cloud.email ? "&prefilled_email=" + encodeURIComponent(Cloud.email) : "");
+  });
+  const acc = $("acctBox");
+  if (acc) {
+    if (!Cloud.on) acc.innerHTML = '<p class="muted small">Parent accounts are not switched on yet, so progress is kept on this device only.</p>';
+    else if (Cloud.signedIn) {
+      acc.innerHTML = `<p>Signed in as <b>${stEsc(Cloud.email || "")}</b>. Progress for all your children is saved to your account and appears on any device where you sign in.</p><div class="row"><button class="ghost" id="acSync" type="button">Sync now</button><button class="ghost" id="acOut" type="button">Sign out</button><button class="ghost" id="acDel" type="button">Delete my saved data</button></div>`;
+      $("acDel").onclick = async () => { if (!confirm("Delete everything saved in your account? Progress on this device stays.")) return; await Cloud.wipe(); renderPlan(); };
+      $("acSync").onclick = async () => { $("acSync").textContent = "Syncing…"; await Cloud.pull(); $("acSync").textContent = "Synced"; };
+      $("acOut").onclick = () => { Cloud.signOut(); renderPlan(); };
+    } else {
+      acc.innerHTML = `<p class="muted small">Sign in to save progress to your account and use the app on more than one device. We email you a sign-in link: no password.</p>
+        <div class="row"><input id="acMail" type="email" autocomplete="email" placeholder="Parent's email" style="max-width:260px;font:inherit;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)"><button class="primary" id="acGo" type="button">Email me a link</button></div><p class="muted small" id="acMsg"></p>`;
+      $("acGo").onclick = async () => { const e = $("acMail").value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { $("acMsg").textContent = "Please enter an email address."; return; }
+        $("acMsg").textContent = (await Cloud.sendLink(e)) ? "Check your email and tap the link on this device." : "That didn't work. Please try again in a minute."; };
+    }
+  }
+  $("codeGo").onclick = async () => {
+    const c = $("codeIn").value.trim().toUpperCase(); if (!c) return;
+    let ok = false; try { ok = CODE_HASHES.includes(await sha256(c)); } catch (e) {}
+    if (ok) { try { localStorage.setItem("y4maths:access", JSON.stringify({ kind: "code", at: Date.now() })); } catch (e) {} renderPlan(); }
+    else $("planMsg").textContent = "That code didn't work. Check the spelling and try again.";
+  };
+}
+/* ----- profile pictures: drawn characters (no emojis) or the child's own photo ----- */
+const AVATARS = {
+  cat: ["#f4b183", `<path d="M22 30 L26 12 L38 24 Z M78 30 L74 12 L62 24 Z" fill="#e08a4f"/><circle cx="50" cy="55" r="28" fill="#f4b183"/><circle cx="40" cy="50" r="4" fill="#222"/><circle cx="60" cy="50" r="4" fill="#222"/><path d="M46 60 L54 60 L50 65 Z" fill="#c0505a"/><path d="M28 60 h12 M60 60 h12 M28 66 h12 M60 66 h12" stroke="#7a4a2a" stroke-width="1.5"/>`],
+  bear: ["#c89b6d", `<circle cx="28" cy="28" r="11" fill="#a9784a"/><circle cx="72" cy="28" r="11" fill="#a9784a"/><circle cx="50" cy="54" r="29" fill="#c89b6d"/><ellipse cx="50" cy="64" rx="12" ry="9" fill="#ead2b4"/><circle cx="40" cy="48" r="4" fill="#222"/><circle cx="60" cy="48" r="4" fill="#222"/><circle cx="50" cy="61" r="4" fill="#3a2a1a"/>`],
+  rabbit: ["#e9e4f2", `<ellipse cx="38" cy="20" rx="7" ry="17" fill="#ddd6ec"/><ellipse cx="62" cy="20" rx="7" ry="17" fill="#ddd6ec"/><circle cx="50" cy="58" r="26" fill="#f4f1f9"/><circle cx="41" cy="54" r="4" fill="#222"/><circle cx="59" cy="54" r="4" fill="#222"/><circle cx="50" cy="63" r="3.5" fill="#e07a9a"/>`],
+  owl: ["#9bc7a8", `<ellipse cx="50" cy="56" rx="28" ry="30" fill="#7a5c3e"/><circle cx="39" cy="48" r="11" fill="#fff"/><circle cx="61" cy="48" r="11" fill="#fff"/><circle cx="39" cy="48" r="5" fill="#222"/><circle cx="61" cy="48" r="5" fill="#222"/><path d="M46 58 L54 58 L50 66 Z" fill="#f2a516"/><path d="M26 30 L36 36 M74 30 L64 36" stroke="#7a5c3e" stroke-width="5"/>`],
+  fox: ["#ffd8a8", `<path d="M20 22 L38 34 L28 50 Z M80 22 L62 34 L72 50 Z" fill="#d9601e"/><path d="M22 40 Q50 20 78 40 L50 84 Z" fill="#e8742a"/><path d="M34 60 L50 84 L66 60 Q50 66 34 60 Z" fill="#fff"/><circle cx="40" cy="50" r="4" fill="#222"/><circle cx="60" cy="50" r="4" fill="#222"/><circle cx="50" cy="80" r="3.5" fill="#222"/>`],
+  panda: ["#cfe6f5", `<circle cx="28" cy="30" r="10" fill="#222"/><circle cx="72" cy="30" r="10" fill="#222"/><circle cx="50" cy="55" r="28" fill="#fff"/><ellipse cx="39" cy="51" rx="7" ry="9" fill="#222"/><ellipse cx="61" cy="51" rx="7" ry="9" fill="#222"/><circle cx="39" cy="51" r="2.5" fill="#fff"/><circle cx="61" cy="51" r="2.5" fill="#fff"/><circle cx="50" cy="64" r="4" fill="#222"/>`],
+  robot: ["#c9d6e3", `<rect x="47" y="12" width="6" height="12" fill="#7a8a9a"/><circle cx="50" cy="12" r="4" fill="#e04848"/><rect x="24" y="26" width="52" height="46" rx="10" fill="#8fa3b8"/><rect x="33" y="40" width="12" height="10" rx="2" fill="#fff"/><rect x="55" y="40" width="12" height="10" rx="2" fill="#fff"/><rect x="38" y="58" width="24" height="5" rx="2" fill="#3a4a5a"/>`],
+  rocket: ["#20294a", `<circle cx="22" cy="24" r="2" fill="#fff"/><circle cx="78" cy="30" r="2" fill="#fff"/><circle cx="70" cy="76" r="1.5" fill="#fff"/><path d="M50 14 Q66 30 62 62 L38 62 Q34 30 50 14 Z" fill="#e8eef5"/><circle cx="50" cy="38" r="7" fill="#4aa3df"/><path d="M38 52 L28 68 L38 64 Z M62 52 L72 68 L62 64 Z" fill="#e04848"/><path d="M42 62 L50 80 L58 62 Z" fill="#f2a516"/>`]
+};
+/* children of different looks: skin tone, hair, head coverings, glasses */
+const KIDS = {
+  k1: { bg: "#bfe3f2", skin: "#f5d2b8", hair: "#6b4226", style: "short", shirt: "#2f7fb8" },
+  k2: { bg: "#ffd9a8", skin: "#8d5a3b", hair: "#1e1410", style: "afro", shirt: "#e0613b" },
+  k3: { bg: "#d8c8f0", skin: "#5c3a24", hair: "#1a1110", style: "braids", shirt: "#7a4fc0" },
+  k4: { bg: "#c8ecd4", skin: "#c9946b", hair: "#7a3f8c", style: "hijab", shirt: "#7a3f8c" },
+  k5: { bg: "#fde2e4", skin: "#f3c6a5", hair: "#b5532a", style: "long", shirt: "#3f9a6b", glasses: true },
+  k6: { bg: "#fff1b8", skin: "#a8724f", hair: "#1f4f9a", style: "patka", shirt: "#e0a020" },
+  k7: { bg: "#d6eefc", skin: "#f7dcc6", hair: "#e3bf5a", style: "bob", shirt: "#d0436e" },
+  k8: { bg: "#e6dcc8", skin: "#6e4630", hair: "#24170f", style: "curly", shirt: "#2c9a9a", glasses: true }
+};
+function kidSVG(k) {
+  const c = KIDS[k], back = { long: `<path d="M24 50 Q22 18 50 17 Q78 18 76 50 L79 84 L21 84 Z" fill="${c.hair}"/>`, afro: `<circle cx="50" cy="42" r="28" fill="${c.hair}"/>`,
+    braids: `<path d="M27 46 Q26 18 50 18 Q74 18 73 46 Z" fill="${c.hair}"/><rect x="22" y="44" width="8" height="34" rx="4" fill="${c.hair}"/><rect x="70" y="44" width="8" height="34" rx="4" fill="${c.hair}"/>`,
+    bob: `<path d="M25 58 Q22 18 50 18 Q78 18 75 58 Z" fill="${c.hair}"/>`, hijab: `<path d="M22 100 Q20 60 26 44 Q32 18 50 17 Q68 18 74 44 Q80 60 78 100 Z" fill="${c.hair}"/>` }[c.style] || "";
+  const top = { short: `<path d="M29 46 Q29 22 50 21 Q71 22 71 46 Q66 32 50 32 Q36 32 29 46 Z" fill="${c.hair}"/>`, curly: `<g fill="${c.hair}"><circle cx="34" cy="33" r="8"/><circle cx="44" cy="27" r="8"/><circle cx="56" cy="27" r="8"/><circle cx="66" cy="33" r="8"/></g>`,
+    long: `<path d="M30 42 Q34 26 50 26 Q64 26 70 42 Q60 33 50 34 Q40 33 30 42 Z" fill="${c.hair}"/>`, bob: `<path d="M30 40 Q36 27 50 27 Q66 27 70 40 Q58 34 30 40 Z" fill="${c.hair}"/>`,
+    braids: "", afro: "", hijab: "", patka: `<path d="M29 42 Q29 22 50 21 Q71 22 71 42 Q60 36 50 36 Q40 36 29 42 Z" fill="${c.hair}"/><circle cx="50" cy="19" r="7" fill="${c.hair}"/>` }[c.style] || "";
+  const face = c.style === "hijab" ? `<ellipse cx="50" cy="50" rx="15" ry="18" fill="${c.skin}"/>` : `<circle cx="50" cy="49" r="20" fill="${c.skin}"/>`;
+  const glasses = c.glasses ? `<g fill="none" stroke="#222" stroke-width="2"><circle cx="43" cy="49" r="5.5"/><circle cx="57" cy="49" r="5.5"/><path d="M48.5 49 h3"/></g>` : "";
+  return [c.bg, `${back}<path d="M18 104 Q20 76 50 74 Q80 76 82 104 Z" fill="${c.style === "hijab" ? c.hair : c.shirt}"/><rect x="44" y="64" width="12" height="12" fill="${c.skin}"/>${face}${top}
+    <circle cx="43" cy="49" r="2.3" fill="#222"/><circle cx="57" cy="49" r="2.3" fill="#222"/><path d="M43 57 Q50 62 57 57" stroke="#7a3b2e" stroke-width="2" fill="none" stroke-linecap="round"/>${glasses}`];
+}
+{ const animals = { ...AVATARS }; Object.keys(AVATARS).forEach(k => delete AVATARS[k]); Object.keys(KIDS).forEach(k => { AVATARS[k] = kidSVG(k); }); Object.assign(AVATARS, animals); }   /* children first, then animals */
+let AVCLIP = 0;
+const meKid = () => children().find(c => c.id === CHILD) || children()[0] || { id: CHILD, name: "" };
+function avatarHTML(k, cls) {
+  k = k || meKid(); cls = cls || "avatar";
+  if (k.photo) return `<img class="${cls}" src="${k.photo}" alt="">`;
+  const key = AVATARS[k.avatar] ? k.avatar : null;
+  if (!key) { const ch = (k.name || "?").trim().charAt(0).toUpperCase() || "?"; return `<svg class="${cls}" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="50" fill="var(--accent)"/><text x="50" y="64" text-anchor="middle" font-size="44" font-weight="700" fill="var(--accent-ink)">${stEsc(ch)}</text></svg>`; }
+  const [bg, art] = AVATARS[key], id = "avc" + (++AVCLIP);
+  return `<svg class="${cls}" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="${id}"><circle cx="50" cy="50" r="50"/></clipPath></defs><g clip-path="url(#${id})"><circle cx="50" cy="50" r="50" fill="${bg}"/>${art}</g></svg>`;
+}
+function saveKid(change) {
+  const ks = children().slice(); let k = ks.find(c => c.id === CHILD); if (!k) { k = { id: CHILD, name: "" }; ks.unshift(k); }
+  Object.assign(k, change); store.set("children", ks); renderMeBtn(); if (typeof renderProfileBtn === "function") renderProfileBtn();
+}
+function renderMeBtn() {   /* "My profile", with the child's picture once one is chosen */
+  const k = meKid();
+  $("meBtn").innerHTML = (k.photo || AVATARS[k.avatar] ? avatarHTML(k, "avatar mini") : "") + "<span>My profile</span>";
+}
+function photoFrom(file, done) {   /* shrink to 160 px so it is small to keep */
+  const r = new FileReader();
+  r.onload = () => { const img = new Image(); img.onload = () => { const c = document.createElement("canvas"), z = 160, m = Math.min(img.width, img.height); c.width = c.height = z;
+    c.getContext("2d").drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, z, z); done(c.toDataURL("image/jpeg", 0.8)); }; img.src = r.result; };
+  r.readAsDataURL(file);
+}
+function openMe() {
+  const k = meKid(), kids = children(), box = $("meBox");
+  box.innerHTML = `<div style="display:grid;gap:14px">
+    <div class="mehead">${avatarHTML(k, "avatar big")}<div><h2 id="meTitle" style="margin:0">${k.name ? stEsc(k.name) : "My profile"}</h2><span class="muted small">Your name, picture and how the app looks</span></div></div>
+    <label>Username <input id="meName" type="text" maxlength="20" value="${stEsc(k.name || "")}" placeholder="e.g. MathsFox"></label>
+    <div><b>Picture</b><div class="av-pick" role="group" aria-label="Choose a picture" style="margin-top:8px">${Object.keys(AVATARS).map((a, i) => `<button type="button" data-av="${a}" aria-label="${KIDS[a] ? "Child picture " + (i + 1) : a}" aria-pressed="${!k.photo && k.avatar === a}">${avatarHTML({ avatar: a })}</button>`).join("")}</div>
+      <div class="row" style="margin-top:10px"><label class="ghost" style="display:inline-block;padding:8px 14px;border:2px solid var(--line);border-radius:12px;cursor:pointer">Use a photo<input id="mePhoto" type="file" accept="image/*" hidden></label>${k.photo ? '<button class="ghost" id="meNoPhoto" type="button">Remove photo</button>' : ""}</div></div>
+    <div id="meTheme">${themeHTML()}</div>
+    ${kids.length > 1 ? `<div><b>Switch child</b><div class="row" style="margin-top:8px">${kids.filter(c => c.id !== CHILD).map(c => `<button type="button" class="ghost" data-kid="${stEsc(c.id)}">${avatarHTML(c, "kidav")}${stEsc(c.name || "Child")}</button>`).join("")}</div></div>` : ""}
+    <div class="row"><button class="primary" id="meDone" type="button">Done</button></div></div>`;
+  box.querySelectorAll("[data-av]").forEach(b => b.onclick = () => { saveKid({ avatar: b.dataset.av, photo: null }); openMe(); });
+  $("mePhoto").onchange = e => { const f = e.target.files[0]; if (f) photoFrom(f, url => { saveKid({ photo: url }); openMe(); }); };
+  const np = $("meNoPhoto"); if (np) np.onclick = () => { saveKid({ photo: null }); openMe(); };
+  $("meName").onchange = () => saveKid({ name: $("meName").value.trim().slice(0, 20) });
+  const rt = () => { $("meTheme").innerHTML = themeHTML(); wireTheme($("meTheme"), rt); }; wireTheme($("meTheme"), rt);
+  box.querySelectorAll("[data-kid]").forEach(b => b.onclick = () => switchChild(b.dataset.kid));
+  $("meDone").onclick = () => { saveKid({ name: $("meName").value.trim().slice(0, 20) }); $("meDlg").close(); };
+  if (!$("meDlg").open) $("meDlg").showModal();
+}
+$("meBtn").onclick = openMe;
+renderMeBtn();
 function switchChild(id) { try { localStorage.setItem("y4maths:activeChild", JSON.stringify(id)); } catch (e) {} location.hash = "#profile"; location.reload(); }
-function renderProfileBtn() { const n = childName(); $("profileBtn").textContent = n ? n + "'s progress" : "My progress"; }
+function renderProfileBtn() { $("profileBtn").textContent = "My progress"; }
 $("profileBtn").onclick = () => { renderProfile(); show("profileView"); };
 $("progBtn2").onclick = () => $("profileBtn").click();
 $("profBack").onclick = () => show("home");

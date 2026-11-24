@@ -147,7 +147,7 @@ def digits_puzzle(R):
     t = R.randint(3, 9); n2 = R.randint(11, 30)
     return ("Digit puzzles.", [
         (f"Use each of the digits {', '.join(map(str, ds))} once to make the largest possible 4-digit number.", str(hi), f"Put the digits in order, largest first: {hi}."),
-        (f"What is the difference between that number and the smallest 4-digit number made from the same digits?", str(hi - lo), f"Smallest: {lo}. {hi} − {lo} = {hi - lo}."),
+        (f"Use each of the digits {', '.join(map(str, ds))} once. What is the difference between the largest and the smallest 4-digit numbers you can make?", str(hi - lo), f"Largest: {hi}. Smallest: {lo}. {hi} − {lo} = {hi - lo}."),
         (f"How many 2-digit numbers have digits that add up to {t}?", str(sum(1 for n in range(10, 100) if n // 10 + n % 10 == t)),
          f"List them: {', '.join(str(n) for n in range(10, 100) if n // 10 + n % 10 == t)}.")])
 
@@ -159,7 +159,7 @@ PLAIN = {"Factors and multiples.", "Prime numbers.", "× and ÷ by 10, 100, 1000
 def main():
     qp = sys.argv[1]; Q = json.load(open(qp))
     Q = [q for q in Q if not re.match(r"SK-\w+-N\d", q["id"])]      # safe to re-run
-    seen = {q["q"] for q in Q}
+    seen = {q["q"] + "|" + q.get("pic", "") for q in Q}
     for sk, gen in GEN.items():
         have = sum(1 for q in Q if q.get("skill") == sk and not str(q.get("paper", "")).startswith("PT"))
         R = random.Random("new-" + sk); n = 0; tries = 0
@@ -167,8 +167,9 @@ def main():
             tries += 1; res = gen(R); stem, parts = res[:2]; pic = res[2] if len(res) > 2 else None
             if len(parts) != 3 or any(not p[1] or "-" in p[1] for p in parts): continue
             texts = [p[0] if stem in PLAIN else f"{stem}\n{'abc'[i]}) {p[0]}" for i, p in enumerate(parts)]
-            if texts[0] in seen: continue
-            seen.update(texts); n += 1
+            keys = [t + "|" + (pic or "") for t in texts]
+            if keys[0] in seen: continue
+            seen.update(keys); n += 1
             for i, p in enumerate(parts):
                 d = dict(id=f"SK-{sk}-N{n:02d}{'abc'[i]}", q=texts[i], a=p[1], s=p[2], m=1, wp=False, yr=5, skill=sk, set=f"{sk}-N{n:02d}",
                          lv=["Easy", "Hard", "Challenge"][i], k=NAME[sk], t=NAME[sk], tab=NAME[sk], src="Written for this app in the CSSE style")

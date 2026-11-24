@@ -297,3 +297,199 @@ def e_fruit(R):
     return ("In the picture, the same fruit always has the same value.", qs, pic)
 
 ALG = [e_fruit]
+
+# ---------------- 24 Nov top-up: Money, 2D and 3D shapes, primes, powers, FDP, counting ----------------
+def mny_change(R):
+    n = R.choice(NAMES); items = R.sample([("comic", 275, 450), ("pen", 85, 160), ("sandwich", 240, 380), ("juice", 65, 140), ("notebook", 120, 260), ("ball", 350, 799)], 3)
+    p = [R.randrange(lo, hi, 5) for _, lo, hi in items]; note = R.choice([1000, 2000])
+    k = R.randint(2, 4); tot = p[0] + k * p[1]
+    if tot >= note: return mny_change(R)
+    return (f"In a shop a {items[0][0]} costs {money(p[0])}, a {items[1][0]} costs {money(p[1])} and a {items[2][0]} costs {money(p[2])}.", [
+        (f"{n} buys a {items[0][0]} and {k} of the {items[1][0]}s. How much is that?", money(tot), f"{money(p[0])} + {k} × {money(p[1])} = {money(tot)}."),
+        (f"{n} pays with a {money(note)} note. How much change is given?", money(note - tot), f"{money(note)} − {money(tot)} = {money(note - tot)}."),
+        (f"How many {items[2][0]}s could be bought with {money(note)}?", str(note // p[2]), f"{money(note)} ÷ {money(p[2])} = {note / p[2]:.2f}…, so {note // p[2]}.")])
+
+def mny_bill(R):
+    k = R.choice([3, 4, 5, 6]); each = R.randrange(450, 1500, 5); tot = each * k; tip = R.choice([300, 500, 600])
+    return (f"{k} friends share a restaurant bill of {money(tot)} equally.", [
+        ("How much does each friend pay?", money(each), f"{money(tot)} ÷ {k} = {money(each)}."),
+        (f"They also leave a tip of {money(tip * k // k)} shared equally. How much does each friend pay now, to the nearest penny?", money(each + round(tip / k)), f"{money(tip)} ÷ {k} = {tip / k / 100:.2f}, about {money(round(tip / k))}. {money(each)} + {money(round(tip / k))} = {money(each + round(tip / k))}."),
+        ("One friend pays with a £20 note for their share of the bill only. How much change do they get?", money(2000 - each), f"£20 − {money(each)} = {money(2000 - each)}.")]) if each < 2000 else mny_bill(R)
+
+def mny_coins(R):
+    t = R.choice([85, 95, 135, 165, 185, 245, 270, 380]); a = R.choice([3, 4, 5]); b = R.choice([2, 3])
+    def fewest(x):
+        n = 0
+        for c in (200, 100, 50, 20, 10, 5, 2, 1): n += x // c; x %= c
+        return n
+    return ("UK coins are 1p, 2p, 5p, 10p, 20p, 50p, £1 and £2.", [
+        (f"What is the smallest number of coins that make {money(t)}?", str(fewest(t)), f"Use the biggest coins first. {money(t)} needs {fewest(t)} coins."),
+        (f"A jar has {a} × 50p, {b} × 20p and 7 × 5p coins. How much money is in the jar?", money(a * 50 + b * 20 + 35), f"{a} × 50p + {b} × 20p + 7 × 5p = {a * 50 + b * 20 + 35}p = {money(a * 50 + b * 20 + 35)}."),
+        ("How many 20p coins make £6?", "30", "£6 = 600p. 600 ÷ 20 = 30.")])
+
+def mny_profit(R):
+    n = R.choice(NAMES); cost = R.randrange(600, 1500, 50); k = R.choice([12, 15, 20, 24]); price = R.choice([60, 75, 80, 90, 120])
+    sold = R.randint(k // 2, k)
+    return (f"{n} spends {money(cost)} making {k} bracelets to sell at the school fair for {money(price)} each.", [
+        (f"How much money comes in if all {k} are sold?", money(k * price), f"{k} × {money(price)} = {money(k * price)}."),
+        (f"Only {sold} are sold. How much money comes in?", money(sold * price), f"{sold} × {money(price)} = {money(sold * price)}."),
+        (f"With {sold} sold, what is the profit or loss? (Give the amount.)", money(abs(sold * price - cost)), f"{money(sold * price)} − {money(cost)}: the difference is {money(abs(sold * price - cost))} ({'profit' if sold * price >= cost else 'loss'}).")])
+
+def mny_exchange(R):
+    cur, rate = R.choice([("euros", 1.2), ("dollars", 1.25), ("euros", 1.15), ("dollars", 1.3)]); a = R.choice([20, 40, 50, 80, 120, 200]); back = R.choice([30, 60, 90, 120])
+    if (back / rate * 100) % 1: return mny_exchange(R)
+    return (f"The exchange rate is £1 = {rate:g} {cur}.", [
+        (f"How many {cur} do you get for £{a}?", f"{a * rate:g} {cur}", f"{a} × {rate:g} = {a * rate:g}."),
+        (f"How many pounds do you get for {back} {cur}?", money(round(back / rate * 100)), f"{back} ÷ {rate:g} = {back / rate:.2f}, so {money(round(back / rate * 100))}."),
+        (f"A cap costs {back} {cur} abroad and £{int(back / rate) + 3} in the UK. How much cheaper is it abroad, in pounds?", money(round((int(back / rate) + 3 - back / rate) * 100)), f"{back} {cur} = {money(round(back / rate * 100))}. £{int(back / rate) + 3} − {money(round(back / rate * 100))} = {money(round((int(back / rate) + 3 - back / rate) * 100))}.")])
+
+MONEY = [mny_change, mny_bill, mny_coins, mny_profit, mny_exchange]
+
+SOLIDS = {"cube": (6, 12, 8), "cuboid": (6, 12, 8), "triangular prism": (5, 9, 6), "square-based pyramid": (5, 8, 5), "triangular-based pyramid": (4, 6, 4),
+          "pentagonal prism": (7, 15, 10), "hexagonal prism": (8, 18, 12)}
+def shp_solids(R):
+    a, b = R.sample(list(SOLIDS), 2); fa, ea, va = SOLIDS[a]; fb, eb, vb = SOLIDS[b]
+    return ("3D shapes: count faces, edges and vertices (corners).", [
+        (f"How many edges does a {a} have?", str(ea), f"A {a} has {fa} faces, {ea} edges and {va} vertices. So {ea}."),
+        (f"How many vertices does a {b} have?", str(vb), f"A {b} has {fb} faces, {eb} edges and {vb} vertices. So {vb}."),
+        (f"What is the total number of faces of a {a} and a {b}?", str(fa + fb), f"{fa} + {fb} = {fa + fb}.")])
+
+def shp_cubes(R):
+    l, w, h = R.randint(2, 6), R.randint(2, 5), R.randint(2, 4)
+    return (f"A cuboid is built from 1 cm cubes. It is {l} cubes long, {w} cubes wide and {h} cubes tall.", [
+        ("How many cubes are used?", str(l * w * h), f"{l} × {w} × {h} = {l * w * h}."),
+        ("How many cubes are in the bottom layer?", str(l * w), f"{l} × {w} = {l * w}."),
+        ("One more layer is added on top. How many cubes are there now?", str(l * w * (h + 1)), f"{l * w * h} + {l * w} = {l * w * (h + 1)}.")])
+
+QUADS = [("square", "4 equal sides and 4 right angles"), ("rectangle", "4 right angles, opposite sides equal"), ("rhombus", "4 equal sides, no right angles"),
+         ("parallelogram", "opposite sides equal and parallel, no right angles"), ("trapezium", "exactly one pair of parallel sides"), ("kite", "two pairs of equal sides next to each other")]
+def shp_quads(R):
+    qs = R.sample(QUADS, 3); names = [q[0] for q in QUADS]
+    return ("Quadrilaterals are shapes with 4 straight sides.", [(f"Which quadrilateral has {d}?", n, f"A {n} has {d}. So: {n}.", [n] + R.sample([x for x in names if x != n], 3)) for n, d in qs])
+
+def shp_triangles(R):
+    a = R.choice([40, 50, 70, 80]); iso = R.choice([30, 40, 50, 70])
+    return ("Triangles.", [
+        ("A triangle has all three sides the same length. What type of triangle is it?", "equilateral", "Three equal sides: equilateral.", ["equilateral", "isosceles", "scalene", "right-angled"]),
+        (f"An isosceles triangle has two equal angles of {iso}°. What is the third angle?", f"{180 - 2 * iso}°", f"180 − {iso} − {iso} = {180 - 2 * iso}."),
+        (f"A right-angled triangle has one angle of {a}°. What is the smallest angle?", f"{min(a, 90 - a)}°", f"The angles are 90°, {a}° and {90 - a}°. The smallest is {min(a, 90 - a)}°.")])
+
+SHAPES = [shp_solids, shp_cubes, shp_quads, shp_triangles]
+
+def isprime(n): return n > 1 and all(n % d for d in range(2, int(n ** .5) + 1))
+def prm_which(R):
+    lo = R.randint(20, 80); ps = [n for n in range(lo, lo + 20) if isprime(n)]
+    if len(ps) < 2: return prm_which(R)
+    opts = R.sample([n for n in range(lo, lo + 20) if not isprime(n) and n % 2], 3); p = R.choice(ps)
+    a = R.randint(10, 40); s = sum(n for n in range(a, a + 10) if isprime(n))
+    return ("Prime numbers have exactly two factors: 1 and themselves.", [
+        ("Which of these numbers is prime?", str(p), f"{p} has no factors except 1 and {p}. The others can be divided: " + ", ".join(f"{o} = {min(d for d in range(3, o) if o % d == 0)} × {o // min(d for d in range(3, o) if o % d == 0)}" for o in opts) + ".", [str(p)] + [str(o) for o in opts]),
+        (f"How many prime numbers are there from {lo} to {lo + 19}?", str(len(ps)), f"They are {', '.join(map(str, ps))}: {len(ps)}."),
+        (f"What is the total of the prime numbers from {a} to {a + 9}?", str(s), f"The primes are {', '.join(str(n) for n in range(a, a + 10) if isprime(n))}. Total {s}.")])
+
+def prm_factors(R):
+    ps = R.sample([2, 3, 5, 7, 11], 3); n = ps[0] * ps[1] * ps[2] * R.choice([1, ps[0]])
+    big = max(d for d in range(2, n + 1) if n % d == 0 and isprime(d))
+    return (f"Think about the number {n}.", [
+        (f"What is the largest prime factor of {n}?", str(big), f"{n} = " + " × ".join(str(d) for d in sorted(ps + ([ps[0]] if n != ps[0] * ps[1] * ps[2] else []))) + f". The largest prime is {big}."),
+        (f"What is the smallest prime factor of {n}?", str(min(ps)), f"The smallest prime that divides {n} is {min(ps)}."),
+        (f"How many different prime factors does {n} have?", "3", f"{', '.join(map(str, sorted(ps)))}: 3 different primes.")])
+
+def prm_puzzle(R):
+    a, b = R.sample([p for p in range(11, 60) if isprime(p)], 2); t = R.choice([20, 24, 30, 36])
+    ways = sum(1 for p in range(2, t // 2 + 1) if isprime(p) and isprime(t - p))
+    return ("Prime puzzles.", [
+        (f"I am a prime number. I am between {a - 3} and {a + 3}. What number am I?", str(a), f"The only prime between {a - 3} and {a + 3} is {a}.") if sum(isprime(x) for x in range(a - 2, a + 3)) == 1 else (f"What is the next prime number after {a}?", str(next(x for x in range(a + 1, 200) if isprime(x))), f"Check the numbers after {a}: the next prime is {next(x for x in range(a + 1, 200) if isprime(x))}."),
+        (f"In how many ways can {t} be written as the sum of two prime numbers? (3 + 5 and 5 + 3 count as one way.)", str(ways), f"{'; '.join(f'{p} + {t - p}' for p in range(2, t // 2 + 1) if isprime(p) and isprime(t - p))}: {ways} ways."),
+        (f"Is {a} × 2 + 1 a prime number?", "Yes" if isprime(2 * a + 1) else "No", f"{a} × 2 + 1 = {2 * a + 1}. " + ("It has no factors except 1 and itself. So: Yes." if isprime(2 * a + 1) else f"{2 * a + 1} = {min(d for d in range(3, 2 * a + 1) if (2 * a + 1) % d == 0)} × {(2 * a + 1) // min(d for d in range(3, 2 * a + 1) if (2 * a + 1) % d == 0)}, so it is not prime. So: No."), ["Yes", "No"])])
+
+PRIMES = [prm_which, prm_factors, prm_puzzle]
+
+def pw_missing(R):
+    b, e = R.choice([(2, 6), (3, 4), (3, 5), (4, 3), (5, 3), (2, 7), (10, 4)]); c, f = R.choice([(2, 4), (3, 3), (5, 2), (6, 2)])
+    return ("Powers: 2⁵ means 2 × 2 × 2 × 2 × 2.", [
+        (f"{b} to the power □ = {b ** e}. What number goes in the box?", str(e), f"{' × '.join([str(b)] * e)} = {b ** e}, so the power is {e}."),
+        (f"What is {c} to the power {f}?", str(c ** f), f"{' × '.join([str(c)] * f)} = {c ** f}."),
+        (f"What is {b} to the power {e} take away {c} to the power {f}?", str(b ** e - c ** f), f"{b ** e} − {c ** f} = {b ** e - c ** f}.")])
+
+def pw_squares(R):
+    lo = R.randint(20, 120); sq = [n * n for n in range(1, 20) if lo < n * n < lo + 80]; cu = [n ** 3 for n in range(1, 10) if n ** 3 <= 200]
+    a, b = R.sample(range(4, 13), 2)
+    return ("Square numbers and cube numbers.", [
+        (f"How many square numbers are there between {lo} and {lo + 80}?", str(len(sq)), f"They are {', '.join(map(str, sq)) or 'none'}: {len(sq)}."),
+        (f"What is {a}² + {b}²?", str(a * a + b * b), f"{a * a} + {b * b} = {a * a + b * b}."),
+        ("Which number under 100 is both a square number and a cube number (other than 1)?", "64", "64 = 8 × 8 and 64 = 4 × 4 × 4. So 64.")])
+
+def pw_compare(R):
+    x, y = R.choice([(2, 5), (3, 3), (4, 2), (5, 2), (2, 4)]), R.choice([(3, 2), (2, 3), (6, 2), (3, 4), (10, 2)])
+    vx, vy = x[0] ** x[1], y[0] ** y[1]
+    if vx == vy: return pw_compare(R)
+    big = f"{x[0]} to the power {x[1]}" if vx > vy else f"{y[0]} to the power {y[1]}"
+    return ("Comparing powers.", [
+        (f"Which is bigger: {x[0]} to the power {x[1]} or {y[0]} to the power {y[1]}?", big, f"{x[0]} to the power {x[1]} = {vx}; {y[0]} to the power {y[1]} = {vy}. So: {big}.", [f"{x[0]} to the power {x[1]}", f"{y[0]} to the power {y[1]}"]),
+        (f"What is the difference between them?", str(abs(vx - vy)), f"{max(vx, vy)} − {min(vx, vy)} = {abs(vx - vy)}."),
+        ("What is 10 to the power 3?", "1000", "10 × 10 × 10 = 1000.")])
+
+POWERS = [pw_missing, pw_squares, pw_compare]
+
+FDPS = [(1, 2), (1, 4), (3, 4), (1, 5), (2, 5), (3, 5), (4, 5), (1, 10), (3, 10), (7, 10), (9, 10), (1, 20), (3, 20), (7, 20), (11, 20), (1, 25), (6, 25), (9, 50), (17, 50)]
+def fdp_convert(R):
+    (a, b), (c, d), (e, f) = R.sample(FDPS, 3)
+    return ("Fractions, decimals and percentages.", [
+        (f"Write {a}/{b} as a percentage.", f"{a * 100 // b}%", f"{a}/{b} = {a * 100 // b}/100 = {a * 100 // b}%."),
+        (f"Write {c * 100 // d}% as a decimal.", dz(c / d), f"{c * 100 // d}% = {c * 100 // d}/100 = {dz(c / d)}."),
+        (f"Write {dz(e / f)} as a fraction in its simplest form.", f"{e}/{f}", f"{dz(e / f)} = {e * 100 // f}/100 = {e}/{f}.")])
+
+def fdp_class(R):
+    n = R.choice([20, 25, 40, 50]); fr_ = R.choice([(1, 4), (2, 5), (3, 5), (3, 10), (7, 20)]); p = R.choice([20, 30, 40, 60])
+    if (n * fr_[0]) % fr_[1] or (n * p) % 100: return fdp_class(R)
+    k = n * fr_[0] // fr_[1]
+    return (f"There are {n} children in a class.", [
+        (f"{fr_[0]}/{fr_[1]} of them walk to school. How many is that?", str(k), f"{n} ÷ {fr_[1]} × {fr_[0]} = {k}."),
+        ("What percentage of the class walk to school?", f"{fr_[0] * 100 // fr_[1]}%", f"{fr_[0]}/{fr_[1]} = {fr_[0] * 100 // fr_[1]}%."),
+        (f"{p}% of the class have a dog. How many children is that?", str(n * p // 100), f"{p}% of {n} = {n * p // 100}.")])
+
+def fdp_order(R):
+    (a, b), (c, d) = R.sample(FDPS, 2); p = R.choice([15, 35, 45, 65, 85])
+    vals = {f"{a}/{b}": a / b, dz(c / d): c / d, f"{p}%": p / 100}
+    if len(set(vals.values())) < 3: return fdp_order(R)
+    big = max(vals, key=vals.get); small = min(vals, key=vals.get)
+    return (f"Look at these three amounts: {a}/{b}, {dz(c / d)} and {p}%.", [
+        ("Which is the largest?", big, "As decimals: " + ", ".join(f"{k} = {dz(v)}" for k, v in vals.items()) + f". The largest is {big}.", list(vals)),
+        ("Which is the smallest?", small, f"The smallest decimal is {dz(vals[small])}, so {small}.", list(vals)),
+        (f"What is {p}% of 60?", str(60 * p // 100) if (60 * p) % 100 == 0 else dz(60 * p / 100), f"{p}% of 60 = {dz(60 * p / 100)}.")])
+
+FDP = [fdp_convert, fdp_class, fdp_order]
+
+def cnt_menu(R):
+    a, b, c = R.randint(2, 5), R.randint(2, 4), R.randint(2, 3)
+    return (f"A café menu has {a} sandwiches, {b} drinks and {c} cakes.", [
+        ("How many different sandwich-and-drink meals can you choose?", str(a * b), f"{a} × {b} = {a * b}."),
+        ("How many different meals of one sandwich, one drink and one cake are there?", str(a * b * c), f"{a} × {b} × {c} = {a * b * c}."),
+        ("One more drink is added to the menu. How many sandwich-drink-cake meals are there now?", str(a * (b + 1) * c), f"{a} × {b + 1} × {c} = {a * (b + 1) * c}.")])
+
+def cnt_handshake(R):
+    n = R.randint(4, 9)
+    return (f"At a party, every person shakes hands once with every other person.", [
+        (f"How many handshakes are there with {n} people?", str(n * (n - 1) // 2), f"Each of the {n} shakes {n - 1} hands, but each handshake is counted twice: {n} × {n - 1} ÷ 2 = {n * (n - 1) // 2}."),
+        ("How many handshakes are there with 3 people?", "3", "3 × 2 ÷ 2 = 3."),
+        (f"One more person arrives, making {n + 1}. How many extra handshakes does that make?", str(n), f"The new person shakes hands with the {n} already there: {n} more.")])
+
+def cnt_codes(R):
+    d = R.choice([3, 4, 5]); L = R.choice([2, 3])
+    return (f"A lock code uses only the digits 1 to {d}.", [
+        (f"How many {L}-digit codes are there if digits can repeat?", str(d ** L), f"{' × '.join([str(d)] * L)} = {d ** L}."),
+        (f"How many {L}-digit codes are there if no digit is used twice?", str(__import__('math').perm(d, L)), f"{' × '.join(str(d - i) for i in range(L))} = {__import__('math').perm(d, L)}."),
+        (f"How many {L}-digit codes start with 1, if digits can repeat?", str(d ** (L - 1)), f"The first digit is fixed: {' × '.join([str(d)] * (L - 1))} = {d ** (L - 1)}.")])
+
+COUNT = [cnt_menu, cnt_handshake, cnt_codes]
+
+def frc_addsub(R):
+    d1, d2 = R.sample([3, 4, 5, 6, 8, 10, 12], 2); a, b = R.randint(1, d1 - 1), R.randint(1, d2 - 1)
+    x, y = F(a, d1), F(b, d2); w1, w2 = R.randint(1, 3), R.randint(1, 2)
+    if x + y == 1 or w1 + x <= w2 + y: return frc_addsub(R)
+    return ("Adding and subtracting fractions. Give answers in their simplest form.", [
+        (f"{a}/{d1} + {b}/{d2} =", fr(x + y), f"Use a common denominator: {a}/{d1} + {b}/{d2} = {fr(x + y)}."),
+        (f"{w1} {a}/{d1} − {w2} {b}/{d2} =", fr(w1 + x - w2 - y), f"{fr(w1 + x)} − {fr(w2 + y)} = {fr(w1 + x - w2 - y)}."),
+        (f"A jug holds {w1 + 1} litres. {a}/{d1} of a litre and then {b}/{d2} of a litre are poured out. How many litres are left?", fr(w1 + 1 - x - y), f"{w1 + 1} − {a}/{d1} − {b}/{d2} = {fr(w1 + 1 - x - y)}.")])
+FRAC = [frc_addsub]

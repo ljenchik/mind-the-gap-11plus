@@ -34,7 +34,7 @@ SLOTS = [   # 23 Nov: the order of the real CSSE papers (see "CSSE past papers â
   [("rect", SF.rect, "rect"), ("patio", CF["patio"], "rect"), ("garden", CF["garden"], "rect")],
   [("ages", CF["ages"], "puz2"), ("eq", AF.eq, "eq"), ("league", CF["league"], "puz2")],
   [("bake", CF["bake"], "money"), ("pizza", EF.fdp_pizza, "fdpwp"), ("shop", CF["shop"], "money"), ("tank", EF.fdp_tank, "fdpwp"), ("cinema", CF["cinema"], "md"), ("zoo", CF["zoo"], "md")],
-  [("dice", CF["dice"], "count"), ("cards", EF.count_cards, "count"), ("outfits", EF.count_outfits, "count"), ("bag", EF.prob_bag, "count"), ("spinner", EF.prob_spin, "count")],
+  [("dice", CF["dice"], "count"), ("cards", EF.count_cards, "count"), ("outfits", EF.count_outfits, "count")],
   [("riddle", CF["riddle"], "puz1"), ("code", CF["code"], "puz1"), ("magic", CF["magic"], "puz2")],
 ]
 BLUE = {"as": "Addition and subtraction", "md": "Multiplication and division", "frac": "Fractions", "fdpwp": "Fractions, decimals and percentages in context",

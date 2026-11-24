@@ -47,4 +47,7 @@ After any script that writes questions, run in this order:
    from `pct-families.py.txt`. Topic labels such as "Decimals and order of operations." are never shown in questions.
 4. `bond-topup.py.txt questions.json starter-data.json` – tops up Roman numerals, formula machines, sequences, add and subtract,
    number puzzles, logic puzzles and always/sometimes/never with Bond-style question types (`bond-families.py.txt`, ids SK-<part>-Ynn).
+5. `data-update.py.txt questions.json starter-data.json` – no probability questions, "Counting and combinations" in Problem solving, no commas in numbers (2634, not 2,634).
+6. `quality-fix.py.txt questions.json` – removes repeated practice questions (re-lettering linked parts) and makes every worked solution state its answer.
+7. `context-fix.py.txt questions.json` – linked parts that say "that sequence" or "that number" repeat the numbers from part a, and fixes ordinals (41st, 42nd).
 Magic squares are drawn with the picture `magic a,b,c;d,e,f;g,h,i` (`_` for an empty box).
