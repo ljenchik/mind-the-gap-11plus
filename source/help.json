@@ -602,7 +602,7 @@
    ]
   },
   "round": {
-   "intro": "Look at the digit to the right of the place you round to: 5 or more rounds up, 4 or less rounds down. For 'largest and smallest' questions, find the range of numbers that round to the value.",
+   "intro": "Look at the digit to the right of the place you round to: 5 or more rounds up, 4 or less rounds down. For 'largest and smallest' questions, find all the numbers that round to the value.",
    "examples": [
     [
      "Round 38 649 to the nearest thousand.",
@@ -706,7 +706,7 @@
    ]
   },
   "place": {
-   "intro": "× 10 moves every digit one place to the left; ÷ 10 moves it one place to the right. × 100 and × 1000 move it two and three places.",
+   "intro": "× 10 moves every digit one place to the left. ÷ 10 moves it one place to the right. × 100 and × 1000 move it two and three places.",
    "examples": [
     [
      "4.37 × 100",
@@ -719,7 +719,7 @@
    ]
   },
   "money": {
-   "intro": "Find 10% by dividing by 10, then build other percentages from it. A percentage increase adds on; a decrease takes off. For 'price before', work out what 1% is.",
+   "intro": "Find 10% by dividing by 10, then build other percentages from it. A percentage increase adds on. A decrease takes off. For 'price before', work out what 1% is.",
    "examples": [
     [
      "35% of £80",
@@ -740,7 +740,7 @@
     ],
     [
      "Which is closest to 1/2: 0.48 or 11/20?",
-     "1/2 = 0.5. 0.48 is 0.02 away; 11/20 = 0.55 is 0.05 away. So 0.48."
+     "1/2 = 0.5. 0.48 is 0.02 away. 11/20 = 0.55 is 0.05 away. So 0.48."
     ]
    ]
   },
@@ -843,7 +843,7 @@
      "Take 4 from both sides: 8n = 88. Divide by 8: n = 11."
     ],
     [
-     "3 apples = 15; apple + 2 bananas = 13. What is a banana?",
+     "3 apples = 15. Apple + 2 bananas = 13. What is a banana?",
      "Apple = 5. 2 bananas = 8, so a banana = 4."
     ]
    ]
@@ -901,7 +901,7 @@
    ]
   },
   "shape": {
-   "intro": "Learn the properties: a square has 4 equal sides and 4 right angles; a rhombus has 4 equal sides; a trapezium has one pair of parallel sides. 3D shapes have faces, edges and vertices.",
+   "intro": "Learn the properties: a square has 4 equal sides and 4 right angles. A rhombus has 4 equal sides. A trapezium has one pair of parallel sides. 3D shapes have faces, edges and vertices.",
    "examples": [
     [
      "How many edges does a triangular prism have?",
