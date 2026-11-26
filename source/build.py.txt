@@ -1,6 +1,6 @@
 import json
-t = open('app-template.html').read()
-h = json.dumps(json.load(open('help.json')), ensure_ascii=False)
-out = (t.replace('__DATA__', open('questions.json').read()).replace('__HELP__', h)
-        .replace('__STARTER__', open('starter-data.json').read()).replace('/*__MARKER__*/', open('marker.js').read()))
+t = open('template.html').read()
+d = lambda f: json.dumps(json.load(open(f)), ensure_ascii=False)
+out = t.replace('__DATA__', d('questions.json')).replace('__HELP__', d('help.json')).replace('__STARTER__', d('starter-data.json'))
 open('index.html', 'w').write(out)
+print('built', len(out))

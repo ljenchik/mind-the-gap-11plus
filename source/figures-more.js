@@ -3,6 +3,13 @@ function picMore(kind, rest) {
   const arg = rest.join(" "), esc = s => String(s).replace(/_/g, " ").replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" text-anchor="${o.a || "middle"}" font-size="${o.f || 15}" ${o.b ? 'font-weight="700"' : ""} fill="${o.c || "currentColor"}">${esc(s)}</text>`;
   const ink = 'stroke="currentColor" stroke-width="2" fill="none"';
+  if (kind === "lshape") {   /* lshape bottom left top lowerRight unit: an L with right angles, four sides labelled */
+    const [b, l, t, r, u] = rest, B = +b, L = +l, Tt = +t, R = +r, k = Math.min(220 / B, 150 / L), ox = 50, oy = 175;
+    const X = v => (ox + v * k).toFixed(1), Y = v => (oy - v * k).toFixed(1);
+    const pts = [[0, 0], [B, 0], [B, R], [Tt, R], [Tt, L], [0, L]].map(([x, y]) => X(x) + "," + Y(y)).join(" ");
+    return `<svg viewBox="0 0 320 210" width="320" role="img" aria-label="L-shape"><polygon points="${pts}" ${ink} fill="#4c6ef5" fill-opacity=".1"/>
+      ${T(X(B / 2), +Y(0) + 22, b + " " + u, { b: 1 })}${T(+X(0) - 8, Y(L / 2), l + " " + u, { a: "end", b: 1 })}${T(X(Tt / 2), +Y(L) - 8, t + " " + u, { b: 1 })}${T(+X(B) + 8, Y(R / 2), r + " " + u, { a: "start", b: 1 })}</svg>`;
+  }
   if (kind === "venn") {
     const [la, lb, a, both, b, nei] = arg.split(";");
     return `<svg viewBox="0 0 320 190" width="320" role="img" aria-label="Venn diagram"><rect x="4" y="4" width="312" height="182" rx="6" ${ink} stroke-width="1.5"/>

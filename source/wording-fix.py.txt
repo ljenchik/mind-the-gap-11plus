@@ -1,0 +1,113 @@
+"""Plain, child-friendly wording for every question and worked answer (26 Nov).
+Runs on questions.json and the CEM file (cem.json). Safe to run more than once."""
+import json, re, sys
+OUT = {}
+
+def cap(m): return m.group(1) + m.group(2).upper()
+
+def fix_q(t):
+    o = t
+    # probability is not taught: ask for the fraction instead (same answer)
+    t = re.sub(r'The spinner is spun once\.', 'The spinner has equal parts.', t)
+    t = re.sub(r'What is the probability that it lands on (an? |)([^?]+)\?', lambda m: f"What fraction of the parts show {m.group(1)}{m.group(2)}?", t)
+    t = re.sub(r'One ticket is picked at random\. What is the probability that its number is ([^?]+)\?', r'What fraction of the tickets have a number that is \1?', t)
+    t = re.sub(r'One counter is taken without looking\. What is the probability that it is ([^?]+)\?', r'What fraction of the counters are \1?', t)
+    t = re.sub(r'(?:One|A) (\w+) is (?:picked|taken|chosen) (?:at random|without looking)\. What is the probability that it is ([^?]+)\?', r'What fraction of the \1s are \2?', t)
+    # topic labels at the start of a question
+    t = re.sub(r'^(Coordinates|Number riddles|Factors and multiples|Square numbers and cube numbers|Fractions, decimals and percentages|× and ÷ by 10, 100, 1000)\.(\s+|\n)', '', t)
+    t = re.sub(r'^Number riddles\. ', '', t)
+    t = re.sub(r'^Roman numerals\. (I = 1)', r'\1', t)
+    t = re.sub(r'^Think of a number\.\n', '', t)
+    if 'What fraction' in t: t = t.replace('Give your answer as a fraction in its simplest form', 'Give your answer in its simplest form')
+    t = t.replace('Choose ALWAYS, SOMETIMES or NEVER true.', 'Is it always, sometimes or never true?')
+    # plain words
+    t = re.sub(r'\bCalculate\b', 'Work out', t); t = re.sub(r'\bcalculate\b', 'work out', t)
+    t = re.sub(r'\b(does|do|did|will) (\w+) receive\b', r'\1 \2 get', t)
+    t = re.sub(r'\breceives\b', 'gets', t); t = re.sub(r'\breceived (£[\d.]+|\d+p) change', r'got \1 change', t)
+    t = re.sub(r'\berasers\b', 'rubbers', t); t = re.sub(r'\beraser\b', 'rubber', t); t = re.sub(r'\bEraser', 'Rubber', t)
+    t = re.sub(r'(\d) - (\d)', r'\1 − \2', t)
+    # lists of numbers to choose from: commas, not semicolons
+    t = re.sub(r'(\S);\s+(?=[\d−£.])', r'\1, ', t)
+    return t
+
+def fix_s(s, q):
+    if not isinstance(s, str): return s
+    t = s
+    t = re.sub(r'It works for every number you try, and you can see why\.', 'Try a few examples: it is true every time.', t)
+    t = re.sub(r'^It can never happen\.', 'Try a few examples: it is never true.', t)
+    if re.fullmatch(r'Try a few examples: it is never true\.', t): t += ' So the answer is Never.'
+    t = re.sub(r'\bCalculate\b', 'Work out', t); t = re.sub(r'\bcalculate\b', 'work out', t)
+    t = re.sub(r'(\d) - (\d)', r'\1 − \2', t)
+    t = re.sub(r'\b1 (tenth|hundredth|thousandth|dot|part|point|apple|sweet|marble|coin|day|week|hour|minute|second|card|length|metre|gram|litre)s\b', r'1 \1', t)
+    t = re.sub(r'\berasers\b', 'rubbers', t); t = re.sub(r'\beraser\b', 'rubber', t)
+    # "x = x." with nothing worked out
+    m = re.search(r'(\d+)/(\d+) × (\d+)/(\d+)\s*(?:=|$)', q) or re.search(r'(\d+)/(\d+) × (\d+)/(\d+)', q)
+    mm = re.fullmatch(r'(?:Multiply the tops and the bottoms: )?(\d+/\d+) = \1\.?(.*)', t)
+    if mm and m:
+        a, b, c, d = m.groups()
+        t = f"Multiply the tops: {a} × {c} = {int(a)*int(c)}. Multiply the bottoms: {b} × {d} = {int(b)*int(d)}. {mm.group(1)} cannot be simplified.{mm.group(2)}"
+    elif mm:
+        t = f"{mm.group(1)} cannot be simplified, so it stays as {mm.group(1)}.{mm.group(2)}"
+    t = re.sub(r'The first digit is fixed: (\d+) = \1\.', lambda k: f"The first digit must be 1. The second digit can be any of the {k.group(1)} digits, so there are {k.group(1)} codes.", t)
+    # semicolons read like an essay: use full stops
+    t = re.sub(r';\s+(\S)', lambda k: '. ' + k.group(1).upper(), t)
+    return t
+
+
+SING = {'apples': 'apple', 'cards': 'card', 'coins': 'coin', 'shells': 'shell', 'pastries': 'pastry'}
+MOVE = re.compile(r"There are some (\w+) (?:in|on) an? (\w+) and some (?:in|on) a second \2\. If (\d+) of the \1 (?:is|are) moved from the first \2 to the second, both \2(?:e?s) have the same number\. If (\d+) of the \1 (?:is|are) moved from the first \2 to the second, the second \2 has (\d+) times as many as the first\. How many \1 are in the (first|second) \2 to begin with\?")
+def fix_move(x):
+    m = MOVE.search(x['q'])
+    if not m: return
+    items, cont, n1, n2, k, which = m.group(1), m.group(2), int(m.group(3)), int(m.group(4)), int(m.group(5)), m.group(6)
+    one = SING.get(items, items.rstrip('s')); pl = cont + ('es' if cont.endswith(('x', 's')) else 's'); C = cont.capitalize()
+    mv = lambda n: f"{n} {one if n == 1 else items} {'moves' if n == 1 else 'move'}"
+    new = (f"{C} A and {cont} B hold some {items}. If {mv(n1)} from {cont} A to {cont} B, both {pl} hold the same number. "
+           f"If {mv(n2)} from {cont} A to {cont} B, {cont} B then holds {k} times as many as {cont} A. How many {items} are in {cont} {'A' if which == 'first' else 'B'} at the start?")
+    x['q'] = x['q'][:m.start()] + new + x['q'][m.end():]
+    d = 2 * n1
+    y = next((y for y in range(0, 500) if y + n2 == k * (y + d - n2)), None)
+    if y is not None:
+        a1, b1 = y + d - n2, y + n2
+        x['s'] = (f"Moving {n1} makes them equal, so {cont} A has {d} more than {cont} B. Try numbers: if {cont} B has {y}, {cont} A has {y + d}. "
+                  f"After moving {n2}, {cont} A has {a1} and {cont} B has {b1}, and {b1} = {k} × {a1}. So {cont} {'A' if which == 'first' else 'B'} has {y + d if which == 'first' else y} at the start.")
+        assert str(y + d if which == 'first' else y) == str(x['a']).strip(), (x['id'], y, x['a'])
+
+LSH = re.compile(r"\nL-shape: the bottom edge is (\d+) (\w+), the left edge is (\d+) \w+, the top edge is (\d+) \w+ and the lower right edge is (\d+) \w+\. All corners are right angles\.")
+VENN = re.compile(r'\n?The Venn diagram has two circles\. Only in "([^"]+)": (\d+)\. In both: (\d+)\. Only in "([^"]+)": (\d+)\. In neither: (\d+)\.')
+def fix_pics(x):
+    m = LSH.search(x['q'])
+    if m and not x.get('pic'):
+        b, u, l, t, r = m.groups(); x['pic'] = f"lshape {b} {l} {t} {r} {u}"; x['q'] = x['q'][:m.start()] + x['q'][m.end():]
+    m = VENN.search(x['q'])
+    if m and not x.get('pic'):
+        la, a, both, lb, b, nei = m.groups(); x['pic'] = f"venn {la.replace(' ', '_')};{lb.replace(' ', '_')};{a};{both};{b};{nei}"
+        x['q'] = (x['q'][:m.start()] + x['q'][m.end():]).replace('\n\n', '\n').strip()
+
+SIBS = re.compile(r'((?:\d+ children have \d+ brothers? or sisters?[,.;]? ?){3,})')
+def fix_lists(x):
+    m = SIBS.search(x['q'])
+    if not m: return
+    rows = re.findall(r'(\d+) children have (\d+) brothers? or sisters?', m.group(1))
+    rest = x['q'][m.end():].strip()
+    x['q'] = x['q'][:m.start()].strip() + ' The table shows the results.\nBrothers and sisters | Children\n' + '\n'.join(f'{k} | {c}' for c, k in rows) + ('\n' + rest if rest else '')
+
+DROP = re.compile(r'\bmedian\b|\bthe range\b|rotational symmetry|\bprobability\b', re.I)
+
+def run(items):
+    keep = []; dropped = 0; changed = 0
+    for x in items:
+        q0, s0 = x.get('q', ''), x.get('s', '')
+        fix_move(x); fix_pics(x); fix_lists(x)
+        x['q'] = fix_q(x['q'])
+        if 'hint' in x and isinstance(x['hint'], str): x['hint'] = fix_q(x['hint'])
+        x['s'] = fix_s(x['s'], x['q'])
+        if DROP.search(x['q']) and not x['id'].startswith('PT'): dropped += 1; continue
+        if x['q'] != q0 or x['s'] != s0: changed += 1
+        keep.append(x)
+    return keep, dropped, changed
+
+if __name__ == '__main__':
+    qs = json.load(open('questions.json')); qs, d1, c1 = run(qs); json.dump(qs, open('questions.json', 'w'), ensure_ascii=False)
+    cem = json.load(open('cem.json')); cem, d2, c2 = run(cem); json.dump(cem, open('cem.json', 'w'), ensure_ascii=False)
+    print('questions.json: changed', c1, 'dropped', d1, '| cem: changed', c2, 'dropped', d2)

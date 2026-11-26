@@ -45,6 +45,46 @@
 .mebtn { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; } .mebtn .mini { width: 28px; height: 28px; flex: none; }
 .avatarbtn { width: 42px; height: 42px; padding: 0; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); overflow: hidden; display: grid; place-items: center; }
 .avatar { width: 100%; height: 100%; display: block; border-radius: 50%; object-fit: cover; }
+/* pastel backgrounds */
+:root[data-theme="mint"]  { --bg: #e3f6ec; --line: #c4e6d3; color-scheme: light; }
+:root[data-theme="lilac"] { --bg: #efe8fb; --line: #dccff3; color-scheme: light; }
+:root[data-theme="peach"] { --bg: #fdece0; --line: #f3d3bd; color-scheme: light; }
+:root[data-theme="sky"]   { --bg: #e4f1fc; --line: #c7def3; color-scheme: light; }
+:root[data-theme="rose"]  { --bg: #fce8ee; --line: #f2cdd9; color-scheme: light; }
+:root[data-theme="lemon"] { --bg: #fdf7d8; --line: #eee2a6; color-scheme: light; }
+/* pictures: one row of 20, swipe sideways */
+.avrow { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity; padding: 8px 4px 12px; margin: 0 -4px; -webkit-overflow-scrolling: touch; }
+.avrow button { flex: 0 0 auto; scroll-snap-align: start; width: 68px; height: 68px; padding: 0; border-radius: 50%; border: 0; background: none; box-shadow: 0 0 0 2px var(--line); }
+.avrow button svg { width: 100%; height: 100%; display: block; }
+.avrow button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--accent); }
+.combos { display: flex; flex-wrap: wrap; gap: 12px; padding: 4px 2px; }
+.combos button { width: 46px; height: 46px; border-radius: 50%; border: 0; box-shadow: 0 0 0 2px var(--line); }
+.combos button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--ink); }
+/* welcome and setting up children */
+body[data-view="welcomeView"] header, body[data-view="welcomeView"] .tabbar { display: none !important; }
+#welcomeView { max-width: 560px; margin: 0 auto; width: 100%; }
+.mebtn span { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wc { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+#welcomeView, .wc > *, #meBox > div > * { min-width: 0; }
+.wc h1 { font-family: var(--display); color: var(--accent); margin: 0; font-size: 2rem; line-height: 1.15; }
+.wc h2 { margin: 0; }
+.wc .lead { font-size: 1.15rem; margin: 0; }
+.wcsteps.sell { list-style: none; padding-left: 0; }
+.wcsteps.sell li { margin: 6px 0; }
+.wcsteps { margin: 0; padding-left: 1.4em; display: grid; gap: 10px; font-size: 1.05rem; }
+.wc button.big { padding: 16px 20px; font-size: 1.15rem; width: 100%; }
+.wcpreview { display: flex; align-items: center; gap: 14px; min-height: 80px; }
+.wcpreview svg { width: 76px; height: 76px; flex: none; }
+.wcpreview b { font-size: 1.4rem; font-family: var(--display); }
+.wcfield { display: grid; gap: 4px; }
+.wcfield input { font: inherit; font-size: 1.2rem; padding: 12px 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); }
+.wcfield input:focus { border-color: var(--accent); outline: none; }
+.wcmsg { color: var(--bad); font-weight: 700; margin: 0; min-height: 1.2em; }
+.whogrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.whogrid button { display: grid; justify-items: center; gap: 8px; padding: 18px 8px; border: 2px solid var(--line); border-radius: 18px; background: var(--surface); font-weight: 700; font-size: 1.1rem; color: var(--ink); }
+.whogrid button svg { width: 80px; height: 80px; }
+.about h2 { margin: 22px 0 6px; font-size: 1.25rem; } .about h2:first-of-type { margin-top: 6px; }
+.about p, .about li { line-height: 1.55; } .about ol, .about ul { padding-left: 1.3em; margin: 6px 0; display: grid; gap: 6px; }
 .av-pick { display: grid; grid-template-columns: repeat(4, 60px); gap: 10px; }
 .av-pick button { width: 60px; height: 60px; padding: 0; border-radius: 50%; border: 3px solid transparent; background: none; overflow: hidden; }
 .av-pick button[aria-pressed="true"] { border-color: var(--accent); }
@@ -72,6 +112,7 @@ table.tt th, table.tt td { border: 1.5px solid var(--line); padding: 6px 12px; t
 table.tt thead th { background: var(--bg); color: var(--accent); font-weight: 800; }
 table.tt tbody th { text-align: left; font-weight: 700; }
 table.tt tbody tr:nth-child(even) td, table.tt tbody tr:nth-child(even) th { background: color-mix(in srgb, var(--bg) 55%, transparent); }
+#options { margin-top: 6px; }
 .ttafter { display: block; margin-top: 10px; }
 body.kb table.tt th, body.kb table.tt td { padding: 3px 8px; font-size: .92rem; }
 .wnote { white-space: pre-wrap; font: inherit; background: var(--bg); border-radius: 10px; padding: 10px 12px; margin: 8px 0; }
@@ -352,6 +393,8 @@ select.year { font: inherit; font-weight: 700; border: 0; border-radius: 999px; 
 .st-field input:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
 .st-field .pre, .st-field .suf { font-weight: 700; font-size: 1.1rem; color: var(--muted); }
 .st-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.st-opts.one-row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+.st-opts.one-row .st-opt { padding: 10px 4px; min-width: 0; }
 .st-opt { background: var(--bg); color: var(--ink); border: 2px solid var(--line); padding: 10px 16px; font-weight: 700; font-size: 1rem; }
 .st-opt[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .st-foot { justify-content: space-between; }
@@ -454,7 +497,7 @@ button, .chip, .opt, .tile, select { touch-action: manipulation; -webkit-tap-hig
 /* bottom bar on every screen: Home, Papers, Progress, Parents */
 header.top #profileBtn, header.top #parentsBtn { display: none; }
 main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
-.tabbar { display: grid; grid-template-columns: repeat(4, minmax(0, 150px)); justify-content: center; position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line); padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
+.tabbar { display: grid; grid-template-columns: repeat(5, minmax(0, 130px)); justify-content: center; position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line); padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
 .tabbar button { background: none; border: 0; border-radius: 10px; min-height: 52px; color: var(--muted); font-weight: 700; font-size: .85rem; display: grid; justify-items: center; align-content: center; gap: 2px; }
 .tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .tabbar button[aria-current="page"] { color: var(--accent); background: var(--bg); }
@@ -466,7 +509,7 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
   h1 { font-size: 1.35rem; }
   header.top { flex-wrap: nowrap; position: sticky; top: 0; z-index: 5; background: var(--bg); margin: -12px -12px 0; padding: calc(10px + env(safe-area-inset-top)) 12px 10px; border-bottom: 1px solid var(--line); }
   header.top #profileBtn, header.top #parentsBtn { display: none; }
-  .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line); padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
+  .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line); padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
   .tabbar button { background: none; border: 0; border-radius: 10px; min-height: 52px; color: var(--muted); font-weight: 700; font-size: .8rem; display: grid; justify-items: center; align-content: center; gap: 2px; }
   .tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .tabbar button[aria-current="page"] { color: var(--accent); background: var(--bg); }
@@ -476,8 +519,10 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
   body[data-view="quiz"] main, body[data-view="starterView"]:has(#stExam:not([hidden])) main { padding-bottom: 24px; }
   .panel { padding: 14px; border-radius: 16px; }
   /* phone keyboard open: keep only the question, picture and answer box on screen */
-  body.kb main { padding: 4px 4px 8px; gap: 6px; }
-  body.kb .panel { padding: 8px 10px; gap: 8px; border-width: 0; }
+  /* the panel being answered is pinned to the part of the screen above the keyboard, so nothing slides under the browser bar */
+  body.kb .kbpanel { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); height: var(--vvh, 50vh); overflow-y: auto; overscroll-behavior: contain; z-index: 30;
+    padding: 14px 14px 18px; gap: 14px; border: 0; border-radius: 0; align-content: start; }
+  body.kb .kbpanel #options, body.kb .kbpanel .typed-row { margin-top: 4px; }
   body.kb .topbar, body.kb #qreport, body.kb .progress, body.kb #qpaper, body.kb .quizfoot, body.kb #options > label.muted, body.kb .qhead #qtime { display: none !important; }
   body.kb .qhead { font-size: .8rem; }
   body.kb .question { font-size: 1.08rem; line-height: 1.35; }
@@ -544,7 +589,7 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
   </header>
   <dialog id="meDlg" class="medlg" aria-labelledby="meTitle"><div id="meBox"></div></dialog>
   <div class="assigned" id="assigned" hidden><div><strong>A test has been set for you</strong><br><span id="assignedInfo" class="muted"></span></div><button class="primary" id="assignedGo" type="button">Start test</button></div>
-  <button class="starter-btn" id="starterBtn" type="button"><span class="t1" id="starterT1">Initial assessment</span><span class="t2" id="starterT2">Initial assessment A and B · finds your strong and weak skills</span></button>
+  <button class="starter-btn" id="starterBtn" type="button"><span class="t1" id="starterT1">Initial assessment</span><span class="t2" id="starterT2">Two short tests that show what to practise</span></button>
   <button class="checkup-btn" id="checkupBtn" type="button" hidden><span class="t1" id="checkupT1">Starting check-up</span><span class="t2" id="checkupT2">20 harder questions like a real test · finds your strong and weak topics</span></button>
   <p class="planline" id="planLine" hidden style="display:none"></p>
   <button class="today-btn" id="todayBtn" type="button"><span class="t1" id="todayT1">Today's practice</span><span class="t2" id="todayT2">About 10 minutes · mixed topics</span></button>
@@ -587,7 +632,7 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
     <p class="paper" id="qpaper" hidden></p>
     <div class="options" id="options"></div>
     <div id="feedback" class="feedback" hidden></div>
-    <div class="row quizfoot"><button class="primary" id="next" type="button" hidden>Next</button><button class="ghost" id="skip" type="button" hidden>Skip for now</button><button class="ghost" id="quit" type="button">Stop and see score</button><span class="total">Total: <strong id="qscore"></strong></span></div>
+    <div class="row quizfoot"><button class="primary" id="next" type="button" hidden>Next</button><button class="ghost" id="skip" type="button" hidden>Skip → next question</button><button class="ghost" id="quit" type="button">Stop and see score</button><span class="total">Total: <strong id="qscore"></strong></span></div>
   </section>
 
   <section id="done" class="panel" hidden>
@@ -690,11 +735,40 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
     <div class="cards" id="helpCards"></div>
   </section>
 
+  <section id="welcomeView" class="panel" hidden><div id="wcBox"></div></section>
+  <section id="aboutView" class="panel about" hidden>
+    <h1 style="margin:0">About Mind the Gap 11+</h1>
+    <p>Maths practice for Year 5 children getting ready for the CSSE 11+ test in Essex. A little practice most days works better than a lot at once: 10 to 20 minutes is enough.</p>
+    <h2>How it works</h2>
+    <ol>
+      <li><b>Initial assessment.</b> Two short tests, A and B, show which topics your child knows and which need work.</li>
+      <li><b>Today's practice.</b> A short mixed set each day, taken from the topics that need it most.</li>
+      <li><b>Practise by topic.</b> Over 6000 questions in 8 topics, from Number to Problem solving. Pick one topic or several.</li>
+      <li><b>Practice papers.</b> 60 CSSE-style practice papers, with the topics in the same order as the exam. Paper 1 is the gentlest; each one after it is a little harder.</li>
+      <li><b>Fix my mistakes.</b> After a set or a paper, new questions like the ones your child got wrong. A right answer on the second try still earns the mark.</li>
+    </ol>
+    <h2>Why parents choose it</h2>
+    <ul>
+      <li><b>Made for the CSSE maths test.</b> Questions follow its topics and order.</li>
+      <li><b>Mistakes are fixed, not just marked.</b> Your child practises the method again with new numbers.</li>
+      <li><b>Help when stuck.</b> A help card for every part of every topic, and a worked answer for every question.</li>
+      <li><b>Easy on a phone.</b> Big buttons, number boxes that only take numbers, and answers you can tap.</li>
+      <li><b>Nothing to distract.</b> No adverts, no prizes, no chat.</li>
+      <li><b>You can see the gaps.</b> Scores by topic, an estimated test score and a short weekly note.</li>
+      <li><b>Fair price.</b> £6 a month or £39 until the test, with brothers and sisters at half price.</li>
+    </ul>
+    <h2>How the papers open</h2>
+    <p>Paper 1 is open from the start. The next paper opens when your child scores 55% or more on the first try, or finishes "Fix my mistakes" for that paper. Only the first try counts towards the score; a retake has different questions.</p>
+    <h2>Children</h2>
+    <p>Each child has their own name, picture, colours and progress. Tap the name at the top to switch child or change the picture. Add children in Parents → Children.</p>
+    <div class="row"><button class="ghost" type="button" id="aboutPlans">See the plans</button><a class="ghost linkbtn" href="/privacy.html" target="_blank" rel="noopener">Privacy policy</a></div>
+    <p class="muted small">Mind the Gap 11+ is independent and not connected with CSSE.</p>
+  </section>
   <section id="pastView" class="panel" hidden>
     <div class="topbar"><button class="back" id="backPast" type="button">← Topics</button></div>
     <div id="pvPT">
     <h2>Practice papers</h2>
-    <p class="muted">Written for this app in the style of the CSSE maths paper: about 20 questions, 60 marks, 60 minutes, no calculator. Pencil and paper ready.</p>
+    <p class="muted">Written for this app in the style of the CSSE maths paper: about 20 questions, 55 to 60 marks, 60 minutes, no calculator. Pencil and paper ready.</p>
     <div class="row" id="ptList"></div>
     </div>
     <div id="pvPast">
@@ -741,14 +815,143 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
     <p class="muted small noprint">To pick questions: Questions tab, then tick the box next to each one. The test below is what your child will get.</p>
     <div id="paper"></div>
   </section>
-  <nav class="tabbar" id="tabbar" aria-label="Main"><button type="button" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</button><button type="button" data-tab="pastView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Papers</button><button type="button" data-tab="profileView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progress</button><button type="button" data-tab="parents"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg>Parents</button></nav>
+  <nav class="tabbar" id="tabbar" aria-label="Main"><button type="button" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</button><button type="button" data-tab="pastView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Papers</button><button type="button" data-tab="profileView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progress</button><button type="button" data-tab="parents"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg>Parents</button><button type="button" data-tab="aboutView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>About</button></nav>
 </main>
 <script src="config.js"></script>
+<script src="source/questions-cem.js"></script>
+<script src="source/figures-more.js"></script>
 <script>
 const QUESTIONS = __DATA__;
 const HELP = __HELP__;
 const STARTER = __STARTER__;
-/*__MARKER__*/
+/* Auto-marking for exam-style answers. Pure functions, no page needed.
+   mark(spec, input) -> true / false.  input is a string, or an array of strings for spec.k === "multi". */
+const MK = (() => {
+  const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a || 1; };
+  const rat = (n, d = 1) => { if (d < 0) { n = -n; d = -d; } const g = gcd(n, d); return [n / g, d / g]; };
+  const eq = (a, b) => a && b && a[0] === b[0] && a[1] === b[1];
+  const VUL = { "½": [1, 2], "⅓": [1, 3], "⅔": [2, 3], "¼": [1, 4], "¾": [3, 4], "⅕": [1, 5], "⅖": [2, 5], "⅗": [3, 5], "⅘": [4, 5], "⅙": [1, 6], "⅚": [5, 6], "⅛": [1, 8], "⅜": [3, 8], "⅝": [5, 8], "⅞": [7, 8] };
+  const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹", SUB = "₀₁₂₃₄₅₆₇₈₉";
+  const deSS = s => s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]/g, c => { const i = SUP.indexOf(c); return i >= 0 ? i : SUB.indexOf(c); });
+  function clean(s) {
+    s = String(s == null ? "" : s).replace(/[−–—‐-‒]/g, "-").replace(/[×✕]/g, "x").replace(/[⁄∕]/g, "/").replace(/ /g, " ");
+    s = deSS(s);
+    s = s.replace(/([0-9])\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (m, w, f) => w + " " + VUL[f][0] + "/" + VUL[f][1]).replace(/[½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, f => VUL[f][0] + "/" + VUL[f][1]);
+    return s.trim();
+  }
+  /* any single number: whole, decimal, fraction, mixed number -> [n, d] or null */
+  function value(s) {
+    s = clean(s).replace(/,(?=\d{3}(\D|$))/g, "").replace(/\s+/g, " ");
+    let m;
+    if ((m = /^(-?)(\d*)\.(\d+)$/.exec(s)) || (m = /^(-?)(\d+)\.?$/.exec(s))) {
+      const frac = m[3] || "", n = parseInt((m[2] || "0") + frac, 10); if (!isFinite(n)) return null;
+      return rat(m[1] ? -n : n, Math.pow(10, frac.length));
+    }
+    if ((m = /^(-?)(\d+) (\d+)\/(\d+)$/.exec(s))) { const d = +m[4]; if (!d) return null; const n = +m[2] * d + +m[3]; return rat(m[1] ? -n : n, d); }
+    if ((m = /^(-?)(\d+)\/(\d+)$/.exec(s))) { const d = +m[3]; if (!d) return null; return rat(m[1] ? -+m[2] : +m[2], d); }
+    return null;
+  }
+  const UNIT = /\s*(?:(?:sq|square)\.?\s*)?(?:cm2|cm²|mm2|mm²|m2|m²|km2|km²|cm|mm|km|kg|mg|g|ml|l|litres?|liters?|m|minutes?|mins?|min|hours?|hrs?|hr|h|years?|yrs?|days?|degrees?|deg|°\s*[cf]?|º|%|pence|pounds?|dollars?|p|points?|goals?|penalties|terms?|marks?|games?|people|children|sweets?|stickers?)\s*$/i;
+  function stripUnits(s) {
+    s = clean(s).replace(/^[£$€]\s*/, "").replace(/^(term|number|n\s*=|x\s*=|y\s*=|=)\s*/i, "");
+    for (let i = 0; i < 3; i++) { const t = s.replace(UNIT, ""); if (t === s) break; s = t.trim(); }
+    return s.replace(/^[£$€]\s*/, "").trim();
+  }
+  const num = s => value(stripUnits(s));
+  const V = s => value(s);  // spec values are written plainly
+  function reduced(s) {  // is a typed fraction / mixed number in simplest form (or a whole number)?
+    s = clean(s).replace(/\s+/g, " ");
+    let m;
+    if ((m = /^-?(\d+)$/.exec(s))) return true;
+    if ((m = /^-?(?:\d+ )?(\d+)\/(\d+)$/.exec(s))) return gcd(+m[1], +m[2]) === 1;
+    return false;
+  }
+  function timeOf(s) {
+    s = clean(s).toLowerCase().replace(/\b(the )?next day\b|two days later|tomorrow/g, "").trim();
+    let ap = null; const a = /(a\.?m\.?|p\.?m\.?)\s*$/.exec(s); if (a) { ap = a[1][0]; s = s.slice(0, a.index).trim(); }
+    let h, m, mm;
+    if ((mm = /^(\d{1,2})\s*[:.h]\s*(\d{2})$/.exec(s))) { h = +mm[1]; m = +mm[2]; }
+    else if ((mm = /^(\d{1,2})(\d{2})$/.exec(s))) { h = +mm[1]; m = +mm[2]; }
+    else if ((mm = /^(\d{1,2})$/.exec(s)) && ap) { h = +mm[1]; m = 0; }
+    else return null;
+    if (m > 59 || h > 24 || (ap && (h < 1 || h > 12))) return null;
+    if (ap) { h = h % 12 + (ap === "p" ? 12 : 0); }
+    return { t: (h % 24) * 60 + m, ap: !!ap };
+  }
+  function durOf(s, unit) {
+    s = clean(s).toLowerCase().replace(/\band\b/g, " ").replace(/\s+/g, " ").trim();
+    let m, tot = 0, hit = false;
+    if ((m = /^(\d+):(\d{2})$/.exec(s))) return +m[1] * 60 + +m[2];
+    const h = /(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|hr|h)(?![a-z])/.exec(s), mi = /(\d+)\s*(?:minutes?|mins?|min|m)(?![a-z])/.exec(s);
+    if (h) { tot += Math.round(parseFloat(h[1]) * 60); hit = true; }
+    if (mi) { tot += +mi[1]; hit = true; }
+    if (hit) return tot;
+    if ((m = /^(\d+(?:\.\d+)?)$/.exec(s)) && unit) return Math.round(parseFloat(m[1]) * (unit === "h" ? 60 : 1));
+    return null;
+  }
+  function tokens(s) {
+    s = clean(s).toLowerCase().replace(/\b(between|from|the|is|are|a|an)\b/g, " ").replace(/\s*(a\.?m\.?|p\.?m\.?)(?![a-z])/g, " ");
+    return s.split(/\s+and\s+|\s*[,;&–-]\s*|\s+to\s+|\s+/).map(x => x.trim()).filter(Boolean).map(normTok);
+  }
+  function normTok(t) {
+    let m;
+    if ((m = /^(\d{1,2})[:.](\d{2})$/.exec(t))) return m[2] === "00" ? +m[1] + "/1" : +m[1] + ":" + m[2];
+    if (/^\d/.test(t)) { const v = value(t); return v ? v[0] + "/" + v[1] : t; }
+    return t.slice(0, 3);
+  }
+  const normText = s => clean(s).toLowerCase().replace(/[-–,.]/g, " ").replace(/\band\b/g, " ").replace(/\s+/g, " ").trim();
+  const sameSet = (a, b) => a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+  const nums = s => clean(s).split(/\s*(?:,|;|\band\b|\s)\s*/i).filter(Boolean);
+
+  function mark(spec, input) {
+    if (!spec) return false;
+    if (spec.k === "multi") {
+      const inp = Array.isArray(input) ? input : [];
+      return spec.parts.every((p, i) => p.optional ? true : mark(p, inp[i]));
+    }
+    if (spec.k === "lin") {
+      const a = (Array.isArray(input) ? input : []).map(x => num(x || ""));
+      if (a.length !== 2 || !a[0] || !a[1] || a[0][1] !== 1 || a[1][1] !== 1) return false;
+      const g = a[0][0], p = a[1][0];
+      return g >= 0 && p >= 0 && spec.a * g + spec.b * p === spec.N && !spec.excl.some(e => e[0] === g && e[1] === p);
+    }
+    const s = input == null ? "" : String(input).trim();
+    if (!s) return false;
+    switch (spec.k) {
+      case "n": {
+        const x = num(s); if (!x) return false;
+        if (spec.dec && /\//.test(clean(s))) return false;
+        if ([spec.v, ...(spec.alt || [])].some(v => eq(x, V(v)))) return true;
+        const u = (/(kg|km|ml|mm|cm|g|m|l)\s*$/i.exec(clean(s)) || [])[1];
+        return !!u && (spec.au || []).some(([v, un]) => un === u.toLowerCase() && eq(x, V(v)));
+      }
+      case "f": {
+        const t = stripUnits(s), x = value(t); if (!x) return false;
+        if (!eq(x, V(spec.v))) return false;
+        if (spec.den) { const q = /^(-?\d+)\s*\/\s*(\d+)$/.exec(clean(t)); return !!q && +q[2] === spec.den; }
+        return spec.strict ? reduced(t) : true;
+      }
+      case "t": {
+        const x = timeOf(s); if (!x) return false;
+        if (spec.h12 && !x.ap) return x.t % 720 === spec.v % 720;
+        return x.t === spec.v % 1440;
+      }
+      case "d": { const x = durOf(s, spec.u); return x != null && x === spec.v; }
+      case "c": { const m = /^\(?\s*(-?\d+)\s*[,; ]\s*(-?\d+)\s*\)?$/.exec(clean(s)); return !!m && +m[1] === spec.v[0] && +m[2] === spec.v[1]; }
+      case "ch": return s === spec.v;
+      case "list": { const a = nums(s).map(num); return a.length === spec.v.length && a.every((x, i) => x && eq(x, V(spec.v[i]))); }
+      case "set": return sameSet(tokens(s), spec.v.map(normTok));
+      case "pairs": { const t = tokens(s); return spec.v.some(p => sameSet(t, p.map(normTok))); }
+      case "x": return spec.v.some(v => normText(v) === normText(s));
+      case "dig": { const d = clean(s).replace(/\D/g, ""); if (d.length !== 3) return false; const [x, y, z] = d.split("").map(Number);
+        return x && y && z && new Set([x, y, z]).size === 3 && spec.a * (10 * x + y + z) === spec.T; }
+    }
+    return false;
+  }
+  return { mark, value, num, clean };
+})();
+if (typeof module !== "undefined") module.exports = MK;
+
 
 const MIXED = "Mixed topics";
 /* Year 5 practises the 20 CSSE exam skills, in exam order; other years keep the curriculum topics */
@@ -1237,6 +1440,7 @@ function drawPic(spec) {
       <path d="M78,112 Q130,152 182,112" fill="none" stroke="${col}" stroke-width="2.5" marker-end="url(#eqa)"/>
       <text x="130" y="164" text-anchor="middle" font-size="18" font-weight="700" fill="${col}">${sym}${k}</text></svg>`;
   }
+  if (["venn", "pie", "angline", "tri", "rectfig", "dicenet", "symgrid", "spinner", "shapeq", "sqpat", "tilepat", "lshape"].includes(kind)) return picMore(kind, rest);
   if (kind === "pattern") return picPattern(rest[0]);
   if (kind === "cgrid") return picCgrid(rest);
   if (kind === "magic") return picMagic(rest.join(" "));
@@ -1859,10 +2063,10 @@ function renderSetup() {
   });
 }
 
-const HASH = { home: "", quiz: "practice", done: "results", starterView: "starter", profileView: "profile" };
+const HASH = { home: "", quiz: "practice", done: "results", starterView: "starter", profileView: "profile", aboutView: "about" };
 function show(id, fromHash) {
   setView(id);
-  ["home", "quiz", "done", "parents", "printView", "pastView", "raceView", "helpView", "starterView", "profileView"].forEach(s => $(s).hidden = s !== id);
+  ["home", "quiz", "done", "parents", "printView", "pastView", "raceView", "helpView", "starterView", "profileView", "welcomeView", "aboutView"].forEach(s => $(s).hidden = s !== id);
   $("homebar").hidden = id !== "home"; $("todayBtn").hidden = id !== "home"; $("starterBtn").hidden = id !== "home"; if (id !== "home") { $("planLine").hidden = true; $("plan2Btn").hidden = true; } if (typeof renderAssigned === "function") renderAssigned(); if (id === "home" && typeof renderSuggest === "function") { renderSuggest(); renderToday(); applySettings(); if (typeof renderStarterHome === "function") renderStarterHome(); }
   $("leave").hidden = true;
   window.scrollTo(0, 0);
@@ -1880,7 +2084,7 @@ function setView(id) {
 }
 document.querySelectorAll("#tabbar button").forEach(b => b.onclick = () => {
   const t = b.dataset.tab;
-  if (t === "home") show("home"); else if (t === "pastView") openPapers("pt"); else if (t === "profileView") $("profileBtn").click(); else openParents();
+  if (t === "home") show("home"); else if (t === "pastView") openPapers("pt"); else if (t === "profileView") $("profileBtn").click(); else if (t === "aboutView") show("aboutView"); else openParents();
 });
 const isPhone = () => matchMedia("(max-width: 699px)").matches;
 
@@ -1891,6 +2095,10 @@ function reportUI(id) {
     <div class="rbox" hidden><textarea rows="3" placeholder="What is wrong? For example: the wording, the answer, the picture or how it looks on the screen."></textarea>
     <div class="row"><button type="button" class="primary small" data-rsave>Save</button><button type="button" class="ghost small" data-rcancel>Cancel</button><span class="muted small" data-rmsg></span></div></div></div>`.replace("<div class=\"report\">", `<div class="report" data-qid="${stEsc(id)}">`);
 }
+function syncReports() {
+  try { if (!DB || !UID) return; (store.get("reports") || []).forEach(x => { DB.doc("data/users/" + UID + "/report-" + x.at).set(x).catch(() => {}); }); } catch (e) {}
+}
+setTimeout(syncReports, 4000);
 function wireReport(box) {
   const r = box.querySelector(".report"); if (!r) return;
   const rb = r.querySelector(".rbox"), ta = r.querySelector("textarea");
@@ -1899,7 +2107,7 @@ function wireReport(box) {
   r.querySelector("[data-rsave]").onclick = () => {
     const t = ta.value.trim(); if (!t) { ta.focus(); return; }
     const list = store.get("reports") || []; list.push({ id: r.dataset.qid, note: t.slice(0, 1000), at: Date.now(), child: childName() || "", screen: innerWidth + "×" + innerHeight });
-    store.set("reports", list); ta.value = ""; rb.hidden = true; if (typeof Cloud !== "undefined") Cloud.bump(r.dataset.qid, false, true);
+    store.set("reports", list); syncReports(); ta.value = ""; rb.hidden = true; if (typeof Cloud !== "undefined") Cloud.bump(r.dataset.qid, false, true);
     r.querySelector("[data-report]").textContent = "Reported – thank you";
   };
 }
@@ -1991,8 +2199,8 @@ function adapt(earned) {
   const A = run.auto; if (!A) return "";
   if (earned) { A.streak++; A.wrongs = 0; } else { A.wrongs++; A.streak = 0; }
   let i = STEPS.indexOf(A.lv), msg = "";
-  if (A.streak >= 3 && i < STEPS.length - 1) { i++; msg = `Level up! Now trying ${STEPS[i]} questions.`; }
-  else if (A.wrongs >= 2 && i > 0) { i--; msg = `Let's try some ${STEPS[i]} questions for a bit.`; }
+  if (A.streak >= 3 && i < STEPS.length - 1) { i++; msg = `Now trying ${STEPS[i]} questions.`; }
+  else if (A.wrongs >= 2 && i > 0) { i--; msg = `Now trying ${STEPS[i]} questions for a while.`; }
   if (!msg) return "";
   A.lv = STEPS[i]; A.streak = 0; A.wrongs = 0; store.set(autoKey(), A.lv);
   const left = run.items.length - run.i - 1;
@@ -2024,6 +2232,10 @@ function tableHTML(rows) {
 }
 function renderQ() {
   if (run.i >= run.items.length) return finish();
+  /* every new question starts at the top of the screen */
+  { const ae = document.activeElement; if (ae && ae.tagName === "INPUT" && ae.blur) ae.blur(); }
+  window.scrollTo(0, 0); { const kp = document.querySelector(".kbpanel"); if (kp) kp.scrollTop = 0; }
+  setTimeout(() => dispatchEvent(new Event("kbcheck")), 0);
   const total = run.items.length;
   $("qcount").textContent = (run.checkup ? "Check-up · " : run.paperName ? run.paperName + " · " : run.mock ? "Mock test · " : "") + `Question ${run.i + 1} of ${total}` + (run.auto ? ` · ${run.auto.lv}` : "");
   $("qscore").textContent = `${run.marks} ${run.marks === 1 ? "mark" : "marks"}`;
@@ -2090,7 +2302,7 @@ function renderQ() {
         answer(null, (w ? w + " " : "") + n + "/" + d);
       };
       $("checkTyped").onclick = go;
-      ins[0].focus();
+      ins[0].focus({ preventScroll: true });
       return;
     }
     box.innerHTML = `<label for="typedAnswer" class="muted">Type your answer</label><div class="row typed-row">${pre ? `<span class="unit">${pre}</span>` : ""}<input id="typedAnswer" type="text" autocomplete="off" inputmode="${mode}">${suf ? `<span class="unit">${suf}</span>` : ""}<button class="primary" id="checkTyped" type="button">Check</button></div>`;
@@ -2104,7 +2316,7 @@ function renderQ() {
     const go = () => { if (inp.value.trim()) answer(null, inp.value); };
     $("checkTyped").onclick = go;
     inp.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (!e.repeat) go(); } };
-    inp.focus();
+    inp.focus({ preventScroll: true });
     return;
   }
   box.className = "options" + (q.optCol || built.options.some(o => o.length > 14 || /\ba\)/.test(o)) ? " long" : "");
@@ -2140,7 +2352,7 @@ function answer(btn, choice) {
   if (!ok && !run.mock && !item.tried) {
     item.tried = true;
     renderQ();
-    const fb = $("feedback"); fb.hidden = false; fb.className = "feedback bad retry-note"; fb.innerHTML = "<strong>Not quite – have another go!</strong>" + (S().hints === false ? "" : hintFor(q));
+    const fb = $("feedback"); fb.hidden = false; fb.className = "feedback bad retry-note"; fb.innerHTML = "<strong>Not quite. Try again.</strong>" + (S().hints === false ? "" : hintFor(q));
     [...$("options").children].forEach(b => { if ((b.dataset.value || b.textContent) === choice) { b.disabled = true; b.classList.add("wrong"); } });
     return;
   }
@@ -2151,16 +2363,16 @@ function answer(btn, choice) {
   reviewMark(q, earned);
   if (ordered) { document.querySelectorAll("#options .tile, #orderCheck, #orderClear").forEach(b => b.disabled = true); $("orderPicked").classList.add(ok ? "right" : "wrong"); }
   if (typed) { const inp = $("typedAnswer"); inp.disabled = true; $("checkTyped").disabled = true; inp.classList.add(ok ? "right" : "wrong"); document.querySelectorAll(".fracin input").forEach(i => { i.disabled = true; i.classList.add(ok ? "right" : "wrong"); }); }
-  run.answered++; run.totalMarks += (q.m || 1); if (earned) run.marks += (q.m || 1);
+  run.answered++; run.totalMarks += (q.m || 1); if (earned || (ok && !run.mock)) run.marks += (q.m || 1);
   if (!q.gen) { const seen = new Set(store.get("seen") || []); seen.add(q.id); store.set("seen", [...seen]); }
   if (run.mock) { (run.given = run.given || {})[q.id] = { a: String(choice == null ? "" : choice), ok: earned }; if (earned) run.score++; else run.missed.push(q); run.i++; renderQ(); return; }
   const levelMsg = adapt(earned);
   [...$("options").children].forEach(b => { b.disabled = true; if ((b.dataset.value || b.textContent) === q.a) b.classList.add("right"); });
   const fb = $("feedback"); fb.hidden = false;
   if (earned) {
-    run.score++; fb.className = "feedback good"; fb.textContent = "Correct, well done!";
+    run.score++; fb.className = "feedback good"; fb.textContent = "Correct.";
   } else if (ok) {
-    run.missed.push(q); fb.className = "feedback good"; fb.textContent = "Got it on the second go! No marks this time, but well done for sticking with it.";
+    run.missed.push(q); fb.className = "feedback good"; fb.textContent = "Right on the second try. That earns the mark.";
   } else {
     if (btn && btn.classList) btn.classList.add("wrong"); run.missed.push(q);
     fb.className = "feedback bad";
@@ -2206,7 +2418,7 @@ function finish() {
     store.set("avgTime:" + topic, avg);
   }
   $("doneTime").textContent = `${run.score} of ${answered} questions right. ` + timeMsg;
-  $("doneMsg").textContent = pct === 1 ? "Perfect score!" : pct >= .8 ? "Great work. Have a look at the ones you missed." : pct >= .5 ? "Good effort. Practising your mistakes will help most." : "Keep going. Read each worked solution, then practise your mistakes.";
+  $("doneMsg").textContent = pct === 1 ? "Full marks." : pct >= .8 ? "Great work. Have a look at the ones you missed." : pct >= .5 ? "Good effort. Practising your mistakes will help most." : "Keep going. Read each worked solution, then practise your mistakes.";
   if (run.fixFor) $("doneMsg").textContent = fixedPapers().includes(run.fixFor) ? "Well done. The next paper is now open." : "Answer at least most of the questions to open the next paper.";
   $("retryMissed").hidden = run.missed.length === 0;
   const box = $("missed"); box.innerHTML = run.missed.length ? "<h3>Questions to look at again</h3>" : "";
@@ -2271,6 +2483,7 @@ window.addEventListener("popstate", () => {
   if (!$("parents").hidden || !$("printView").hidden || !$("pastView").hidden || !$("raceView").hidden || !$("helpView").hidden || !$("profileView").hidden) { clearInterval(window.__race); show("home", true); }
 });
 /* ---------- saved progress, edits and parent tools ---------- */
+if (window.CEM_Q) { const rp = new Set(window.CEM_REPLACE || []); for (let i = QUESTIONS.length - 1; i >= 0; i--) if (rp.has(QUESTIONS[i].paper)) QUESTIONS.splice(i, 1); QUESTIONS.push(...window.CEM_Q); }
 const BASE = QUESTIONS.map(q => ({ ...q }));
 const EDITS = new Map();
 const TAB_NAMES = ["Number", "Add & Subtract", "Multiply & Divide", "Fractions", "Decimals", "Money & Time"];
@@ -2416,7 +2629,7 @@ function checkPin() {
   const v = $("pin").value.trim(), pin = store.get("parentPin");
   if (!/^\d{4}$/.test(v)) { $("pinMsg").textContent = "The PIN is 4 digits."; return; }
   if (!pin) store.set("parentPin", v); else if (v !== pin) { $("pinMsg").textContent = "That PIN isn't right."; $("pin").value = ""; return; }
-  $("pinBox").hidden = true; $("parentArea").hidden = false; parentTab("kids");
+  $("pinBox").hidden = true; $("parentArea").hidden = false; parentTab(window.__ptab || "kids"); window.__ptab = null;
 }
 function parentTab(t) {
   [...$("ptabs").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.tab === t));
@@ -2577,7 +2790,7 @@ function renderPast() {
   const d = t => new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
   box.innerHTML = `<table class="ptable"><tr><th>Date</th><th>Paper</th><th class="n">Score</th><th class="n">%</th><th class="n">Time</th></tr>${h.map(x => `<tr><td>${d(x.at)}</td><td>${escH(x.topic)}</td><td class="n">${x.marks}/${x.total}</td><td class="n">${Math.round(x.marks / x.total * 100)}%</td><td class="n">${x.secs ? Math.round(x.secs / 60) + " min" : ""}</td></tr>`).join("")}</table>`;
 }
-const PRACTICE_TESTS = Array.from({ length: 50 }, (_, i) => ["PT" + (i + 1), "Practice test " + (i + 1)]);
+const PRACTICE_TESTS = Array.from({ length: 60 }, (_, i) => ["PT" + (i + 1), "Practice test " + (i + 1)]);
 /* papers open one after another: the next opens after 55% or more on the FIRST try of this one,
    or after the child has done "Fix my mistakes" for it (new questions of the same kinds, so nothing can be copied).
    Retakes use a twin paper (same order, new questions) and never count as the score. */
@@ -2633,7 +2846,7 @@ function renderPracticeTests() {
     const b = document.createElement("button"); b.type = "button"; b.className = "ptile" + (locked ? " locked" : "");
     const f = firstTry(name), tot = items.reduce((a, q) => a + (q.m || 1), 0);
     const lockMsg = !hasFull() && i > FREE.papers ? "Full access" : `Opens after 55% on ${prev}, or after fixing its mistakes`;
-    b.innerHTML = `<b>${name.replace("Practice test", "Paper")}</b><span class="muted small">${locked ? lockMsg : f ? `First try ${f.marks} / ${tot} · retake has new questions` : "60 marks · 60 min"}</span>`;
+    b.innerHTML = `<b>${name.replace("Practice test", "Paper")}</b><span class="muted small">${locked ? lockMsg : f ? `First try ${f.marks} / ${tot} · retake has new questions` : tot + " marks · 60 min"}</span>`;
     if (f) b.classList.add("done");
     if (locked) { b.disabled = true; b.setAttribute("aria-disabled", "true"); }
     else b.onclick = () => { const retake = !!f; startMock({ items: retake ? twinPaper(code) : items, minutes: 60 }); run.paperName = name; run.retake = retake; renderQ(); };
@@ -2740,7 +2953,7 @@ function subOf(q) { for (const tp of Object.keys(TREE)) for (const sub of Object
 const HELP5 = HELP.__y5 || {};
 function helpFor(q) { if (q.skill && HELP5[q.skill]) return HELP5[q.skill]; const k = subOf(q); return (k && HELP[k]) || null; }
 function helpBack(h) {
-  return `<span class="hintro">${fracHTML(h.intro)}</span>${h.pic ? `<span class="hpic">${drawPic(h.pic)}</span>` : ""}<span class="hex">${h.examples.map(([q, a, p]) => `<span class="hq">${fracHTML(q)}</span><span class="ha">${fracHTML(a)}</span>${p ? `<span class="hpic">${drawPic(p)}</span>` : ""}`).join("")}</span>`;
+  return `<span class="hintro">${fracHTML(h.intro)}</span>${h.pic ? `<span class="hpic">${drawPic(h.pic)}</span>` : ""}<span class="hex">${h.examples.slice(0, 1).map(([q, a, p]) => `<span class="hq">${fracHTML(q)}</span><span class="ha">${fracHTML(a)}</span>${p ? `<span class="hpic">${drawPic(p)}</span>` : ""}`).join("")}</span>`;
 }
 function openHelp(tp, sub, back) {
   if (YEAR === 5) {   /* one card per part of the picked topics (or every part) */
@@ -2789,7 +3002,7 @@ function withTopic(tp, ty, f) { const kt = topic, ky = type; topic = tp; type = 
 function renderToday() {
   const done = store.get("todayDone") === dayKey(Date.now()), due = dueReviews().length;
   $("todayT1").textContent = done ? "Today's practice ✓ Done" : "Today's practice";
-  $("todayT2").textContent = (done ? "Well done! Do another if you like · " : "About 10 minutes · mixed topics") + (due ? ` · ${due} to look at again` : "");
+  $("todayT2").textContent = (done ? "Done for today. Do another if you like · " : "About 10 minutes · mixed topics") + (due ? ` · ${due} to look at again` : "");
   if (typeof renderPlanHome === "function") renderPlanHome();
 }
 /* starting check-up: harder, test-style questions across every topic; one try, no hints */
@@ -2857,7 +3070,7 @@ function renderCheckupHome() {
   const weak = Object.entries(res.topics).filter(([, [r, n]]) => bandOf(r, n)[1] === "weak").map(([t]) => t);
   const days = Math.floor((Date.now() - res.at) / 864e5);
   $("checkupT1").textContent = "Your check-up map";
-  $("checkupT2").textContent = (weak.length ? "Needs work: " + weak.join(", ") : "No topics need work – great!") + ` · done ${days ? days + " days ago" : "today"} · tap to see it or do it again`;
+  $("checkupT2").textContent = (weak.length ? "Needs work: " + weak.join(", ") : "No topics need work at the moment.") + ` · done ${days ? days + " days ago" : "today"} · tap to see it or do it again`;
 }
 function openCheckupMap() {
   const res = store.get(cuKey()); if (!res) return startCheckup();
@@ -2925,7 +3138,7 @@ function raceStop() {
   const m = raceMode(), best = store.get("raceBest:" + m) || 0, nb = RACE.right > best;
   if (nb) store.set("raceBest:" + m, RACE.right);
   $("racePlay").hidden = true; $("raceEnd").hidden = false; $("raceSetup").hidden = false;
-  $("raceResult").textContent = `${RACE.right} right out of ${RACE.tried}.` + (nb ? " New best!" : best ? ` Your best is ${best}.` : "");
+  $("raceResult").textContent = `${RACE.right} right out of ${RACE.tried}.` + (nb ? " Your best so far." : best ? ` Your best is ${best}.` : "");
   if (RACE.tried) { const h = getHistory(); h.push({ at: Date.now(), topic: "Times table practice", level: "All", marks: RACE.right, total: RACE.tried, right: RACE.right, answered: RACE.tried, secs: 60, types: { "Multiply & Divide · Times tables": [RACE.right, RACE.tried] } }); store.set("history", h.slice(-300)); saveProgress(); renderStreak(); }
   raceShowBest(); RACE = null;
 }
@@ -3094,7 +3307,7 @@ function stField(qi, pi, spec, idx, label, part) {
   const k = qi + "." + pi, cur = () => { const v = ST.ans[k]; return idx == null ? v : Array.isArray(v) ? v[idx] : undefined; };
   const put = val => { if (idx == null) ST.ans[k] = val; else { const a = Array.isArray(ST.ans[k]) ? ST.ans[k].slice() : []; a[idx] = val; ST.ans[k] = a; } stDirty(); };
   if (spec.k === "ch") {
-    const g = document.createElement("div"); g.className = "st-opts"; g.setAttribute("role", "group");
+    const g = document.createElement("div"); g.className = "st-opts" + (spec.o.length <= 5 && spec.o.every(o => String(o).length <= 6) ? " one-row" : ""); g.setAttribute("role", "group");
     spec.o.forEach(o => { const b = document.createElement("button"); b.type = "button"; b.className = "st-opt"; b.innerHTML = fracHTML(o); b.setAttribute("aria-pressed", String(cur() === o));
       b.onclick = () => { put(cur() === o ? "" : o); [...g.children].forEach(c => c.setAttribute("aria-pressed", String(c === b && cur() === o))); }; g.appendChild(b); });
     wrap.appendChild(g); return wrap;
@@ -3127,6 +3340,7 @@ function stField(qi, pi, spec, idx, label, part) {
   wrap.appendChild(f); return wrap;
 }
 function stShowQ() {
+  { const ae = document.activeElement; if (ae && ae.tagName === "INPUT" && ae.blur) ae.blur(); } setTimeout(() => dispatchEvent(new Event("kbcheck")), 0);
   const P = ST.paper, q = P.qs[ST.qi], box = $("stQ"); $("stConfirm").hidden = true;
   let h = `<h3 class="st-qh">Question ${q.n} <span class="muted">· ${q.parts.length} mark${q.parts.length > 1 ? "s" : ""}</span></h3>`;
   q.intro.forEach(l => { h += `<p class="st-intro">${fracHTML(l)}</p>`; });
@@ -3214,7 +3428,7 @@ function starterParentHTML() {
 }
 function renderStarterHome() {
   const att = stAttempts(), lv = stDefaultLevel(), map = stMap(lv);
-  if (!map) { $("starterT1").textContent = att.length ? "Initial assessment" : "Initial assessment: start here"; $("starterT2").textContent = "Initial assessment A and B · finds your strong and weak skills · then you know what to practise"; return; }
+  if (!map) { $("starterT1").textContent = att.length ? "Initial assessment" : "Initial assessment: start here"; $("starterT2").textContent = "Two short tests that show what to practise"; return; }
   const rows = stMapRows(map).filter(r => r.pct < 80).sort((a, b) => a.pct - b.pct).slice(0, 3).map(r => r.name);
   $("starterT1").textContent = "Your progress";
   $("starterT2").textContent = (map.parts.length < 2 ? "Initial assessment " + (map.parts[0].sit === "A" ? "B" : "A") + " still to do · " : "") + "tap to open";
@@ -3255,7 +3469,7 @@ function renderPlanHome() {
   line.hidden = false; line.innerHTML = `Your plan: <b>${PLANS[g][0]}</b> · ${PLANS[g][1]}`;
   const due = paperDue(g), np = nextPaper(), last = examResults()[0];
   const nextOn = last ? new Date(last.at + PLANS[g][2] * 864e5).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" }) : "";
-  const paperT1 = np ? np[1] : "A past paper", paperT2 = np ? "60 minutes · 60 marks · no calculator" : "All exam-like papers done · print a real CSSE paper";
+  const paperT1 = np ? np[1] : "A past paper", paperT2 = np ? "60 minutes · about 55 to 60 marks · no calculator" : "All exam-like papers done · print a real CSSE paper";
   if (g === "papers") {
     if (due) { t1.textContent = "This week's paper: " + paperT1; t2.textContent = paperT2; }
     else { t1.textContent = "Go over what went wrong"; t2.textContent = "Practice on the skills you lost marks on · next paper on " + nextOn; }
@@ -3348,10 +3562,14 @@ function weekPlanHTML(wp) {
 }
 /* ----- colour theme (per child) ----- */
 const ACCENTS = { teal: "#0f7c8c", blue: "#1d5fd1", purple: "#6b46c1", green: "#1f7a3a", orange: "#c2510c", pink: "#c0306b" };
-function applyTheme() {
-  const t = store.get("theme") || {}, r = document.documentElement;
+const PASTELS = { mint: "#e3f6ec", lilac: "#efe8fb", peach: "#fdece0", sky: "#e4f1fc", rose: "#fce8ee", lemon: "#fdf7d8" };
+/* ready-made colour sets for each child: 6 bright, 6 pastel */
+const COMBOS = [["teal", ""], ["blue", ""], ["purple", ""], ["green", ""], ["orange", ""], ["pink", ""], ["green", "mint"], ["purple", "lilac"], ["orange", "peach"], ["blue", "sky"], ["pink", "rose"], ["teal", "lemon"]];
+const comboHTML = (t) => `<div class="combos" role="group" aria-label="Colours">${COMBOS.map(([a, m], i) => `<button type="button" data-combo="${i}" aria-label="${m ? m + " with " + a : a}" aria-pressed="${(t.accent || "teal") === a && (t.mode || "") === m}" style="background:${m ? `radial-gradient(circle, ${ACCENTS[a]} 0 34%, ${PASTELS[m]} 36%)` : ACCENTS[a]}"></button>`).join("")}</div>`;
+function applyTheme(preview) {
+  const t = preview || store.get("theme") || {}, r = document.documentElement;
   if (t.accent && ACCENTS[t.accent]) r.dataset.accent = t.accent; else delete r.dataset.accent;
-  if (["light", "dark", "cream", "contrast"].includes(t.mode)) r.dataset.theme = t.mode; else delete r.dataset.theme;
+  if (["light", "dark", "cream", "contrast", ...Object.keys(PASTELS)].includes(t.mode)) r.dataset.theme = t.mode; else delete r.dataset.theme;
   if (t.size === "l" || t.size === "xl") r.dataset.size = t.size; else delete r.dataset.size;
   if (t.font === "easy") r.dataset.font = "easy"; else delete r.dataset.font;
   if (t.cb) r.dataset.cb = "1"; else delete r.dataset.cb;
@@ -3360,8 +3578,8 @@ function applyTheme() {
 }
 function themeHTML() {
   const t = store.get("theme") || {};
-  return `<div style="display:grid;gap:8px"><span><b>Colours</b></span>
-    <div class="swatches" role="group" aria-label="Colour">${Object.entries(ACCENTS).map(([k, c]) => `<button type="button" class="swatch" data-accent="${k}" style="background:${c}" aria-label="${k}" aria-pressed="${(t.accent || "teal") === k}"></button>`).join("")}</div>
+  return `<div style="display:grid;gap:8px"><span><b>Colours</b></span>${comboHTML(t)}
+    <details class="moreset"><summary><b>Easier to see</b> <span class="muted small">dark screen, bigger text and more</span></summary><div style="display:grid;gap:8px;margin-top:10px">
     <span><b>Background</b></span>
     <div class="chips" role="group" aria-label="Background">${[["", "Automatic"], ["light", "Light"], ["dark", "Dark"], ["cream", "Cream"], ["contrast", "High contrast"]].map(([k, l]) => `<button type="button" class="chip" data-mode="${k}" aria-pressed="${(t.mode || "") === k}">${l}</button>`).join("")}</div>
     <span><b>Text size</b></span>
@@ -3369,9 +3587,11 @@ function themeHTML() {
     <span><b>Letters</b></span>
     <div class="chips" role="group" aria-label="Letters">${[["", "Standard"], ["easy", "Easy to read (wider spacing)"]].map(([k, l]) => `<button type="button" class="chip" data-font="${k}" aria-pressed="${(t.font || "") === k}">${l}</button>`).join("")}</div>
     <label class="opt"><input type="checkbox" data-flag="cb"${t.cb ? " checked" : ""}> Colour-blind friendly (blue for right, orange for wrong)</label>
-    <label class="opt"><input type="checkbox" data-flag="calm"${t.calm ? " checked" : ""}> Less movement on screen</label></div>`;
+    <label class="opt"><input type="checkbox" data-flag="calm"${t.calm ? " checked" : ""}> Less movement on screen</label></div></details></div>`;
 }
 function wireTheme(box, after) {
+  const more = box.querySelector("details.moreset"); if (more && window.__moreOpen) more.open = true; if (more) more.ontoggle = () => { window.__moreOpen = more.open; };
+  box.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const [a, m] = COMBOS[+b.dataset.combo]; store.set("theme", { ...(store.get("theme") || {}), accent: a, mode: m }); applyTheme(); after(); });
   box.querySelectorAll("[data-accent]").forEach(b => b.onclick = () => { store.set("theme", { ...(store.get("theme") || {}), accent: b.dataset.accent }); applyTheme(); after(); });
   box.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { store.set("theme", { ...(store.get("theme") || {}), mode: b.dataset.mode }); applyTheme(); after(); });
   box.querySelectorAll("[data-size]").forEach(b => b.onclick = () => { store.set("theme", { ...(store.get("theme") || {}), size: b.dataset.size }); applyTheme(); after(); });
@@ -3406,7 +3626,7 @@ function renderKids() {
       ${heatHTML(heatData(), true)}
       <details class="weekly"><summary><b>This week</b> (a short note you can share)</summary><pre class="wnote">${stEsc(weeklyNote(k))}</pre>
         <div class="row"><button class="ghost" type="button" data-share="${stEsc(k.id)}">Share or copy</button><a class="ghost linkbtn" href="mailto:?subject=${encodeURIComponent("This week in Mind the Gap 11+")}&body=${encodeURIComponent(weeklyNote(k))}">Email it</a></div></details>
-      <div class="row"><button class="ghost" type="button" data-open="${stEsc(k.id)}">Open full progress and plan</button></div></div>`;
+      <div class="row"><button class="ghost" type="button" data-open="${stEsc(k.id)}">Open full progress and plan</button><button class="ghost" type="button" data-kedit="${stEsc(k.id)}">Change name or picture</button></div></div>`;
   })).join("") + `<button class="ghost" id="kidAdd" type="button">Add another child</button>`;
   box.querySelectorAll("[data-open]").forEach(b => b.onclick = () => switchChild(b.dataset.open));
   box.querySelectorAll("[data-share]").forEach(b => b.onclick = async () => {
@@ -3414,11 +3634,8 @@ function renderKids() {
     try { if (navigator.share) { await navigator.share({ title: "This week in Mind the Gap 11+", text }); return; } } catch (e) { return; }
     try { await navigator.clipboard.writeText(text); b.textContent = "Copied"; } catch (e) { b.textContent = "Select the note and copy it"; }
   });
-  $("kidAdd").onclick = () => {
-    const nm = prompt("Child's name"); if (!nm || !nm.trim()) return;
-    const ks = children().slice(); if (!ks.some(c => c.id === CHILD)) ks.unshift({ id: CHILD, name: childName() });
-    const id = "k" + Date.now().toString(36); ks.push({ id, name: nm.trim().slice(0, 30) }); store.set("children", ks); renderKids();
-  };
+  $("kidAdd").onclick = () => welcome("form", { mode: "add", from: "parents" });
+  box.querySelectorAll("[data-kedit]").forEach(b => b.onclick = () => welcome("form", { mode: "edit", id: b.dataset.kedit, from: "parents" }));
 }
 function renderProfile() {
   const box = $("profBox"), kids = children(), me = kids.find(c => c.id === CHILD) || kids[0], plan = store.get("plan") || {};
@@ -3559,16 +3776,99 @@ const Cloud = (() => {
   const vv = window.visualViewport; if (!vv) return;
   const typing = () => { const a = document.activeElement; return a && a.tagName === "INPUT" && !/^(checkbox|radio|button|range|color|file)$/.test(a.type) && a.closest("#quiz, #starterView, #raceView"); };
   const full = () => matchMedia("(orientation: landscape)").matches ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
-  let was = false;
+  let was = false, panel = null;
+  const fit = () => { const r = document.documentElement.style; r.setProperty("--vvt", vv.offsetTop + "px"); r.setProperty("--vvh", vv.height + "px"); };
   const check = () => {
-    const on = !!typing() && vv.height < full() * 0.72;
+    const a = typing(), on = !!a && vv.height < full() * 0.72;
+    fit();
+    const p = on ? a.closest(".panel") : null;
+    if (panel !== p) { if (panel) panel.classList.remove("kbpanel"); if (p) p.classList.add("kbpanel"); panel = p; }
     document.body.classList.toggle("kb", on);
-    if (on && !was) setTimeout(() => { const a = document.activeElement, q = $("qtext");
-      if (q && !q.closest("[hidden]") && a.closest("#quiz")) q.scrollIntoView({ block: "start" }); a.scrollIntoView({ block: "nearest" }); }, 60);
+    if (on && !was && p) { p.scrollTop = 0; setTimeout(() => { const r = a.getBoundingClientRect(), pr = p.getBoundingClientRect(); if (r.bottom > pr.bottom - 8) p.scrollTop += r.bottom - pr.bottom + 16; }, 60); }
     was = on;
   };
-  vv.addEventListener("resize", check); addEventListener("focusin", () => setTimeout(check, 50)); addEventListener("focusout", () => setTimeout(check, 50));
+  vv.addEventListener("resize", check); vv.addEventListener("scroll", fit);
+  addEventListener("focusin", () => setTimeout(check, 50)); addEventListener("focusout", () => setTimeout(check, 50));
+  addEventListener("kbcheck", () => { check(); setTimeout(check, 120); setTimeout(() => { check(); if (!document.body.classList.contains("kb")) window.scrollTo(0, 0); }, 450); });
 })();
+/* ----- welcome: set up children (name, picture, colours), and "who's practising?" ----- */
+const namedKids = () => children().filter(k => k.name);
+function welcome(step, o = {}) {
+  const box = $("wcBox"), kids = namedKids();
+  show("welcomeView", true);
+  if (step === "intro") {
+    box.innerHTML = `<div class="wc"><h1>Mind the Gap 11+</h1><p class="lead">Maths practice for the CSSE 11+ test in Essex, for Year 5.</p>
+      <ul class="wcsteps sell">
+        <li><b>It starts with a check.</b> Two short tests show what your child knows and what to work on.</li>
+        <li><b>Practice by topic.</b> Over 6000 questions in 8 topics. Every question shows how to work it out.</li>
+        <li><b>60 practice papers.</b> They follow the CSSE topics and question order, open one at a time and get harder.</li>
+        <li><b>Mistakes get fixed.</b> After a paper, your child gets new questions like the ones they got wrong.</li>
+        <li><b>Calm and clear.</b> No adverts and no prizes. Works on phones, tablets and computers.</li>
+        <li><b>For the whole family.</b> A profile for each child, and a parents' area with progress and printing.</li>
+      </ul>
+      <p class="muted">10 to 20 minutes a day is enough. First, add your child: it takes a minute.</p><button class="primary big" type="button" id="wcAdd">Add your child</button></div>`;
+    $("wcAdd").onclick = () => welcome("form", { mode: "first" });
+    return;
+  }
+  if (step === "done") {
+    const k = children().find(c => c.id === o.id) || {};
+    box.innerHTML = `<div class="wc"><div class="wcpreview">${avatarHTML(k, "")}<div><b>${stEsc(k.name)}</b><br><span class="muted">${o.edited ? "Saved." : "is ready to start."}</span></div></div>
+      ${kids.length > 1 ? `<p style="margin:0">Children on this device: ${kids.map(c => stEsc(c.name)).join(", ")}.</p>` : ""}
+      ${o.from === "parents" ? `<button class="primary big" type="button" id="wcBack">Back to Parents</button>` : `<button class="primary big" type="button" id="wcGo">Start practising as ${stEsc(k.name)}</button>`}
+      <button class="ghost" type="button" id="wcAdd">Add another child</button>
+      <p class="muted small" style="margin:0">You can add or change children at any time in Parents → Children.</p></div>`;
+    if ($("wcGo")) $("wcGo").onclick = () => startAs(k.id);
+    if ($("wcBack")) $("wcBack").onclick = () => { applyTheme(); show("parents"); parentTab("kids"); };
+    $("wcAdd").onclick = () => welcome("form", { mode: "add", from: o.from });
+    return;
+  }
+  /* the form: first child, another child, or a change */
+  const editing = o.mode === "edit", old = editing ? children().find(c => c.id === o.id) || {} : {};
+  const id = editing ? o.id : o.mode === "first" ? CHILD : "k" + Date.now().toString(36);
+  const used = new Set(children().map(c => c.avatar));
+  const t0 = editing ? asChild(id, () => store.get("theme") || {}) : { accent: "teal", mode: "" };
+  const st = { name: old.name || "", avatar: old.avatar || AV_PICKS.find(a => !used.has(a)) || "k1", accent: t0.accent || "teal", mode: t0.mode || "" };
+  box.innerHTML = `<div class="wc"><h1>${editing ? "Change name or picture" : o.mode === "first" ? "Add your child" : "Add another child"}</h1>
+    <div class="wcpreview" id="wcPrev"></div>
+    <label class="wcfield"><b>Name</b><span class="muted small">A first name or a made-up username</span><input id="wcName" type="text" maxlength="20" autocomplete="off" autocapitalize="words" enterkeyhint="done" placeholder="e.g. Sam or MathsFox" value="${stEsc(st.name)}"></label>
+    <div><b>Picture</b> <span class="muted small">swipe to see all 20</span><div id="wcAv">${avRowHTML(st.avatar)}</div></div>
+    <div><b>Colours</b><div id="wcCol">${comboHTML(st)}</div></div>
+    <p class="wcmsg" id="wcMsg" role="alert"></p>
+    <button class="primary big" type="button" id="wcSave">Save</button>
+    ${o.mode === "first" ? "" : `<button class="ghost" type="button" id="wcCancel">Cancel</button>`}</div>`;
+  const prev = () => { $("wcPrev").innerHTML = `${avatarHTML({ avatar: st.avatar }, "")}<b>${stEsc(st.name || "Your child")}</b>`; applyTheme({ ...(store.get("theme") || {}), accent: st.accent, mode: st.mode }); };
+  const wire = () => {
+    $("wcAv").querySelectorAll("[data-av]").forEach(b => b.onclick = () => { st.avatar = b.dataset.av; $("wcAv").querySelectorAll("[data-av]").forEach(x => x.setAttribute("aria-pressed", x === b)); prev(); });
+    $("wcCol").querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { [st.accent, st.mode] = COMBOS[+b.dataset.combo]; $("wcCol").innerHTML = comboHTML(st); wire(); prev(); });
+  };
+  wire(); prev();
+  const sel = $("wcAv").querySelector('[aria-pressed="true"]'); if (sel) $("wcAv").firstElementChild.scrollLeft = Math.max(0, sel.offsetLeft - 40);
+  $("wcName").oninput = () => { st.name = $("wcName").value; $("wcMsg").textContent = ""; prev(); };
+  $("wcName").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); $("wcName").blur(); } };
+  $("wcSave").onclick = () => {
+    const name = st.name.trim().slice(0, 20);
+    if (!name) { $("wcMsg").textContent = "Please type a name."; $("wcName").focus(); return; }
+    if (children().some(c => c.id !== id && c.name && c.name.toLowerCase() === name.toLowerCase())) { $("wcMsg").textContent = "There is already a child called " + name + ". Please choose another name."; return; }
+    let ks = (store.get("children") || []).filter(c => c.name || c.id === CHILD);
+    if (!ks.some(c => c.id === CHILD) && o.mode !== "first") ks.unshift({ id: CHILD, name: "" });
+    let k = ks.find(c => c.id === id); if (!k) { k = { id }; if (o.mode === "first") ks.unshift(k); else ks.push(k); }
+    Object.assign(k, { name, avatar: st.avatar, photo: null });
+    store.set("children", ks.filter(c => c.name || c.id !== CHILD || ks.length === 1));
+    asChild(id, () => store.set("theme", { ...(store.get("theme") || {}), accent: st.accent, mode: st.mode }));
+    applyTheme(); renderMeBtn();
+    if (typeof renderKids === "function" && o.from === "parents") renderKids();
+    welcome("done", { id, from: o.from, edited: editing });
+  };
+  if ($("wcCancel")) $("wcCancel").onclick = () => { applyTheme(); if (o.from === "parents") { show("parents"); parentTab("kids"); } else show("home"); };
+}
+function startAs(id) {
+  if (id === CHILD) { applyTheme(); renderMeBtn(); show("home"); return; }
+  try { localStorage.setItem("y4maths:activeChild", JSON.stringify(id)); } catch (e) {}
+  location.hash = ""; location.reload();
+}
+$("aboutPlans").onclick = () => { window.__ptab = "plan"; openParents(); };
+/* links from the website: app/#plans opens Parents → Plan and access (after the parent PIN) */
+if (location.hash === "#plans") addEventListener("load", () => { window.__ptab = "plan"; try { history.replaceState(null, "", location.pathname); } catch (e) {} openParents(); });
 if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude|anthropic/.test(location.hostname)) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 if (Cloud.on) (async () => { const back = Cloud.fromLink(); if (Cloud.signedIn && await Cloud.pull() && back) location.reload(); })();
 /* ----- learning from real use: how often each question is got wrong ----- */
@@ -3601,7 +3901,7 @@ function renderPlan() {
   box.innerHTML = `<div style="display:grid;gap:12px">
     <p>${cloudAccess() ? `<b>Full access</b> until ${d(cloudAccess().until)} (${stEsc(cloudAccess().plan || "paid")}).` : a ? `<b>Full access</b> on this device since ${d(a.at)}${a.kind === "code" ? " (access code)" : ""}.` : PAYWALL ? "<b>Free plan</b> on this device." : "<b>Everything is free</b> while the app is being tested."}</p>
     ${card("", "Free", "£0", ["Initial assessment A and B, with results for every topic", `Practice papers 1 and ${FREE.papers}`, `${FREE.sessionsPerDay} topic practice sessions a day`])}
-    ${card("monthly", "Monthly", "£6 a month", ["Everything in the app for one child", "All 50 practice papers and every topic", "Cancel any time"])}
+    ${card("monthly", "Monthly", "£6 a month", ["Everything in the app for one child", "All 60 practice papers and every topic", "Cancel any time"])}
     ${card("oneoff", "Until the test", "£39 once", ["Everything in the app for one child", "Lasts until the end of September of the test year", "No subscription"])}
     <p class="muted small">Brothers and sisters: each extra child is half price.</p>
     <h3>Your account</h3><div id="acctBox"></div>
@@ -3657,7 +3957,9 @@ const KIDS = {
   k5: { bg: "#fde2e4", skin: "#f3c6a5", hair: "#b5532a", style: "long", shirt: "#3f9a6b", glasses: true },
   k6: { bg: "#fff1b8", skin: "#a8724f", hair: "#1f4f9a", style: "patka", shirt: "#e0a020" },
   k7: { bg: "#d6eefc", skin: "#f7dcc6", hair: "#e3bf5a", style: "bob", shirt: "#d0436e" },
-  k8: { bg: "#e6dcc8", skin: "#6e4630", hair: "#24170f", style: "curly", shirt: "#2c9a9a", glasses: true }
+  k8: { bg: "#e6dcc8", skin: "#6e4630", hair: "#24170f", style: "curly", shirt: "#2c9a9a", glasses: true },
+  f1: { bg: "#efe2ff", skin: "#f3c6a5", hair: "#e3bf5a", style: "long", shirt: "#c86bd8", fairy: true },
+  f2: { bg: "#d6f5ec", skin: "#7a4a30", hair: "#1e1410", style: "braids", shirt: "#2fa58c", fairy: true }
 };
 function kidSVG(k) {
   const c = KIDS[k], back = { long: `<path d="M24 50 Q22 18 50 17 Q78 18 76 50 L79 84 L21 84 Z" fill="${c.hair}"/>`, afro: `<circle cx="50" cy="42" r="28" fill="${c.hair}"/>`,
@@ -3667,16 +3969,27 @@ function kidSVG(k) {
     long: `<path d="M30 42 Q34 26 50 26 Q64 26 70 42 Q60 33 50 34 Q40 33 30 42 Z" fill="${c.hair}"/>`, bob: `<path d="M30 40 Q36 27 50 27 Q66 27 70 40 Q58 34 30 40 Z" fill="${c.hair}"/>`,
     braids: "", afro: "", hijab: "", patka: `<path d="M29 42 Q29 22 50 21 Q71 22 71 42 Q60 36 50 36 Q40 36 29 42 Z" fill="${c.hair}"/><circle cx="50" cy="19" r="7" fill="${c.hair}"/>` }[c.style] || "";
   const face = c.style === "hijab" ? `<ellipse cx="50" cy="50" rx="15" ry="18" fill="${c.skin}"/>` : `<circle cx="50" cy="49" r="20" fill="${c.skin}"/>`;
+  const star = (x, y, r) => `<path d="${[...Array(10)].map((_, i) => { const a = Math.PI / 5 * i - Math.PI / 2, d = i % 2 ? r * .45 : r; return (i ? "L" : "M") + (x + d * Math.cos(a)).toFixed(1) + " " + (y + d * Math.sin(a)).toFixed(1); }).join(" ")} Z" fill="#ffd23f" stroke="#e0a800" stroke-width="1"/>`;
+  const wings = c.fairy ? `<ellipse cx="22" cy="72" rx="15" ry="24" fill="#fff" opacity=".9" stroke="#b9a6f0" stroke-width="1.5" transform="rotate(-28 22 72)"/><ellipse cx="78" cy="72" rx="15" ry="24" fill="#fff" opacity=".9" stroke="#b9a6f0" stroke-width="1.5" transform="rotate(28 78 72)"/>` : "";
+  const fairyTop = c.fairy ? `<path d="M38 29 L41 20 L46 26 L50 17 L54 26 L59 20 L62 29 Z" fill="#ffd23f" stroke="#e0a800" stroke-width="1"/><path d="M80 98 L88 66" stroke="#8a5a2b" stroke-width="3" stroke-linecap="round"/>${star(88, 62, 8)}` : "";
   const glasses = c.glasses ? `<g fill="none" stroke="#222" stroke-width="2"><circle cx="43" cy="49" r="5.5"/><circle cx="57" cy="49" r="5.5"/><path d="M48.5 49 h3"/></g>` : "";
-  return [c.bg, `${back}<path d="M18 104 Q20 76 50 74 Q80 76 82 104 Z" fill="${c.style === "hijab" ? c.hair : c.shirt}"/><rect x="44" y="64" width="12" height="12" fill="${c.skin}"/>${face}${top}
-    <circle cx="43" cy="49" r="2.3" fill="#222"/><circle cx="57" cy="49" r="2.3" fill="#222"/><path d="M43 57 Q50 62 57 57" stroke="#7a3b2e" stroke-width="2" fill="none" stroke-linecap="round"/>${glasses}`];
+  return [c.bg, `${wings}${back}<path d="M18 104 Q20 76 50 74 Q80 76 82 104 Z" fill="${c.style === "hijab" ? c.hair : c.shirt}"/><rect x="44" y="64" width="12" height="12" fill="${c.skin}"/>${face}${top}
+    <circle cx="43" cy="49" r="2.3" fill="#222"/><circle cx="57" cy="49" r="2.3" fill="#222"/><path d="M43 57 Q50 62 57 57" stroke="#7a3b2e" stroke-width="2" fill="none" stroke-linecap="round"/>${glasses}${fairyTop}`];
 }
 { const animals = { ...AVATARS }; Object.keys(AVATARS).forEach(k => delete AVATARS[k]); Object.keys(KIDS).forEach(k => { AVATARS[k] = kidSVG(k); }); Object.assign(AVATARS, animals); }   /* children first, then animals */
+Object.assign(AVATARS, {
+  football: ["#cdebc0", `<rect y="74" width="100" height="26" fill="#8fd27a"/><path d="M0 86 H100" stroke="#fff" stroke-width="2" opacity=".7"/><circle cx="50" cy="46" r="27" fill="#fff" stroke="#222" stroke-width="2.5"/><path d="M50 35 L60.5 42.6 L56.5 55 L43.5 55 L39.5 42.6 Z" fill="#222"/><path d="M50 35 V19.5 M60.5 42.6 L75 38 M56.5 55 L65 67 M43.5 55 L35 67 M39.5 42.6 L25 38" stroke="#222" stroke-width="2.5"/><path d="M44 20 L50 19.5 L56 20.5 L53 25 L47 25 Z M74 34 L76 40 L74 46 L70 43 L71 37 Z M26 34 L24 40 L26 46 L30 43 L29 37 Z" fill="#222"/>`],
+  robot2: ["#ffd6e7", `<path d="M50 14 V26" stroke="#7a6a9a" stroke-width="3"/><circle cx="50" cy="12" r="5" fill="#ff6f9f"/><rect x="16" y="40" width="9" height="18" rx="4.5" fill="#8f7ad0"/><rect x="75" y="40" width="9" height="18" rx="4.5" fill="#8f7ad0"/><rect x="22" y="26" width="56" height="46" rx="22" fill="#b9a6f0"/><rect x="30" y="36" width="40" height="24" rx="12" fill="#2a2a48"/><circle cx="41" cy="48" r="5" fill="#7ff0e0"/><circle cx="59" cy="48" r="5" fill="#7ff0e0"/><path d="M44 65 Q50 69 56 65" stroke="#2a2a48" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M28 100 Q30 78 50 76 Q70 78 72 100 Z" fill="#8f7ad0"/><circle cx="50" cy="88" r="4" fill="#ff6f9f"/>`],
+  sunflower: ["#cfe9ff", `<path d="M50 56 V100" stroke="#3f8f3a" stroke-width="5"/><ellipse cx="62" cy="84" rx="11" ry="5" fill="#4fa64a" transform="rotate(-30 62 84)"/><ellipse cx="38" cy="90" rx="11" ry="5" fill="#4fa64a" transform="rotate(30 38 90)"/>${[...Array(12)].map((_, i) => `<ellipse cx="50" cy="20" rx="6.5" ry="13" fill="#ffc928" transform="rotate(${i * 30} 50 40)"/>`).join("")}<circle cx="50" cy="40" r="13" fill="#7a4a1e"/><circle cx="46" cy="37" r="1.6" fill="#4a2a0e"/><circle cx="54" cy="38" r="1.6" fill="#4a2a0e"/><circle cx="50" cy="44" r="1.6" fill="#4a2a0e"/>`],
+  tulip: ["#fde2e4", `<path d="M50 58 V100" stroke="#3f8f3a" stroke-width="5"/><path d="M50 80 Q28 78 24 58 Q42 62 50 80 Z M50 88 Q72 86 76 66 Q58 70 50 88 Z" fill="#4fa64a"/><path d="M33 24 L42 36 L50 20 L58 36 L67 24 Q72 56 50 62 Q28 56 33 24 Z" fill="#e8467c"/><path d="M42 36 L50 20 L58 36 Q50 44 42 36 Z" fill="#f47fa6"/>`]
+});
+/* the 20 pictures children choose from, in this order */
+const AV_PICKS = ["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "f1", "f2", "football", "robot", "robot2", "sunflower", "tulip", "cat", "fox", "panda", "owl", "rocket"];
+const avRowHTML = sel => `<div class="avrow" role="group" aria-label="Choose a picture">${AV_PICKS.map((a, i) => `<button type="button" data-av="${a}" aria-label="${KIDS[a] ? (KIDS[a].fairy ? "Fairy " : "Child ") + (i + 1) : a}" aria-pressed="${sel === a}">${avatarHTML({ avatar: a })}</button>`).join("")}</div>`;
 let AVCLIP = 0;
 const meKid = () => children().find(c => c.id === CHILD) || children()[0] || { id: CHILD, name: "" };
 function avatarHTML(k, cls) {
   k = k || meKid(); cls = cls || "avatar";
-  if (k.photo) return `<img class="${cls}" src="${k.photo}" alt="">`;
   const key = AVATARS[k.avatar] ? k.avatar : null;
   if (!key) { const ch = (k.name || "?").trim().charAt(0).toUpperCase() || "?"; return `<svg class="${cls}" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="50" fill="var(--accent)"/><text x="50" y="64" text-anchor="middle" font-size="44" font-weight="700" fill="var(--accent-ink)">${stEsc(ch)}</text></svg>`; }
   const [bg, art] = AVATARS[key], id = "avc" + (++AVCLIP);
@@ -3688,30 +4001,22 @@ function saveKid(change) {
 }
 function renderMeBtn() {   /* "My profile", with the child's picture once one is chosen */
   const k = meKid();
-  $("meBtn").innerHTML = (k.photo || AVATARS[k.avatar] ? avatarHTML(k, "avatar mini") : "") + "<span>My profile</span>";
-}
-function photoFrom(file, done) {   /* shrink to 160 px so it is small to keep */
-  const r = new FileReader();
-  r.onload = () => { const img = new Image(); img.onload = () => { const c = document.createElement("canvas"), z = 160, m = Math.min(img.width, img.height); c.width = c.height = z;
-    c.getContext("2d").drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, z, z); done(c.toDataURL("image/jpeg", 0.8)); }; img.src = r.result; };
-  r.readAsDataURL(file);
+  $("meBtn").innerHTML = (AVATARS[k.avatar] ? avatarHTML(k, "avatar mini") : "") + `<span>${stEsc(k.name || "My profile")}</span>`;
 }
 function openMe() {
   const k = meKid(), kids = children(), box = $("meBox");
   box.innerHTML = `<div style="display:grid;gap:14px">
-    <div class="mehead">${avatarHTML(k, "avatar big")}<div><h2 id="meTitle" style="margin:0">${k.name ? stEsc(k.name) : "My profile"}</h2><span class="muted small">Your name, picture and how the app looks</span></div></div>
-    <label>Username <input id="meName" type="text" maxlength="20" value="${stEsc(k.name || "")}" placeholder="e.g. MathsFox"></label>
-    <div><b>Picture</b><div class="av-pick" role="group" aria-label="Choose a picture" style="margin-top:8px">${Object.keys(AVATARS).map((a, i) => `<button type="button" data-av="${a}" aria-label="${KIDS[a] ? "Child picture " + (i + 1) : a}" aria-pressed="${!k.photo && k.avatar === a}">${avatarHTML({ avatar: a })}</button>`).join("")}</div>
-      <div class="row" style="margin-top:10px"><label class="ghost" style="display:inline-block;padding:8px 14px;border:2px solid var(--line);border-radius:12px;cursor:pointer">Use a photo<input id="mePhoto" type="file" accept="image/*" hidden></label>${k.photo ? '<button class="ghost" id="meNoPhoto" type="button">Remove photo</button>' : ""}</div></div>
+    <div class="mehead">${avatarHTML(k, "avatar big")}<div><h2 id="meTitle" style="margin:0">${k.name ? stEsc(k.name) : "My profile"}</h2><span class="muted small">Your name, picture and colours</span></div></div>
+    ${kids.length > 1 ? `<div><b>Not you? Switch to</b><div class="row" style="margin-top:8px">${kids.filter(c => c.id !== CHILD).map(c => `<button type="button" class="ghost" data-kid="${stEsc(c.id)}">${avatarHTML(c, "kidav")}${stEsc(c.name || "Child")}</button>`).join("")}</div></div>` : ""}
+    <label>Name <input id="meName" type="text" maxlength="20" value="${stEsc(k.name || "")}" placeholder="e.g. MathsFox"></label>
+    <div><b>Picture</b> <span class="muted small">swipe to see all 20</span>${avRowHTML(k.avatar)}</div>
     <div id="meTheme">${themeHTML()}</div>
-    ${kids.length > 1 ? `<div><b>Switch child</b><div class="row" style="margin-top:8px">${kids.filter(c => c.id !== CHILD).map(c => `<button type="button" class="ghost" data-kid="${stEsc(c.id)}">${avatarHTML(c, "kidav")}${stEsc(c.name || "Child")}</button>`).join("")}</div></div>` : ""}
     <div class="row"><button class="primary" id="meDone" type="button">Done</button></div></div>`;
-  box.querySelectorAll("[data-av]").forEach(b => b.onclick = () => { saveKid({ avatar: b.dataset.av, photo: null }); openMe(); });
-  $("mePhoto").onchange = e => { const f = e.target.files[0]; if (f) photoFrom(f, url => { saveKid({ photo: url }); openMe(); }); };
-  const np = $("meNoPhoto"); if (np) np.onclick = () => { saveKid({ photo: null }); openMe(); };
+  { const r = box.querySelector(".avrow"), sel = r && r.querySelector('[aria-pressed="true"]'); if (sel) requestAnimationFrame(() => { r.scrollLeft = Math.max(0, sel.offsetLeft - r.offsetLeft - 40); }); }
+  box.querySelectorAll("[data-av]").forEach(b => b.onclick = () => { const x = box.querySelector(".avrow").scrollLeft; saveKid({ avatar: b.dataset.av, photo: null }); openMe(); box.querySelector(".avrow").scrollLeft = x; });
   $("meName").onchange = () => saveKid({ name: $("meName").value.trim().slice(0, 20) });
   const rt = () => { $("meTheme").innerHTML = themeHTML(); wireTheme($("meTheme"), rt); }; wireTheme($("meTheme"), rt);
-  box.querySelectorAll("[data-kid]").forEach(b => b.onclick = () => switchChild(b.dataset.kid));
+  box.querySelectorAll("[data-kid]").forEach(b => b.onclick = () => startAs(b.dataset.kid));
   $("meDone").onclick = () => { saveKid({ name: $("meName").value.trim().slice(0, 20) }); $("meDlg").close(); };
   if (!$("meDlg").open) $("meDlg").showModal();
 }
@@ -3736,6 +4041,10 @@ $("yearSel").value = String(YEAR);
 $("yearSel").onchange = () => { YEAR = +$("yearSel").value; store.set("year", YEAR); type = "All"; renderTopics(); renderSetup(); renderSuggest(); renderToday(); renderStarterHome(); };
 renderStreak();
 renderTopics(); renderSetup(); renderSuggest(); renderToday(); applySettings();
+(() => {   /* first visit: welcome and add a child; two or more children: ask who is practising */
+  if (location.hash === "#plans") return;
+  if (!namedKids().length) welcome("intro");   /* otherwise the app opens as the child who used it last */
+})();
 </script>
 </body>
 </html>
