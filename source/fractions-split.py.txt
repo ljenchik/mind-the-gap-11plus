@@ -1,0 +1,140 @@
+"""Fractions parts, 27 Nov: "Fraction of a number" keeps fractions of amounts and fraction word problems only.
+x and / with fractions go to a new part "Multiplying and dividing fractions" (fmd), percentages to
+"Percentages and word problems" (money), equivalent fractions and +/- to "Adding and subtracting fractions" (frac).
+Adds 100 new fmd questions. Safe to run more than once."""
+import json, re, random
+from fractions import Fraction as F
+NAME = {'fmd': 'Multiplying and dividing fractions', 'money': 'Percentages', 'frac': 'Adding and subtracting fractions', 'famt': 'Fractions', 'cash': 'Money'}
+MD = re.compile(r'\d+/\d+ [×÷] \d|\d [×÷] \d+/\d+')
+ADDSUB = re.compile(r'\d+/\d+ [+−] \d|\d [+−] \d+/\d+')
+
+def move(x, sk):
+    x['skill'] = sk
+    for f in ('k', 't', 'tab'):
+        if f in x: x[f] = NAME[sk]
+
+def regroup(items):
+    n = {}
+    for x in items:
+        if x.get('skill') != 'famt' or x.get('paper'): continue
+        last = x['q'].split('\n')[-1]
+        if MD.search(last): move(x, 'fmd')
+        elif '%' in last or 'per cent' in last: move(x, 'money')
+        elif ADDSUB.search(last): move(x, 'frac')
+        else: continue
+        n[x['skill']] = n.get(x['skill'], 0) + 1
+    return n
+
+def regroup2(items):
+    """27 Nov (owner): Fractions = fraction of a number, simplifying, equivalent fractions; Adding and subtracting
+    fractions = only + and −; Percentages = only questions with a percentage; other money questions go to Money."""
+    n = {}
+    for x in items:
+        if x.get('paper'): continue
+        last = x['q'].split('\n')[-1]
+        if x.get('skill') == 'frac' and not re.search(r'\d+/\d+ [+−] \d|\d [+−] \d+/\d+', last): move(x, 'famt')
+        elif x.get('skill') == 'money' and '%' not in x['q'] and 'per cent' not in x['q'] and 'percentage' not in x['q'].lower(): move(x, 'cash')
+        elif x.get('skill') in ('famt', 'money', 'frac', 'fmd'): move(x, x['skill'])   # new names
+        else: continue
+        n[x['skill']] = n.get(x['skill'], 0) + 1
+    return n
+
+def mixed(f):
+    w, r = divmod(f.numerator, f.denominator)
+    return str(w) if r == 0 else (f"{r}/{f.denominator}" if w == 0 else f"{w} {r}/{f.denominator}")
+
+def simp(n, d):
+    f = F(n, d); out = f"{n}/{d}"
+    if f.denominator != d: out += f" = {f.numerator}/{f.denominator}" if f.denominator != 1 else f" = {f.numerator}"
+    if f.numerator > f.denominator and f.denominator != 1: out += f" = {mixed(f)}"
+    return out
+
+def make(rnd):
+    kind = rnd.choice(['wf', 'fw', 'mw', 'fdw', 'wdu', 'ff', 'wp'])
+    d = rnd.choice([3, 4, 5, 6, 8, 10, 12]); n = rnd.randint(1, d - 1)
+    while F(n, d).denominator != d: n = rnd.randint(1, d - 1)
+    w = rnd.randint(2, 9)
+    if kind == 'wf':
+        q = f"{w} × {n}/{d} = ___"; a = F(w * n, d); s = f"{w} lots of {n}/{d}: {w} × {n} = {w * n}, so {simp(w * n, d)}."; lv = 'Easy'
+    elif kind == 'fw':
+        q = f"{n}/{d} × {w} = ___"; a = F(w * n, d); s = f"Multiply the top number by {w}: {n} × {w} = {w * n}, so {n}/{d} × {w} = {simp(w * n, d)}."; lv = 'Easy'
+    elif kind == 'mw':
+        k = rnd.randint(1, 4); a = (k + F(n, d)) * w
+        q = f"{k} {n}/{d} × {w} = ___"; fr = F(n * w, d); s = f"Wholes: {k} × {w} = {k * w}. Fractions: {n}/{d} × {w} = {simp(n * w, d)}. Total: " + (f"{k * w} + {mixed(fr)} = {mixed(a)}." if fr.numerator else f"{mixed(a)}."); lv = 'Hard'
+    elif kind == 'fdw':
+        q = f"{n}/{d} ÷ {w} = ___"; a = F(n, d * w); s = f"Dividing by {w} makes each part {w} times smaller, so multiply the bottom number by {w}: {n}/{d * w}" + (f" = {mixed(a)}." if F(n, d * w).denominator != d * w else ".")
+        lv = 'Hard'
+    elif kind == 'wdu':
+        u = rnd.choice([2, 3, 4, 5, 8]); name = {2: 'halves', 3: 'thirds', 4: 'quarters', 5: 'fifths', 8: 'eighths'}[u]
+        q = f"{w} ÷ 1/{u} = ___"; a = F(w * u); s = f"How many {name} are in {w}? Each whole has {u} {name}, so {w} × {u} = {w * u}."; lv = 'Hard'
+    elif kind == 'ff':
+        d2 = rnd.choice([2, 3, 4, 5, 6]); n2 = rnd.randint(1, d2 - 1)
+        q = f"{n}/{d} × {n2}/{d2} = ___"; a = F(n * n2, d * d2)
+        s = f"Multiply the tops: {n} × {n2} = {n * n2}. Multiply the bottoms: {d} × {d2} = {d * d2}. {simp(n * n2, d * d2)}."; lv = 'Challenge'
+    else:
+        who = rnd.choice(['Mia', 'Omar', 'Zara', 'Leo', 'Ava', 'Sam'])
+        many, unit_q = rnd.choice([('jugs', 'Each jug holds {f} of a litre. How many litres is that altogether?'), ('bottles', 'Each bottle holds {f} of a litre. How many litres is that altogether?'),
+                                   ('bags of flour', 'Each bag weighs {f} of a kilogram. How many kilograms is that altogether?'), ('pieces of ribbon', 'Each piece is {f} of a metre long. How many metres is that altogether?')])
+        q = f"{who} has {w} {many}. " + unit_q.format(f=f"{n}/{d}") + " Give your answer as a mixed number if you can."
+        a = F(w * n, d); s = f"{w} × {n}/{d} = {simp(w * n, d)}."; lv = 'Hard'
+    if kind != 'wp' and a.denominator != 1: q += "  (give your answer in its simplest form)"
+    return q, mixed(a), s, lv
+
+def topup(items, target=100):
+    have = sum(1 for x in items if x.get('skill') == 'fmd' and not x.get('paper'))
+    items[:] = [x for x in items if not x['id'].startswith('SK-fmd-')]
+    have = sum(1 for x in items if x.get('skill') == 'fmd' and not x.get('paper'))
+    rnd = random.Random(27); seen = set(x['q'] for x in items); i = 0; added = 0
+    while have + added < target + 40:
+        q, a, s, lv = make(rnd)
+        if q in seen: continue
+        seen.add(q); i += 1; added += 1
+        items.append({'id': f'SK-fmd-{i:03d}', 'q': q, 'a': a, 's': s, 'k': NAME['fmd'], 't': NAME['fmd'], 'tab': NAME['fmd'],
+                      'm': 1, 'wp': 'has' in q, 'lv': lv, 'yr': 5, 'skill': 'fmd', 'set': f'fmd-{(i - 1) // 3 + 1:03d}', 'src': 'Written for this app (multiplying and dividing fractions)'})
+    return added
+
+def make_famt(rnd):
+    d = rnd.choice([2, 3, 4, 5, 6, 8, 10, 12]); n = rnd.randint(1, d - 1)
+    while F(n, d).denominator != d: n = rnd.randint(1, d - 1)
+    k = rnd.randint(3, 15); whole = d * k; part = n * k
+    kind = rnd.choice(['of', 'of', 'back', 'left', 'class'])
+    if kind == 'of':
+        return f"What is {n}/{d} of {whole}?", str(part), f"Find 1/{d} first: {whole} ÷ {d} = {k}. Then {n}/{d}: {n} × {k} = {part}.", 'Easy' if n == 1 else 'Hard'
+    if kind == 'back':
+        return f"{n}/{d} of a number is {part}. What is the number?", str(whole), f"{n}/{d} is {part}, so 1/{d} is {part} ÷ {n} = {k}. The whole number is {d} × {k} = {whole}.", 'Challenge'
+    if kind == 'left':
+        who = rnd.choice(['Mia', 'Omar', 'Zara', 'Leo', 'Ava', 'Sam'])
+        return (f"{who} has £{whole}. {who} spends {n}/{d} of it. How much money is left?", f"£{whole - part}",
+                f"1/{d} of £{whole} is £{whole} ÷ {d} = £{k}. {n}/{d} is {n} × £{k} = £{part}. £{whole} − £{part} = £{whole - part}.", 'Hard')
+    return (f"There are {whole} children in a school club. {n}/{d} of them are girls. How many boys are there?", str(whole - part),
+            f"1/{d} of {whole} is {whole} ÷ {d} = {k}. Girls: {n} × {k} = {part}. Boys: {whole} − {part} = {whole - part}.", 'Hard')
+
+def topup_famt(items, target=120):
+    items[:] = [x for x in items if not x['id'].startswith('SK-famt-G')]
+    have = sum(1 for x in items if x.get('skill') == 'famt' and not x.get('paper'))
+    rnd = random.Random(127); seen = set(x['q'] for x in items); i = 0
+    while have + i < target:
+        q, a, s, lv = make_famt(rnd)
+        if q in seen: continue
+        seen.add(q); i += 1
+        items.append({'id': f'SK-famt-G{i:03d}', 'q': q, 'a': a, 's': s, 'k': NAME['famt'], 't': NAME['famt'], 'tab': NAME['famt'], 'm': 1, 'wp': not q.startswith('What is'),
+                      'lv': lv, 'yr': 5, 'skill': 'famt', 'set': f'famtG-{(i - 1) // 3 + 1:03d}', 'src': 'Written for this app (fraction of a number)'})
+    return i
+
+def add_skill():
+    S = json.load(open('starter-data.json'))
+    for k in S['sk56']:
+        if k['id'] in NAME: k['name'] = k['topic'] = NAME[k['id']]
+    if not any(k['id'] == 'fmd' for k in S['sk56']):
+        i = next(j for j, k in enumerate(S['sk56']) if k['id'] == 'famt')
+        S['sk56'].insert(i + 1, {**{k: v for k, v in S['sk56'][i].items() if k not in ('id', 'name')}, 'id': 'fmd', 'name': NAME['fmd']})
+    json.dump(S, open('starter-data.json', 'w'), ensure_ascii=False)
+    h = json.load(open('help.json'))
+    h['__y5']['famt'] = {'intro': 'Fraction of an amount: divide by the bottom number, then multiply by the top number. Equivalent fractions: multiply or divide the top and bottom by the same number. Simplest form: divide both by the biggest number that goes into both.', 'examples': [['What is 5/6 of 126?', '126 ÷ 6 = 21. 21 × 5 = 105.'], ['2/3 = ___/15', '3 × 5 = 15, so 2 × 5 = 10.'], ['Write 12/18 in its simplest form.', '6 goes into both: 12 ÷ 6 = 2, 18 ÷ 6 = 3, so 2/3.']]}
+    h['__y5']['fmd'] = {'intro': 'To multiply a fraction by a whole number, multiply the top number and keep the bottom number. To divide a fraction by a whole number, multiply the bottom number. Dividing by 1/2 is the same as finding how many halves fit.', 'examples': [['3/8 × 4', '3 × 4 = 12, so 12/8 = 3/2 = 1 1/2.'], ['2/3 ÷ 4', '2/12 = 1/6.'], ['6 ÷ 1/2', 'There are 2 halves in each whole, so 6 × 2 = 12.']]}
+    json.dump(h, open('help.json', 'w'), ensure_ascii=False, indent=1)
+
+if __name__ == '__main__':
+    add_skill()
+    qs = json.load(open('questions.json')); print('bank', regroup(qs), regroup2(qs)); print('added fmd', topup(qs)); print('added famt', topup_famt(qs)); json.dump(qs, open('questions.json', 'w'), ensure_ascii=False)
+    cem = json.load(open('cem.json')); print('cem', regroup(cem), regroup2(cem)); json.dump(cem, open('cem.json', 'w'), ensure_ascii=False)

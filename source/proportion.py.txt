@@ -1,0 +1,42 @@
+"""Ratio and proportion (27 Nov, owner): direct proportion = Easy, 1 mark.
+Inverse proportion / work-rate (workers, moles, painters...) = Challenge, 2 marks, with a hint that starts from 1 worker.
+Papers keep their marks for direct items; their work-rate parts become 2 marks. Safe to run more than once."""
+import json, re
+SING = {'workers': 'worker', 'moles': 'mole', 'painters': 'painter', 'people': 'person', 'builders': 'builder', 'cats': 'cat',
+        'hens': 'hen', 'machines': 'machine', 'pumps': 'pump', 'gardeners': 'gardener', 'cleaners': 'cleaner', 'men': 'man', 'women': 'woman', 'robots': 'robot', 'printers': 'printer'}
+NOUN = r'(workers?|builders?|painters?|moles?|cats?|hens?|machines?|pumps?|people|men|women|gardeners?|cleaners?|robots?|printers?)'
+INV = re.compile(NOUN + r'\b[^.?]*\b(take|takes|took|dig|digs|eat|eats|lay|lays|fill|fills|paint|build|can)\b[^?]*\b(hours?|days?|minutes?|weeks?)\b', re.I)
+DIRECT = re.compile(r'\bcosts? £|\brecipe|\bfor \d+ people|\bmakes \d+|\bneeds? \d+ ?(g|ml|kg)\b', re.I)
+
+def hint(q):
+    o = re.search(r'How long would 1 (\w+) take', q)
+    if o: return f"1 {o.group(1)} has to do all of the work alone, so it takes longer. How many times longer?"
+    m = re.search(r'(\d+) ' + NOUN + r' take (\d+) (hours|days|minutes) to \w+ (\d+) (m|km)', q)
+    if m:
+        n, noun, t, unit, d, u = m.groups(); one = SING.get(noun, noun)
+        return f"Start with 1 {one}: in 1 {unit[:-1]}, 1 {one} does {d} {u} ÷ {n} ÷ {t}. Then work out the new job with that."
+    m = re.search(r'(\d+) moles dig an? (\d+) m tunnel in (\d+) hours', q)
+    if m:
+        n, d, t = m.groups()
+        return f"Start with 1 mole: in 1 hour, 1 mole digs {d} m ÷ {n} ÷ {t}. Then work out how many moles the new tunnel needs."
+    m = re.search(r'(?:If )?(\d+) ' + NOUN + r' (?:take|can \w+ (?:a|the) \w+ in) (\d+) (hours|days|minutes)', q)
+    if m:
+        n, noun, t, unit = m.groups(); one = SING.get(noun, noun)
+        return f"Start with 1 {one}: on their own they take {n} times as long, {n} × {t} {unit}. More {noun} means less time, so then divide."
+    m = re.search(NOUN, q, re.I); one = SING.get(m.group(1).lower(), m.group(1)) if m else 'worker'
+    return f"Start with 1 {one}: how long would 1 {one} take on their own, or how much does 1 {one} do in 1 hour?"
+
+def run(items):
+    inv = direct = 0
+    for x in items:
+        if x.get('skill') not in ('ratio', 'rates', 'unitc'): continue
+        q = x['q']
+        if INV.search(q):
+            x['hint'] = hint(q); x['m'] = 2; x['lv'] = 'Challenge'; inv += 1
+        elif DIRECT.search(q) and not x.get('paper') and not re.search(r'greatest number|most|how many grams did', q, re.I):
+            x['lv'] = 'Easy'; x['m'] = 1; direct += 1
+    return inv, direct
+
+if __name__ == '__main__':
+    for f in ('questions.json', 'cem.json'):
+        d = json.load(open(f)); print(f, run(d)); json.dump(d, open(f, 'w'), ensure_ascii=False)

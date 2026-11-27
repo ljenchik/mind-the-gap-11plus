@@ -1,0 +1,96 @@
+"""Algebra picture equations (fruit, shapes): one question per picture in topic practice (27 Nov, owner).
+The last part becomes the question; earlier parts become the worked answer and the hint. Safe to run more than once."""
+import json, re, collections
+def run(items):
+    groups = collections.defaultdict(list)
+    for x in items:
+        if x.get('skill') == 'eq' and not x.get('paper') and str(x.get('pic', '')).split(' ')[0] in ('fruit', 'shapeq'):
+            groups[x['pic']].append(x)
+    drop = set(); n = 0
+    for pic, g in groups.items():
+        g.sort(key=lambda x: x['id'])
+        last = g[-1]
+        stem, _, ask = last['q'].partition('\n')
+        ask = re.sub(r'^[a-h]\)\s*', '', ask or stem)
+        if len(g) > 1 or re.match(r'^[a-h]\)', last['q'].split('\n')[-1]):
+            last['q'] = (stem + '\n' + ask) if ask != stem else stem
+            last['s'] = ' '.join(x['s'].strip() for x in g)
+            kind = 'fruit' if pic.startswith('fruit') else 'shape'
+            last['hint'] = f"Start with the line that has only one kind of {kind}. Find its value, then use it in the next line."
+            last['m'] = 2 if len(g) > 1 else last.get('m', 1)
+            last['lv'] = 'Challenge' if len(g) > 2 else 'Hard'
+            drop.update(x['id'] for x in g[:-1]); n += 1
+    items[:] = [x for x in items if x['id'] not in drop]
+    return n, len(drop)
+if __name__ == '__main__':
+    for f in ('questions.json', 'cem.json'):
+        d = json.load(open(f)); print(f, run(d)); json.dump(d, open(f, 'w'), ensure_ascii=False)
+
+# ---- full worked answers for fruit pictures, solved line by line ----
+PL = {'cherry': 'cherries', 'strawberry': 'strawberries'}
+def pl(f, n): return f if n == 1 else PL.get(f, f + 's')
+def solve(pic):
+    eqs = []
+    for part in pic.split(' ', 1)[1].split(';'):
+        lhs, rhs = part.split('='); c = collections.Counter(lhs.split('+')); eqs.append((c, int(rhs)))
+    val, steps, used = {}, [], set()
+    for _ in range(6):
+        prog = False
+        for i, (c, r) in enumerate(eqs):
+            unk = [f for f in c if f not in val]
+            if i in used or len(unk) != 1: continue
+            f = unk[0]; known = sum(c[g] * val[g] for g in c if g in val); rest = r - known; n = c[f]
+            if rest % n: return None
+            val[f] = rest // n; used.add(i); prog = True
+            if known: steps.append(f"Line {i + 1}: {' + '.join(str(c[g] * val[g]) for g in c if g != f)} + {n} {pl(f, n)} = {r}, so {n} {pl(f, n)} = {rest}" + (f" and 1 {f} = {val[f]}." if n > 1 else "."))
+            else: steps.append(f"Line {i + 1}: {n} {pl(f, n)} = {r}" + (f", so 1 {f} = {val[f]}." if n > 1 else "."))
+        if not prog: break
+    # lines with two unknowns: compare two lines that differ by one fruit
+    if len(val) < len({f for c, _ in eqs for f in c}):
+        for i, (c1, r1) in enumerate(eqs):
+            for j, (c2, r2) in enumerate(eqs):
+                d = c2 - c1
+                if i != j and sum((c1 - c2).values()) == 0 and len(d) == 1:
+                    f = list(d)[0]; n = d[f]
+                    if (r2 - r1) % n == 0 and f not in val:
+                        val[f] = (r2 - r1) // n
+                        steps.append(f"Line {j + 1} has {n} more {pl(f, n)} than line {i + 1}: {r2} − {r1} = {r2 - r1}" + (f", so 1 {f} = {val[f]}." if n > 1 else f", so 1 {f} = {val[f]}."))
+        return solve_rest(eqs, val, steps)
+    return val, steps
+def solve_rest(eqs, val, steps):
+    for _ in range(6):
+        for i, (c, r) in enumerate(eqs):
+            unk = [f for f in c if f not in val]
+            if len(unk) != 1: continue
+            f = unk[0]; known = sum(c[g] * val[g] for g in c if g in val); rest = r - known; n = c[f]
+            if rest % n: return None
+            val[f] = rest // n
+            steps.append(f"Line {i + 1}: {known} + {n} {pl(f, n)} = {r}, so {n} {pl(f, n)} = {rest}" + (f" and 1 {f} = {val[f]}." if n > 1 else "."))
+    return val, steps
+def ask_value(q, val):
+    m = re.search(r'What is one (\w+) worth', q)
+    if m: return val.get(m.group(1)), f"So 1 {m.group(1)} is worth {val.get(m.group(1))}."
+    m = re.search(r'What (?:are|is) (.+?) worth altogether', q)
+    if m:
+        tot, bits = 0, []
+        for n, w in re.findall(r'(\d+) (\w+)', m.group(1)):
+            f = next((c for c in (w, w[:-1], w[:-3] + 'y') if c in val), w)
+            if f not in val: return None, ''
+            tot += int(n) * val[f]; bits.append(f"{n} × {val[f]}")
+        return tot, f"{' + '.join(bits)} = {tot}."
+    return None, ''
+def explain(items):
+    n = 0
+    for x in items:
+        if x.get('skill') != 'eq' or x.get('paper') or not str(x.get('pic', '')).startswith('fruit'): continue
+        r = solve(x['pic'])
+        if not r: continue
+        val, steps = r; a, last = ask_value(x['q'].split('\n')[-1], val)
+        if a is None or str(a) != str(x['a']).strip(): continue
+        x['s'] = ' '.join(steps) + ' ' + last
+        x['hint'] = ("Start with the line that has only one kind of fruit. Find its value, then use it in the next line."
+                     if steps and not steps[0].startswith('Line') or ' more ' not in steps[0] else "Compare two lines: what is the only difference between them?")
+        n += 1
+    return n
+if __name__ == '__main__':
+    d = json.load(open('questions.json')); print('explained', explain(d)); json.dump(d, open('questions.json', 'w'), ensure_ascii=False)

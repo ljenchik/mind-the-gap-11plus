@@ -1,0 +1,123 @@
+"""Thorough check of every visible question: answer recomputed where possible, worked answer agrees, options contain the answer.
+Writes problems to problems.json."""
+import json, re, sys, collections
+from fractions import Fraction as F
+D = sys.argv[1] if len(sys.argv) > 1 else '.'
+qs = json.load(open(D + '/questions.json')); cem = json.load(open(D + '/cem.json'))
+rep = set(f'PT{i}' for i in range(1, 51))
+VIS = [x for x in qs if x.get('paper') not in rep] + cem
+UNITS = r"(cm²|m²|cm³|km/h|km per hour|kg|km|cm|mm|ml|g|m|l|litres?|p|°|minutes?|mins?|hours?|days?|weeks?|years?|seconds?|metres?|grams?|pupils|children|people|cars|dots|tiles|squares|cubes|marks|votes|sweets|stickers|books|pages|eggs)"
+def num(s):
+    if s is None: return None
+    s = str(s).replace('−', '-').replace('£', '').replace(',', '').strip()
+    s = re.sub(r'\s*' + UNITS + r'\.?$', '', s).strip()
+    if re.fullmatch(r'-?\d+p', s): return F(int(s[:-1]), 100)
+    m = re.fullmatch(r'(-?\d+) (\d+)/(\d+)', s)
+    if m: return F(int(m[1])) + F(int(m[2]), int(m[3]))
+    m = re.fullmatch(r'(-?\d+)/(\d+)', s)
+    if m: return F(int(m[1]), int(m[2]))
+    try: return F(s)
+    except Exception: return None
+def money(a):
+    a = str(a).strip()
+    if a.startswith('£'): return num(a)
+    if re.fullmatch(r'\d+p', a): return F(int(a[:-1]), 100)
+    return num(a)
+def same(a, v):
+    if isinstance(v, str): return str(a).strip().lower() == v.lower()
+    n = money(a)
+    return n is not None and n == v
+TERM = r"(\d+ \d+/\d+|\d+/\d+|\d+(?:\.\d+)?)"
+OPS = {'+': lambda a, b: a + b, '−': lambda a, b: a - b, '-': lambda a, b: a - b, '×': lambda a, b: a * b, '÷': lambda a, b: a / b}
+ROMAN = [(1000, 'M'), (900, 'CM'), (500, 'D'), (400, 'CD'), (100, 'C'), (90, 'XC'), (50, 'L'), (40, 'XL'), (10, 'X'), (9, 'IX'), (5, 'V'), (4, 'IV'), (1, 'I')]
+def to_roman(n):
+    out = ''
+    for v, s in ROMAN:
+        while n >= v: out += s; n -= v
+    return out
+def from_roman(s):
+    vals = {'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000}; t = 0
+    for i, c in enumerate(s):
+        v = vals[c]; t += -v if i + 1 < len(s) and vals[s[i + 1]] > v else v
+    return t
+def mins(t):
+    m = re.fullmatch(r'(\d{1,2}):(\d\d)\s*(am|pm)?', t.strip().lower())
+    if not m: return None
+    h, mi = int(m[1]), int(m[2])
+    if m[3] == 'pm' and h != 12: h += 12
+    if m[3] == 'am' and h == 12: h = 0
+    return h * 60 + mi
+
+def recompute(x):
+    """return expected value (Fraction or str) or None if no rule applies"""
+    t = re.sub(r'^[a-h]\)\s*', '', x['q'].split('\n')[-1]).strip()
+    t = re.sub(r'\s*\((?:give|write) your answer[^)]*\)', '', t, flags=re.I).strip()
+    t = re.sub(r'^(Work out|Calculate)\s+', '', t).rstrip('.?')
+    m = re.fullmatch(TERM + r' ([+−×÷]) ' + TERM + r'(?: =)?(?: ___)?', t)
+    if m: return OPS[m[2]](num(m[1]), num(m[3]))
+    m = re.fullmatch(TERM + r' ([+−×÷]) ' + TERM + r' ([+−×÷]) ' + TERM + r'(?: =)?(?: ___)?', t)
+    if m and m[2] in '+−' and m[4] in '+−': return OPS[m[4]](OPS[m[2]](num(m[1]), num(m[3])), num(m[5]))
+    m = re.fullmatch(r'(?:What is|Find) (\d+)/(\d+) of (£?)(\d+(?:\.\d+)?)', t)
+    if m: return F(int(m[1]), int(m[2])) * num(m[4])
+    m = re.fullmatch(r'(?:What is|Find) (\d+(?:\.\d+)?)% of (£?)(\d+(?:\.\d+)?)', t)
+    if m: return num(m[1]) * num(m[3]) / 100
+    m = re.fullmatch(r'Round (\d+(?:\.\d+)?) to the nearest (10|100|1000|whole number|tenth)', t)
+    if m:
+        v = num(m[1]); k = {'whole number': F(1), 'tenth': F(1, 10)}.get(m[2], F(m[2]) if m[2].isdigit() else None)
+        import math
+        return F(math.floor(v / k + F(1, 2))) * k
+    m = re.fullmatch(r'Write (\d+) (?:in|as a) Roman numerals?', t)
+    if m: return to_roman(int(m[1]))
+    m = re.fullmatch(r'What (?:number is|is) ([IVXLCDM]+)', t)
+    if m: return F(from_roman(m[1]))
+    m = re.fullmatch(r'(?:What is )?(\d+)²', t)
+    if m: return F(int(m[1]) ** 2)
+    m = re.fullmatch(r'(?:What is )?(\d+)³', t)
+    if m: return F(int(m[1]) ** 3)
+    m = re.fullmatch(r'Write (\d+(?:\.\d+)?) (m|km|cm|mm|g|kg|ml|l|litres) in (m|km|cm|mm|g|kg|ml|l|litres)', t)
+    if m:
+        f = {'mm': 1, 'cm': 10, 'm': 1000, 'km': 10 ** 6, 'g': 1, 'kg': 1000, 'ml': 1, 'l': 1000, 'litres': 1000}
+        return num(m[1]) * f[m[2]] / f[m[3]]
+    m = re.fullmatch(r'(?:Find|What is) the mean of ([\d, ]+?)(?:,? and (\d+))?', t)
+    if m:
+        vals = [int(v) for v in re.findall(r'\d+', m[1])] + ([int(m[2])] if m[2] else [])
+        return F(sum(vals), len(vals))
+    return None
+
+def final_from_solution(s):
+    if not s: return None
+    m = re.search(r'So the answer is (.+?)\.?\s*$', s)
+    if m: return m[1]
+    return None
+
+probs = []
+cnt = collections.Counter()
+for x in VIS:
+    a = str(x.get('a', '')).strip()
+    if not a: probs.append((x['id'], 'empty answer', '')); continue
+    # options in the text
+    last = re.sub(r'^[a-h]\)\s*', '', x['q'].split('\n')[-1])
+    opts = [o.strip() for o in re.split(r'\s{3,}', last)[1:] if o.strip()]
+    if len(opts) >= 2 and not re.search(r'___|<|>', last) and a not in opts and not any(same(a, num(o)) for o in opts if num(o) is not None):
+        probs.append((x['id'], 'answer not among options', f"{a} vs {opts}"))
+    v = recompute(x)
+    if v is not None:
+        cnt['recomputed'] += 1
+        if not same(a, v):
+            probs.append((x['id'], 'answer differs from recomputed', f"a={a} expected={v if isinstance(v, str) else (str(v) if v.denominator == 1 else f'{v} ({float(v):g})')}"))
+    f = final_from_solution(x.get('s', ''))
+    if f is not None:
+        cnt['solution end'] += 1
+        if f.strip() != a and not (money(f) is not None and money(f) == money(a)):
+            probs.append((x['id'], 'worked answer ends with a different answer', f"a={a} s ends {f}"))
+    else:
+        # answer value should appear somewhere in the worked answer
+        s = x.get('s', '')
+        an = money(a)
+        if s and an is not None:
+            nums = [money(n) for n in re.findall(r'£?\d+(?:\.\d+)?(?: \d+/\d+|/\d+)?p?', s.replace('−', '-'))]
+            cnt['solution checked'] += 1
+            if an not in nums and not (an.denominator != 1 and any(n == an for n in nums)):
+                probs.append((x['id'], 'answer not in worked answer', f"a={a} | s={s[:140]}"))
+print(dict(cnt), 'problems', len(probs), collections.Counter(p[1] for p in probs))
+json.dump(probs, open(D + '/problems.json', 'w'), ensure_ascii=False, indent=0)

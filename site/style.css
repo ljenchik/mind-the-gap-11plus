@@ -12,3 +12,4 @@ header{background:var(--card);border-bottom:1px solid var(--line)}header .wrap{d
 h2{font-size:26px;margin:40px 0 8px}.price b{font-size:28px;display:block;color:var(--ink)}
 footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:15px;margin-top:40px}
 .doc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 28px;margin:28px 0}.doc h2{font-size:21px;margin:26px 0 6px}
+.card ul{margin:6px 0 10px;padding-left:22px;color:var(--muted)}.card p+p{margin-top:8px}

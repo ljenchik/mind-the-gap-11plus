@@ -1,0 +1,62 @@
+"""Fractions, decimals and percentages: 8 parts (27 Nov, owner).
+frac  Adding and subtracting fractions      fmd  Multiplying and dividing fractions
+famt  Fractions (fraction of a number, simplifying, equivalent fractions, fraction <-> decimal)
+pct   Percentages (percentages of a number, fractions/decimals/percentages)
+dec   Calculations with decimals            place  x and / by 10, 100, 1000
+order Ordering fractions and decimals       money  Fraction and percentage word problems
+fdp is folded into famt and pct. Linked sets are split by part so every set has one part. Safe to run more than once."""
+import json, re, collections
+NAME = {'frac': 'Adding and subtracting fractions', 'fmd': 'Multiplying and dividing fractions', 'famt': 'Fractions',
+        'pct': 'Percentages', 'money': 'Fraction and percentage word problems'}
+SRC = {'frac', 'fmd', 'famt', 'money', 'fdp', 'pct'}
+NAME_EXTRA = {'place': '× and ÷ by 10, 100, 1000'}
+FRAC = re.compile(r'\d+/\d+|___/\d+|\d+/___|\bfraction|\bhalf|\bquarter|\bthirds?\b|\bfifths?\b|\btenths?\b')
+MD = re.compile(r'\d+/\d+ [×÷] \d|\d [×÷] \d+/\d+')
+AS = re.compile(r'\d+/\d+ [+−] \d|\d [+−] \d+/\d+')
+PLAIN = re.compile(r'^(?:[a-h]\) )?(What is|Work out|Fill in|Write|Which|Simplify|Find|Change|Convert|Is it|Choose|Put|Order|Increase|Decrease|Calculate|How many \w+s are there in|What fraction|What percentage|What decimal|Give)\b', re.I)
+
+def words(t): return len(re.findall(r'[A-Za-z]{3,}', t))
+def classify(x):
+    q = x['q']; last = q.split('\n')[-1]; stem = q.split('\n')[0] if '\n' in q else ''
+    pct = '%' in q or re.search(r'per ?cent', q, re.I)
+    instr = re.match(r'^(Work out|Give|Write|Fill|Find|Look at|Use|Here are|Choose|Is it|Answer|Simplify|Put|Order|Change|Convert|What|Which|Calculate)\b', stem) if stem else True
+    ctx = re.sub(r'\b(answer|answers|simplest|form|each|the|following|give|your|work|out|fraction|fractions|number|numbers|missing|write|these|this|that|what|which|than|more|less)\b', '', (stem if not instr else '') + ' ' + last, flags=re.I)
+    wordy = bool(stem and not instr and words(stem) >= 3) or (not PLAIN.search(last) and words(ctx) >= 5)
+    if wordy and (pct or FRAC.search(q)): return 'money'
+    if pct: return 'pct'
+    if re.search(r'(multiply|divide|×|÷)\D*\b(10|100|1000)\b', last, re.I) and re.search(r'\d\.\d', last) and not re.search(r'\d+/\d+', last): return 'place'
+    if MD.search(last): return 'fmd'
+    if AS.search(last): return 'frac'
+    if FRAC.search(q) or re.search(r'\d\.\d', q): return 'famt' if x.get('skill') != 'money' or not wordy else 'money'
+    return 'money' if wordy else x.get('skill')
+
+def run(items):
+    c = collections.Counter()
+    for x in items:
+        if x.get('skill') not in SRC: continue
+        sk = classify(x)
+        if sk == 'fdp': sk = 'famt'
+        if sk != x['skill']:
+            c[(x['skill'], sk)] += 1
+        x['skill'] = sk
+        for f in ('k', 't', 'tab'):
+            if f in x and not x.get('paper'): x[f] = NAME.get(sk, NAME_EXTRA.get(sk, x[f]))
+    # one part per linked set
+    by = collections.defaultdict(set)
+    for x in items:
+        if x.get('set') and not x.get('paper'): by[x['set']].add(x['skill'])
+    for x in items:
+        if x.get('set') and not x.get('paper') and len(by[x['set']]) > 1 and not x['set'].endswith('-' + x['skill']):
+            x['set'] = x['set'] + '-' + x['skill']
+    return c
+
+if __name__ == '__main__':
+    for f in ('questions.json', 'cem.json'):
+        d = json.load(open(f)); c = run(d); json.dump(d, open(f, 'w'), ensure_ascii=False)
+        print(f, sorted(c.items(), key=lambda z: -z[1])[:12])
+    S = json.load(open('starter-data.json')); ids = [k['id'] for k in S['sk56']]
+    if 'pct' not in ids:
+        i = ids.index('fdp'); S['sk56'][i] = {**S['sk56'][i], 'id': 'pct', 'name': NAME['pct'], 'topic': NAME['pct']}
+    for k in S['sk56']:
+        if k['id'] in NAME: k['name'] = NAME[k['id']]; k['topic'] = NAME[k['id']]
+    json.dump(S, open('starter-data.json', 'w'), ensure_ascii=False)

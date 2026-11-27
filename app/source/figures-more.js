@@ -3,6 +3,27 @@ function picMore(kind, rest) {
   const arg = rest.join(" "), esc = s => String(s).replace(/_/g, " ").replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" text-anchor="${o.a || "middle"}" font-size="${o.f || 15}" ${o.b ? 'font-weight="700"' : ""} fill="${o.c || "currentColor"}">${esc(s)}</text>`;
   const ink = 'stroke="currentColor" stroke-width="2" fill="none"';
+  if (kind === "journeys") {   /* journeys Name,start,end,km;Name,start,end,km : two steady journeys on one distance–time graph */
+    const js = arg.split(";").map(j => { const [n, t0, t1, d] = j.split(","); const mm = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; }; return { n, a: mm(t0), b: mm(t1), d: +d }; });
+    const a = Math.floor(Math.min(...js.map(j => j.a)) / 60) * 60, b = Math.ceil(Math.max(...js.map(j => j.b)) / 60) * 60, D = Math.max(...js.map(j => j.d));
+    const W = 250, H = 160, ox = 52, oy = 190, ystep = [10, 12, 15, 16, 20, 24, 25, 30].find(k => D / k <= 6 && D % k === 0) || D / 4;
+    const X = m => ox + (m - a) / (b - a) * W, Y = d => oy - d / D * H, cols = ["#1971c2", "#e8590c"];
+    let g = "";
+    for (let m = a; m <= b; m += 15) { const x = X(m).toFixed(1); g += `<line x1="${x}" y1="${oy}" x2="${x}" y2="${oy - H}" stroke="currentColor" stroke-opacity="${m % 60 ? .08 : .2}"/>` + (m % 60 ? "" : T(x, oy + 18, String(m / 60).padStart(2, "0") + ":00", { f: 12 })); }
+    for (let d = 0; d <= D + 0.001; d += ystep) { const y = Y(d).toFixed(1); g += `<line x1="${ox}" y1="${y}" x2="${ox + W}" y2="${y}" stroke="currentColor" stroke-opacity=".15"/>` + T(ox - 6, +y + 4, String(Math.round(d)), { f: 12, a: "end" }); }
+    const lines = js.map((j, i) => `<line x1="${X(j.a)}" y1="${Y(0)}" x2="${X(j.b)}" y2="${Y(j.d)}" stroke="${cols[i]}" stroke-width="3"/>` + T(Math.min(X(j.b) + 4, ox + W - 10), Y(j.d) - 6 - i * 14, j.n, { f: 12, b: 1, a: "end" })).join("");
+    return `<svg viewBox="0 0 320 236" width="320" role="img" aria-label="Distance–time graph">${g}<line x1="${ox}" y1="${oy}" x2="${ox + W}" y2="${oy}" ${ink}/><line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy - H}" ${ink}/>${lines}${T(ox + W / 2, 232, "Time", { f: 12, b: 1 })}${T(12, oy - H / 2, "km", { f: 12, b: 1 })}</svg>`;
+  }
+  if (kind === "travel") {   /* travel start end distance: a distance–time graph with a steady speed */
+    const [t0, t1, dist] = rest, D = +dist, mins = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; }, a = mins(t0), b = mins(t1);
+    const W = 250, H = 160, ox = 52, oy = 190, half = (b - a) / 30, ystep = [10, 20, 24, 25, 30, 40, 50, 60, 100].find(k => D / k <= 6 && D % k === 0) || D / 4;
+    const X = m => ox + (m - a) / (b - a) * W, Y = d => oy - d / D * H, hhmm = m => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+    let g = "";
+    for (let i = 0; i <= half; i++) { const m = a + i * 30, x = X(m).toFixed(1); g += `<line x1="${x}" y1="${oy}" x2="${x}" y2="${oy - H}" stroke="currentColor" stroke-opacity=".15"/>` + T(x, oy + 18, hhmm(m), { f: 12 }); }
+    for (let d = 0; d <= D + 0.001; d += ystep) { const y = Y(d).toFixed(1); g += `<line x1="${ox}" y1="${y}" x2="${ox + W}" y2="${y}" stroke="currentColor" stroke-opacity=".15"/>` + T(ox - 6, +y + 4, String(Math.round(d)), { f: 12, a: "end" }); }
+    return `<svg viewBox="0 0 320 236" width="320" role="img" aria-label="Distance–time graph">${g}<line x1="${ox}" y1="${oy}" x2="${ox + W}" y2="${oy}" ${ink}/><line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy - H}" ${ink}/>
+      <line x1="${X(a)}" y1="${Y(0)}" x2="${X(b)}" y2="${Y(D)}" stroke="#1971c2" stroke-width="3"/>${T(ox + W / 2, 232, "Time", { f: 12, b: 1 })}${T(12, oy - H / 2, "km", { f: 12, b: 1 })}</svg>`;
+  }
   if (kind === "lshape") {   /* lshape bottom left top lowerRight unit: an L with right angles, four sides labelled */
     const [b, l, t, r, u] = rest, B = +b, L = +l, Tt = +t, R = +r, k = Math.min(220 / B, 150 / L), ox = 50, oy = 175;
     const X = v => (ox + v * k).toFixed(1), Y = v => (oy - v * k).toFixed(1);

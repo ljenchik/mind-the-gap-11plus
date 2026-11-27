@@ -1,0 +1,65 @@
+"""Every worked answer must end with the answer (27 Nov check). Adds the missing last step where it can be worked out,
+otherwise ends with "So the answer is X." Safe to run more than once."""
+import json, re
+from fractions import Fraction as F
+def mixed(f):
+    w, r = divmod(f.numerator, f.denominator)
+    return str(w) if r == 0 else (f"{r}/{f.denominator}" if w == 0 else f"{w} {r}/{f.denominator}")
+def frac(s):
+    s = s.strip(); m = re.fullmatch(r'(\d+) (\d+)/(\d+)', s)
+    if m: return int(m[1]) + F(int(m[2]), int(m[3]))
+    m = re.fullmatch(r'(\d+)/(\d+)', s)
+    if m: return F(int(m[1]), int(m[2]))
+    return F(s)
+def hm(s):
+    h = re.search(r'(\d+) hours?', s); m = re.search(r'(\d+) minutes?', s)
+    return (int(h[1]) if h else 0) * 60 + (int(m[1]) if m else 0)
+def norm(v): return str(v).replace('−', '-').replace('£', '').strip()
+def has_answer(s, a):
+    B = lambda t: re.search(r'(?<![\d./])' + re.escape(t) + r'(?![\d/]|\.\d)', s.replace('−', '-'))
+    if B(a.replace('−', '-')) or B(re.sub(r'\s*(cm|m|km|minutes|kg|g|ml|l|°|°C)$', '', a).replace('−', '-')): return True
+    if not re.fullmatch(r'-?\d+', a.replace('−', '-')) and B(a.replace('−', '-')): return True
+    return False
+    an = norm(a); an0 = re.sub(r'\s*(cm|m|km|minutes|kg|g|ml|l|°)$', '', an)
+    nums = [n.strip() for n in re.findall(r'-?£?\d+(?:\.\d+)?(?: \d+/\d+|/\d+)?', s.replace('−', '-'))]
+    return an0 in [n.replace('£', '') for n in nums] or an.lower() in s.lower()
+def seq_terms(q):
+    last = q.split('\n')[-1]
+    terms = re.findall(r'\d+ \d+/\d+|\d+/\d+|\d+(?:\.\d+)?', last.split(':', 1)[-1].split('___')[0])
+    return terms
+def complete(x):
+    s, a, q = x.get('s', ''), str(x.get('a', '')).strip(), x['q']
+    if not s or not a or has_answer(s, a): return 0
+    m = re.search(r'A takes (.+?)\. B takes (.+?)\.', s)
+    if m:
+        p, r = hm(m[1]), hm(m[2]); big, small = max(p, r), min(p, r)
+        x['s'] = s + f" {big} − {small} = {big - small} minutes."; return 1
+    m = re.search(r'(\d+)(\S) = (\d+) and (\d+)(\S) = (\d+)\.$', s)
+    if m:
+        u, v = int(m[3]), int(m[6]); x['s'] = s + f" {max(u, v)} − {min(u, v)} = {abs(u - v)}."; return 1
+    m = re.search(r'The gaps are ([^,]+(?:, [^,]+)*), so next \+(\S+) and \+\S+\.$', s)
+    if m:
+        t = seq_terms(q)
+        if t:
+            last = frac(t[-1]); g = frac(m[2]); v = last + g
+            lastS = t[-1]; gS = m[2]; val = (f"{float(v):g}" if '.' in lastS or '.' in gS else mixed(v))
+            x['s'] = s[:m.start()] + f"The gaps are {m[1]}, so the next gap is +{gS}: {lastS} + {gS} = {val}."; return 1
+    m = re.fullmatch(r'Add (\S+(?: \S+/\S+)?) each time\.', s.strip())
+    if m:
+        t = seq_terms(q)
+        if t:
+            v = frac(t[-1]) + frac(m[1]); x['s'] = f"Add {m[1]} each time: {t[-1]} + {m[1]} = {mixed(v)}."; return 1
+    if re.search(r'\d¹ = ', s) or re.search(r'= \d+⁽?[⁰¹²³⁴⁵⁶⁷⁸⁹]+\.$', s):
+        x['s'] = s + f" So the box is {a}."; return 1
+    if s.startswith('Check:') or 'Check:' in s and re.search(r'missing digits', q):
+        d = re.sub(r'\D', '', a)
+        if len(d) == 2: x['s'] = f"The missing digits are {d[0]} and {d[1]}. " + s + f" So write {a}."; return 1
+    if s.startswith('List them:'):
+        x['s'] = s + f" That is {a} numbers."; return 1
+    m = re.fullmatch(r'A: (\d+) (cm|m)\. B: (\d+) (cm|m)\.', s.strip())
+    if m:
+        u, v = int(m[1]), int(m[3]); x['s'] = s + f" {max(u, v)} − {min(u, v)} = {abs(u - v)} {m[2]}."; return 1
+    x['s'] = s.rstrip() + f" So the answer is {a}."; return 1
+if __name__ == '__main__':
+    for f in ('questions.json', 'cem.json'):
+        d = json.load(open(f)); n = sum(complete(x) for x in d); json.dump(d, open(f, 'w'), ensure_ascii=False); print(f, n)

@@ -10,7 +10,7 @@ Not connected with or endorsed by CSSE.
 - `netlify/functions/stripe-webhook.js` records payments; `supabase/schema.sql` the database. See `SETUP.md`.
 - `source/` – what `app/index.html` is built from: `app-template.html.txt`, `questions.json`, `help.json`, `starter-data.json`,
   `questions-cem.js`, and the scripts that write and check questions.
-- The old `site/` folder is no longer used and can be deleted.
+- `site/` is a copy of the website (front page, privacy page and `app/`). Netlify is set to publish this folder, so it must always match the top-level files.
 
 ## Rebuilding the app
 In a folder with `app-template.html.txt` (renamed `template.html`), `questions.json`, `help.json`, `starter-data.json`: run `build.py`.

@@ -1,0 +1,47 @@
+"""Data and charts (27 Nov, owner): every chart question shows a real graph.
+Text pie charts -> pie picture; journeys -> distance-time graph; "4 said 0, 2 said 1..." lists, vote tables and count tables -> bar charts.
+Safe to run more than once."""
+import json, re
+PIE = re.compile(r'\s*(?:/ )?\n?The pie chart has these sectors: ([^.\n]+)\.')
+TRAVEL = re.compile(r'\s*\n?The traveller starts at (\d\d:\d\d) and has gone (\d+) km by (\d\d:\d\d)\. The speed is steady\.')
+SAID = re.compile(r'(\d+) children were asked how many ([\w ]+?) they (?:have|had|read|ate|watched|own)( last \w+)?\. ((?:\d+ said \d+(?:, | and )?)+)\.?')
+def step(vals):
+    m = max(vals)
+    return 1 if m <= 10 else 2 if m <= 20 else 5 if m <= 50 else 10
+def fix(x):
+    if x.get('pic'): return 0
+    x['q'] = x['q'].replace('Use the time chart.', 'Use the table.')
+    q = x['q']
+    m = PIE.search(q)
+    if m:
+        items = [re.match(r'(.+?) (\d+)°', s.strip()).groups() for s in m.group(1).split(',')]
+        x['pic'] = 'pie ' + ','.join(f"{l.strip().replace(' ', '_')}={d}" for l, d in items)
+        x['q'] = (q[:m.start()] + q[m.end():]).strip(); return 1
+    js = re.findall(r'(\w+) sets off at (\d\d:\d\d) and has gone (\d+) km by (\d\d:\d\d)', q)
+    if len(js) == 2:
+        x['pic'] = 'journeys ' + ';'.join(f"{n},{t0},{t1},{d}" for n, t0, d, t1 in js)
+        x['q'] = re.sub(r'\s*\n?\w+ sets off at [^\n]*?Each travels at a steady speed\.', '', q).strip(); return 1
+    m = TRAVEL.search(q)
+    if m:
+        t0, d, t1 = m.groups(); x['pic'] = f"travel {t0} {t1} {d}"
+        x['q'] = (q[:m.start()] + q[m.end():]).strip(); return 1
+    m = SAID.search(q)
+    if m:
+        what = m.group(2).strip(); rows = re.findall(r'(\d+) said (\d+)', m.group(4)); vals = [int(c) for c, _ in rows]
+        x['pic'] = f"chart Number of {what};" + ','.join(f"{k}={c}" for c, k in rows) + f";{step(vals)}"
+        x['q'] = q[:m.start()] + f"{m.group(1)} children were asked how many {what} they have{m.group(3) or ''}. The bar chart shows the results." + q[m.end():]
+        x['q'] = x['q'].replace(' they have last', ' they had last'); return 1
+    lines = q.split('\n'); rows = [l for l in lines if ' | ' in l]
+    if len(rows) >= 3 and x.get('skill') == 'chart':
+        head = [c.strip() for c in rows[0].split(' | ')]; body = [[c.strip() for c in r.split(' | ')] for r in rows[1:]]
+        if len(head) == 2 and all(len(r) == 2 and re.fullmatch(r'\d+', r[1]) for r in body):
+            vals = [int(r[1]) for r in body]
+            x['pic'] = f"chart {head[0]};" + ','.join(f"{r[0].replace(',', ' ').replace('=', ' ')}={r[1]}" for r in body) + f";{step(vals)}"
+            rest = [l for l in lines if ' | ' not in l]
+            x['q'] = '\n'.join(rest).replace('The table shows the results.', 'The bar chart shows the results.')
+            if 'bar chart' not in x['q']: x['q'] = x['q'].replace('\n', ' The bar chart shows the results.\n', 1) if '\n' in x['q'] else x['q'] + ''
+            return 1
+    return 0
+if __name__ == '__main__':
+    for f in ('questions.json', 'cem.json'):
+        d = json.load(open(f)); n = sum(fix(x) for x in d); json.dump(d, open(f, 'w'), ensure_ascii=False); print(f, n)

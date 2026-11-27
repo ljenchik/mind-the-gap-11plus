@@ -207,8 +207,15 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 .chip { background: var(--bg); color: var(--ink); border: 2px solid var(--line); padding: 6px 12px; font-size: .9rem; font-weight: 600; }
 .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.qline { display: flex; gap: 3px; margin: 6px 0 2px; }
+.qline span { flex: 1; height: 8px; border-radius: 4px; background: var(--line); }
+.qline span.done { background: var(--sun); } .qline span.now { background: var(--accent); }
+.qline[hidden], #qprog[hidden] { display: none; }
 .progress { height: 10px; background: var(--line); border-radius: 999px; overflow: hidden; }
 .progress > div { height: 100%; background: var(--sun); transition: width .25s; }
+.qtopic { font-weight: 700; color: var(--accent); font-size: .95rem; line-height: 1.3; margin-bottom: 2px; }
+.qtopic span { color: var(--muted); font-weight: 600; }
+.qtopic:empty { display: none; }
 .qhead { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
 .question { font-size: 1.25rem; font-weight: 700; white-space: pre-line; }
 .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
@@ -221,7 +228,15 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 .feedback.good { background: var(--good-bg); color: var(--good); font-weight: 700; }
 .feedback.bad { background: var(--bad-bg); }
 .feedback.bad strong { color: var(--bad); }
-.feedback .sol { color: var(--ink); }
+.feedback .sol { color: var(--ink); display: block; }
+.work summary { cursor: pointer; color: var(--accent); font-weight: 700; margin-top: 6px; }
+.workbody { margin-top: 6px; }
+.steps { margin: 6px 0 0; padding-left: 1.4em; } .steps li { margin: 3px 0; } .steps.also { margin-top: 8px; }
+.colmeth { display: inline-grid; font: 600 1.25rem/1.35 ui-monospace, Menlo, Consolas, monospace; margin: 4px 0 4px 1.6em; }
+.cmrow { display: flex; justify-content: flex-end; } .cmrow span { width: 1ch; text-align: center; } .cmrow i { font-style: normal; width: .6ch; text-align: center; }
+.cmrow.carry { font-size: .7em; color: var(--accent); min-height: 1em; } .cmrow.ans { color: var(--good); }
+.cmrow b { width: 1.4ch; text-align: left; } .cmline { border-top: 2px solid currentColor; margin: 2px 0; }
+
 .score { font-family: var(--display); font-size: 3rem; color: var(--accent); font-variant-numeric: tabular-nums; }
 .missed { display: grid; gap: 10px; }
 .missed article { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 4px; }
@@ -525,6 +540,7 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
   body.kb .kbpanel #options, body.kb .kbpanel .typed-row { margin-top: 4px; }
   body.kb .topbar, body.kb #qreport, body.kb .progress, body.kb #qpaper, body.kb .quizfoot, body.kb #options > label.muted, body.kb .qhead #qtime { display: none !important; }
   body.kb .qhead { font-size: .8rem; }
+  body.kb .qline { margin: 2px 0; } body.kb .qline span { height: 5px; }
   body.kb .question { font-size: 1.08rem; line-height: 1.35; }
   body.kb .seq span { padding: 4px 8px; }
   body.kb .picbox svg, body.kb .picbox img { max-height: 30vh; width: auto; max-width: 100%; }
@@ -623,16 +639,18 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
   <section id="quiz" class="panel" hidden>
     <div class="topbar"><button class="back" id="backQuiz" type="button" aria-label="Back to topics">← Topics</button></div>
     <div class="leave" id="leave" hidden><p>Leave this set? Your answers so far won't count.</p><div class="row"><button class="primary" id="leaveYes" type="button">Leave</button><button class="ghost" id="leaveNo" type="button">Keep going</button></div></div>
+    <div class="qtopic" id="qtopic"></div>
     <div class="qhead"><span><span id="qcount"></span> · <strong id="qmarks"></strong></span><span id="qtime"></span></div>
     <div id="qreport"></div>
-    <div class="progress"><div id="bar" style="width:0%"></div></div>
+    <div class="progress" id="qprog"><div id="bar" style="width:0%"></div></div>
+    <div class="qline" id="qline" aria-hidden="true"></div>
     <p class="question" id="qtext"></p>
     <div class="seq" id="qseq" hidden></div>
     <div class="picbox" id="qpic" hidden></div>
     <p class="paper" id="qpaper" hidden></p>
     <div class="options" id="options"></div>
     <div id="feedback" class="feedback" hidden></div>
-    <div class="row quizfoot"><button class="primary" id="next" type="button" hidden>Next</button><button class="ghost" id="skip" type="button" hidden>Skip → next question</button><button class="ghost" id="quit" type="button">Stop and see score</button><span class="total">Total: <strong id="qscore"></strong></span></div>
+    <div class="row quizfoot"><button class="primary" id="next" type="button" hidden>Next</button><button class="ghost" id="skip" type="button" hidden>Skip for now</button><button class="ghost" id="quit" type="button">Stop and see score</button><span class="total">Total: <strong id="qscore"></strong></span></div>
   </section>
 
   <section id="done" class="panel" hidden>
@@ -960,7 +978,7 @@ const SKILLS = STARTER.sk56, SKILL_BY_NAME = Object.fromEntries(SKILLS.map(s => 
 /* the 20 exam skills grouped into 7 main topics; each skill is a part (subtopic) of its topic */
 const MAIN = {   /* the 8-topic main page (24 Nov) */
   "Number": ["as", "md", "roman", "round", "pow", "fact", "prime", "asn"],
-  "Fractions, decimals and percentages": ["frac", "dec", "famt", "place", "money", "order", "fdp"],
+  "Fractions, decimals and percentages": ["frac", "fmd", "famt", "pct", "dec", "place", "order", "money"],
   "Ratio and proportion": ["ratio", "unitc", "rates"],
   "Money, time and units": ["cash", "time", "units"],
   "Algebra": ["eq", "seq", "mach"],
@@ -1224,6 +1242,15 @@ function buildQuestion(q) {
   }
   const typed = TYPEABLE.test(q.a) && Math.random() < TYPE_SHARE;
   const ord = o => o.replace(/^(\d+)(st|nd|rd|th)$/, (m, k) => k + (k % 100 >= 10 && k % 100 <= 20 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" })[k % 10] || "th"));   /* 42nd, not 42st */
+  { /* coordinates: wrong options are the easy slips (x and y swapped), not random numbers */
+    const cm = String(q.a).match(/^\((−?-?\d+), ?(−?-?\d+)\)$/);
+    if (!typed && cm) {
+      const pts = [...q.q.matchAll(/\((−?-?\d+), ?(−?-?\d+)\)/g)].map(m => [m[1], m[2]]), c = (x, y) => `(${x}, ${y})`;
+      const opts = [c(cm[2], cm[1]), ...pts.map(([x, y]) => c(y, x)), c(cm[1], cm[1]), c(cm[2], cm[2])].filter(o => o !== q.a && !pts.some(([x, y]) => c(x, y) === o));
+      const wrong = [...new Set(opts)].slice(0, 3);
+      if (wrong.length === 3) return { text: q.q, typed, options: shuffle([q.a, ...wrong]) };
+    }
+  }
   return { text: q.q, typed, options: typed ? [] : shuffle(timeFill(q.a, [...new Set([q.a, ...wrongAnswersFor(q).map(ord).filter(o => !/^(1[3-9]|2\d|0):\d\d\s*[ap]m/i.test(o) && !timeOk(o, q.a))])])) };   /* no "20:57 pm", no second right answer */
 }
 
@@ -1233,6 +1260,87 @@ const svgNS = 'xmlns="http://www.w3.org/2000/svg"';
 /* fractions drawn with a horizontal line */
 const escH = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const fpart = x => x === "___" ? '<span class="fbox"></span>' : x;
+/* How to work it out: one step per line (no full stop after a number), plus a written method for plain sums */
+const PLACE_NM = { "-3": "thousandths", "-2": "hundredths", "-1": "tenths", 0: "ones", 1: "tens", 2: "hundreds", 3: "thousands", 4: "ten thousands", 5: "hundred thousands", 6: "millions" };
+function solSteps(t) {
+  const parts = String(t || "").replace(/\s+/g, " ").trim().split(/(?<!\b[ap]\.m)\.\s+(?=\S)/);
+  return parts.map(p => p.replace(/(?<![ap]\.m)\.$/, "").trim()).filter(Boolean);
+}
+function columnMethod(qt, ans = "") {
+  const line = String(qt).split("\n").pop().replace(/^[a-h]\)\s*/, "").replace(/^(Work out|Calculate)\s+/i, "").replace(/\s*(=\s*(___|\?|□)?)?\s*\.?$/, "").trim();
+  let m = line.match(/^(\d+(?:\.\d+)?) ([+−]) (\d+(?:\.\d+)?)$/);
+  if (m) {
+    const [A, op, B] = [m[1], m[2], m[3]], dp = Math.max(...[A, B].map(x => (x.split(".")[1] || "").length));
+    const fx = x => { let [i, f = ""] = x.split("."); return { i, f: f.padEnd(dp, "0") }; };
+    const a = fx(A), b = fx(B), il = Math.max(a.i.length, b.i.length) + (op === "+" ? 1 : 0);
+    const digits = o => (o.i.padStart(il, " ") + o.f).split("");
+    const da = digits(a), db = digits(b), n = da.length, res = Array(n).fill(" "), carry = Array(n).fill(""), steps = [];
+    if (op === "−" && parseFloat(A) < parseFloat(B)) return null;
+    let c = 0;
+    for (let k = n - 1; k >= 0; k--) {
+      const pl = PLACE_NM[(n - dp - 1) - k], x = da[k] === " " ? 0 : +da[k], y = db[k] === " " ? 0 : +db[k];
+      if (op === "+") {
+        if (da[k] === " " && db[k] === " " && !c) continue;
+        const t = x + y + c, P = pl[0].toUpperCase() + pl.slice(1), said = db[k] === " " || da[k] === " " ? (c ? `${P}: ${da[k] === " " ? y : x} + 1 carried = ${t}` : `${P}: bring down the ${t}`) : `${P}: ${x} + ${y}${c ? " + 1 carried" : ""} = ${t}`;
+        res[k] = String(t % 10); steps.push(t >= 10 && k > 0 ? `${said}. Write ${t % 10} and carry 1 to the ${PLACE_NM[(n - dp) - k]}` : said);
+        if (t >= 10 && k > 0) carry[k - 1] = "1"; c = t >= 10 ? 1 : 0;
+      } else {
+        if (da[k] === " ") continue;
+        const P = pl[0].toUpperCase() + pl.slice(1), nx = PLACE_NM[(n - dp) - k];
+        let top = x - c, said = `${P}: `;
+        if (top < 0) {
+          said += `0 cannot give 1 away, so take 1 from the ${nx} to make 10. 10 − 1 given away = 9` + (db[k] === " " ? "" : `. 9 − ${y} = ${9 - y}`);
+          top = 9; c = 1;
+        } else if (top < y) {
+          said += (c ? `${x} − 1 given away = ${top}. ` : "") + `${top} is smaller than ${y}, so take 1 from the ${nx} to make ${top + 10}. ${top + 10} − ${y} = ${top + 10 - y}`;
+          top += 10; c = 1;
+        } else {
+          said += c ? `${x} − 1 given away = ${top}` + (db[k] === " " ? "" : `. ${top} − ${y} = ${top - y}`) : db[k] === " " ? `bring down the ${top}` : `${top} − ${y} = ${top - y}`;
+          c = 0;
+        }
+        res[k] = String(top - y); steps.push(said);
+      }
+    }
+    // drop leading zeros of the result (not next to the point)
+    for (let k = 0; k < n - dp - 1 && (res[k] === "0" || res[k] === " "); k++) res[k] = " ";
+    const row = (cells, cls = "", lead = "") => `<div class="cmrow ${cls}"><b>${lead}</b>${cells.map((d, k) => `<span>${d === " " ? "" : d}</span>${dp && k === n - dp - 1 ? "<i>.</i>" : ""}`).join("")}</div>`;
+    const html = `<div class="colmeth" aria-label="Column method">${op === "+" ? row(carry, "carry") : ""}${row(da)}${row(db, "", op)}<div class="cmline"></div>${row(res, "ans")}</div>`;
+    return { html, steps: [dp ? "Line up the decimal points. Fill the gaps with 0" : "Line up the digits: ones under ones, tens under tens", "Start from the right-hand column", ...steps] };
+  }
+  m = line.match(/^(\d+) × (\d+)$/);
+  if (m) {
+    let [A, B] = [+m[1], +m[2]]; if (String(B).length > String(A).length) [A, B] = [B, A];
+    if (A < 10 || /^10+$/.test(String(A)) || /^10+$/.test(String(B))) return null;
+    const split = n => String(n).split("").map((d, i, a) => +d * 10 ** (a.length - 1 - i)).filter(Boolean);
+    if (B < 10) {
+      const ps = split(A).map(p => [p, p * B]);
+      return { steps: [`Split ${A} into ${ps.map(p => p[0]).join(" + ")}`, ...ps.map(p => `${p[0]} × ${B} = ${p[1]}`), `${ps.map(p => p[1]).join(" + ")} = ${A * B}`] };
+    }
+    const ps = split(B).map(p => [p, A * p]);
+    return { steps: [`Split ${B} into ${ps.map(p => p[0]).join(" + ")}`, ...ps.map(p => `${A} × ${p[0]} = ${p[1]}`), `${ps.map(p => p[1]).join(" + ")} = ${A * B}`] };
+  }
+  m = line.match(/^(\d+) ÷ (\d+)$/);
+  if (m) {
+    const [A, B] = [m[1], +m[2]]; if (B < 2 || B > 12 || B === 10 || A.length < 2 || (+A % B && !/r|remainder/i.test(ans))) return null;
+    let r = 0, out = "", steps = [`Short division: work from the left, one digit at a time`];
+    for (const [ix, ch] of [...A].entries()) {
+      const cur = r * 10 + +ch, g = Math.floor(cur / B), end = ix === A.length - 1; r = cur - g * B;
+      if (out || g) steps.push(`${cur} ÷ ${B} = ${g}${r ? `, with ${r} left over` + (end ? "" : `. Carry the ${r} to the next digit`) : ""}`); else steps.push(`${B} does not go into ${cur}. Carry the ${cur} to the next digit`);
+      if (out || g) out += g;
+    }
+    steps.push(r ? `So ${A} ÷ ${B} = ${out} remainder ${r}` : `So ${A} ÷ ${B} = ${out}`);
+    return { steps };
+  }
+  return null;
+}
+function workHTML(q) {
+  const cm = q.paper !== undefined || true ? columnMethod(q.q, q.a) : null;
+  let steps = solSteps(q.s).map(t => t.replace(/ · /g, ", "));
+  if (cm && steps.length <= 1) steps = [];
+  const li = a => a.map(t => `<li>${fracHTML(t)}</li>`).join("");
+  return (cm ? (cm.html || "") + `<ol class="steps">${li(cm.steps)}</ol>` : "") + (steps.length ? `<ol class="steps${cm ? " also" : ""}">${li(steps)}</ol>` : "");
+}
+function workDetails(q, open) { return q.s ? `<details class="work"${open ? " open" : ""}><summary>How to work it out</summary><div class="workbody">${workHTML(q)}</div></details>` : ""; }
 function fracHTML(t) {
   return escH(t).replace(/(^|[^\d\/])(\d+|___|□)\/(\d+|___|□)(?![\d\/])/g, (m, pre, n, d) => `${pre}<span class="frac" role="math" aria-label="${/\d/.test(n) ? n : "blank"} over ${/\d/.test(d) ? d : "blank"}"><span>${fpart(n)}</span><span>${fpart(d)}</span></span>`);
 }
@@ -1440,7 +1548,7 @@ function drawPic(spec) {
       <path d="M78,112 Q130,152 182,112" fill="none" stroke="${col}" stroke-width="2.5" marker-end="url(#eqa)"/>
       <text x="130" y="164" text-anchor="middle" font-size="18" font-weight="700" fill="${col}">${sym}${k}</text></svg>`;
   }
-  if (["venn", "pie", "angline", "tri", "rectfig", "dicenet", "symgrid", "spinner", "shapeq", "sqpat", "tilepat", "lshape"].includes(kind)) return picMore(kind, rest);
+  if (["venn", "pie", "angline", "tri", "rectfig", "dicenet", "symgrid", "spinner", "shapeq", "sqpat", "tilepat", "lshape", "travel", "journeys"].includes(kind)) return picMore(kind, rest);
   if (kind === "pattern") return picPattern(rest[0]);
   if (kind === "cgrid") return picCgrid(rest);
   if (kind === "magic") return picMagic(rest.join(" "));
@@ -2161,9 +2269,9 @@ function pickSet(n, avoidIds) {
     pool().filter(q => !avoid.has(q.id)).forEach(q => (sets[q.set || q.id] = sets[q.set || q.id] || []).push(q));
     const groups = Object.values(sets), fresh = shuffle(groups.filter(g => !g.some(q => seen.has(q.id)))), old = shuffle(groups.filter(g => g.some(q => seen.has(q.id))));
     const order = fresh.concat(old), bySk = {}; order.forEach(g => (bySk[g[0].skill] = bySk[g[0].skill] || []).push(g));
-    const lanes = shuffle(Object.values(bySk)), out = [];   /* take turns between the parts of a topic */
-    for (let i = 0; out.length < n && lanes.some(l => l.length); i++) { const l = lanes[i % lanes.length]; if (l.length) out.push(...l.shift()); }
-    return out.slice(0, Math.max(n, 1));
+    const lanes = shuffle(Object.values(bySk)), chosen = [];   /* take turns between the parts of a topic */
+    for (let i = 0, k = 0; k < n && lanes.some(l => l.length); i++) { const l = lanes[i % lanes.length]; if (l.length) { const g = l.shift(); chosen.push(g); k += g.length; } }
+    return easyFirst(linked(chosen.flat().slice(0, Math.max(n, 1)))).flat();
   }
   const all = pool(), seen = new Set(store.get("seen") || []), avoid = avoidIds || new Set();
   const gensHere = generatorsFor(topic, type).length;
@@ -2173,7 +2281,23 @@ function pickSet(n, avoidIds) {
     const used = new Set(list.map(q => q.id));
     list = list.concat(shuffle(all.filter(q => !used.has(q.id) && !avoid.has(q.id))).slice(0, n - list.length));
   }
-  return shuffle(list);
+  return easyFirst(linked(shuffle(list))).flat();
+}
+/* a session goes from easier to harder questions; parts of one question stay together */
+const LV_RANK = { Easy: 0, Core: 1, Medium: 1, Hard: 2, Challenge: 3 };
+function qDiff(q) {
+  const s = String(q.s || ""), t = String(q.q || ""), nums = t.match(/\d+(?:\.\d+)?/g) || [];
+  const big = Math.max(1, ...nums.map(n => n.split(".")[0].length));
+  return (LV_RANK[q.lv] ?? 1) * 4 + ((q.m || 1) - 1) * 2 + Math.min(6, (s.match(/=/g) || []).length) * 0.5 + big * 0.3 + (/\d \d+\/\d+/.test(t) ? 0.8 : 0) + (/\d\.\d/.test(t) ? 0.4 : 0) + Math.min(60, t.split(/\s+/).length) / 40;
+}
+/* parts of a set only stay together when one part uses the answer to another */
+function linked(list) {
+  const by = new Map();
+  list.forEach(q => { const k = q.set || q.id; if (!by.has(k)) by.set(k, []); by.get(k).push(q); });
+  return [...by.values()].flatMap(g => g.some(q => /your answer|answer to (part )?\(?[a-e]\)?\b|from part/i.test(q.q)) ? [g] : g.map(q => [q]));
+}
+function easyFirst(groups) {
+  return groups.map((g, i) => [g, g.reduce((t, q) => t + qDiff(q), 0) / g.length, i]).sort((a, b) => a[1] - b[1] || a[2] - b[2]).map(x => x[0]);
 }
 const autoKey = () => "autoLevel:" + topic;
 function withLevel(lv, f) { const keep = level; level = lv; try { return f(); } finally { level = keep; } }
@@ -2192,6 +2316,7 @@ function start() {
     if (list.length < TARGET) list = list.concat(withLevel("All", () => pickSet(TARGET - list.length, new Set(list.map(q => q.id)))));
   } else list = pickSet(TARGET);
   if (!list.length) { $("setupNote").textContent = "There are no questions here at this level yet. Pick another level or part of the topic."; return; }
+  list = easyFirst(linked(list)).flat();
   addItems(list);
   show("quiz"); renderQ();
 }
@@ -2240,6 +2365,8 @@ function renderQ() {
   $("qcount").textContent = (run.checkup ? "Check-up · " : run.paperName ? run.paperName + " · " : run.mock ? "Mock test · " : "") + `Question ${run.i + 1} of ${total}` + (run.auto ? ` · ${run.auto.lv}` : "");
   $("qscore").textContent = `${run.marks} ${run.marks === 1 ? "mark" : "marks"}`;
   $("bar").style.width = (run.i / total * 100) + "%";
+  { const segs = total <= 60; $("qprog").hidden = segs; $("qline").hidden = !segs;   /* one piece per question: done, this one, still to do */
+    if (segs) $("qline").innerHTML = run.items.map((_, k) => `<span class="${k < run.i ? "done" : k === run.i ? "now" : ""}"></span>`).join(""); }
   $("feedback").hidden = true; $("next").hidden = true;
   $("qreport").innerHTML = reportUI(run.items[run.i].q.id); wireReport($("qreport"));
   $("skip").hidden = run.i >= run.items.length - 1;
@@ -2259,6 +2386,9 @@ function renderQ() {
   const seq = $("qseq"); seq.innerHTML = ""; seq.hidden = !rest.length;
   rest.join("   ").split(/\s{3,}/).filter(Boolean).forEach(t => { const sp = document.createElement("span"); sp.innerHTML = fracHTML(t); if (t === "___") sp.className = "blank"; seq.appendChild(sp); });
   const mk = q.m || 1; $("qmarks").textContent = mk === 1 ? "1 mark" : mk + " marks";
+  { /* topic and part of this question, e.g. "Fractions, decimals and percentages · Fraction of a number" */
+    const sk = q.skill, main = sk && MAIN_OF[sk], part = sk && SKILL_NAME[sk];
+    $("qtopic").innerHTML = run.paperName || run.mock || run.checkup || !main ? "" : `${stEsc(main)} <span>· ${stEsc(part)}</span>`; }
   $("qpic").innerHTML = drawPic(q.pic); $("qpic").hidden = !q.pic;
   const paper = paperHint(q); $("qpaper").textContent = paper; $("qpaper").hidden = !paper;
   const it = run.items[run.i]; run.shownAt = it.shownAt || (it.shownAt = Date.now());
@@ -2376,9 +2506,9 @@ function answer(btn, choice) {
   } else {
     if (btn && btn.classList) btn.classList.add("wrong"); run.missed.push(q);
     fb.className = "feedback bad";
-    fb.innerHTML = `<strong></strong><span class="sol"></span>`;
+    fb.innerHTML = `<strong></strong><div class="sol"></div>`;
     fb.querySelector("strong").innerHTML = fracHTML("Not quite. The answer is " + q.a.split(" · ").join(/order/i.test(q.q) ? ", " : " and ") + ".");
-    fb.querySelector(".sol").innerHTML = fracHTML("How to work it out: " + q.s);
+    fb.querySelector(".sol").innerHTML = workDetails(q, false);
     const hc = helpFor(q);
     if (hc) {
       fb.insertAdjacentHTML("beforeend", '<div class="helpline"><button type="button" class="ghost">Help card</button></div>');
@@ -2434,7 +2564,7 @@ function finish() {
           return tb ? fracHTML(f0) + tableHTML(tb.rows) + tb.other.map(l => " " + fracHTML(l)).join("") : fracHTML(q.q.split(SPLIT)[0].replace(/\n/g, " ").replace(/\s{3,}/g, "  ·  ")); })()}</div>
         <div>Your answer: <b>${r ? fracHTML(stEsc(r.a)) : "not answered"}</b></div>
         ${st === "ok" ? "" : `<div>Correct answer: <b>${fracHTML(q.a)}</b></div>`}
-        ${q.s ? `<details${st === "ok" ? "" : " open"}><summary>How to work it out</summary><div class="muted">${fracHTML(q.s)}</div></details>` : ""}`;
+        ${workDetails(q, false)}`;
       box.appendChild(a);
     });
     run.missed = all.filter(q => !(g[q.id] && g[q.id].ok));
@@ -2446,9 +2576,9 @@ function finish() {
     } else $("retryMissed").textContent = "Practise my mistakes";
   } else run.missed.forEach(q => {
     const a = document.createElement("article");
-    a.innerHTML = `<strong></strong><span></span><span class="muted"></span>`;
+    a.innerHTML = `<strong></strong><span></span><div></div>`;
     a.children[0].innerHTML = fracHTML(q.q.split(SPLIT)[0].replace(/\n/, " ").replace(/\s{3,}/g, "  ·  "));
-    a.children[1].innerHTML = fracHTML("Answer: " + q.a); a.children[2].innerHTML = fracHTML(q.s);
+    a.children[1].innerHTML = fracHTML("Answer: " + q.a.split(" · ").join(", ")); a.children[2].innerHTML = workDetails(q, false);
     box.appendChild(a);
   });
   $("cumap").hidden = true; $("again").hidden = !!run.checkup; $("again").textContent = "New questions"; $("again").onclick = againDefault;
@@ -2901,8 +3031,8 @@ function hintFor(q) {
   if (q.hint) return say("", q.hint);
   if (q.pic && /^line/.test(q.pic) && /arrow/i.test(flat)) return say("", "First work out what each jump is worth: (end number − start number) ÷ number of jumps. Then count the jumps to the arrow.");
   if (/___\s{5,}<|<\s+>\s+=/.test(q.q) && !nums.some(x => x < 0) && /[+−×÷-]\s*\d/.test(flat.replace(/<|>|=/g, ""))) return say("", "Work out each side first, then compare the two answers.");
-  if (/January|February|March|April|May|June|July|August|September|October|November|December/.test(flat) && /days/i.test(flat)) return say("", "30 days have September, April, June and November. All the rest have 31, except February: 28 days (29 in a leap year). Find each month, then add them.");
-  if (/how many (seconds|minutes|hours|days|weeks|months)|in (seconds|minutes|hours|days|weeks)\b/i.test(flat) && new Set((flat.replace(/school year/gi, "").match(/\b(second|minute|hour|day|week|month|year)s?\b/gi) || []).map(u => u.toLowerCase().replace(/s$/, ""))).size >= 2 && !/clock/i.test(flat)) return say("", "60 seconds = 1 minute, 60 minutes = 1 hour, 24 hours = 1 day, 7 days = 1 week, 12 months = 1 year.");
+  if (/January|February|March|April|May|June|July|August|September|October|November|December/.test(flat) && /days/i.test(flat) && !/How many days (does|do|are|is)/i.test(flat)) return say("", "30 days have September, April, June and November. All the rest have 31, except February: 28 days (29 in a leap year). Find each month, then add them.");
+  if (/how many (seconds|minutes|hours|days|weeks|months)|in (seconds|minutes|hours|days|weeks)\b/i.test(flat) && !/How many \w+ are (there )?in (a|an|one) \w+\??$/i.test(flat.trim()) && new Set((flat.replace(/school year/gi, "").match(/\b(second|minute|hour|day|week|month|year)s?\b/gi) || []).map(u => u.toLowerCase().replace(/s$/, ""))).size >= 2 && !/clock/i.test(flat)) return say("", "60 seconds = 1 minute, 60 minutes = 1 hour, 24 hours = 1 day, 7 days = 1 week, 12 months = 1 year.");
   if (/=/.test(flat) && /___/.test(flat) && /\d{4} = |= \d{4}$|\d{4}$/.test(flat) && /\+/.test(flat) && !/×/.test(flat)) { const v = nums.find(x => x >= 1000 && x <= 9999 && x % 1000); if (v) return say(pvGrid(v), `Put ${v} in a place value grid. Each digit shows how many thousands, hundreds, tens and ones.`); }
   if (/halve|doubl/i.test(flat) && /answer is|gets? \d|How old|What was (my|his|her)/i.test(flat)) return say("", "Work backwards from the answer and undo each step in reverse order. To undo halving, double. To undo doubling, halve.");
   if (q.t === "Think of a number" || /think of a number|thinks of a number|What was my number|What number did I/i.test(flat)) return say("", "Work backwards: start from the answer and undo each step in reverse order. Undo + with −, × with ÷.");

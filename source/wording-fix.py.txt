@@ -20,6 +20,7 @@ def fix_q(t):
     t = re.sub(r'^Think of a number\.\n', '', t)
     if 'What fraction' in t: t = t.replace('Give your answer as a fraction in its simplest form', 'Give your answer in its simplest form')
     t = t.replace('Choose ALWAYS, SOMETIMES or NEVER true.', 'Is it always, sometimes or never true?')
+    t = re.sub(r'For each statement, choose ALWAYS true, SOMETIMES true or NEVER true\.', 'Is each statement always, sometimes or never true?', t)
     # plain words
     t = re.sub(r'\bCalculate\b', 'Work out', t); t = re.sub(r'\bcalculate\b', 'work out', t)
     t = re.sub(r'\b(does|do|did|will) (\w+) receive\b', r'\1 \2 get', t)
@@ -55,23 +56,24 @@ def fix_s(s, q):
 
 
 SING = {'apples': 'apple', 'cards': 'card', 'coins': 'coin', 'shells': 'shell', 'pastries': 'pastry'}
-MOVE = re.compile(r"There are some (\w+) (?:in|on) an? (\w+) and some (?:in|on) a second \2\. If (\d+) of the \1 (?:is|are) moved from the first \2 to the second, both \2(?:e?s) have the same number\. If (\d+) of the \1 (?:is|are) moved from the first \2 to the second, the second \2 has (\d+) times as many as the first\. How many \1 are in the (first|second) \2 to begin with\?")
+MOVE = re.compile(r"There are some (\w+) (?:in|on) an? (\w+) and some (?:in|on) a second \2\. If (\d+) of the \1 (?:is|are) moved from the first \2 to the second, both \2(?:e?s) have the same number\. If (\d+) of the \1 (?:is|are) moved from the first \2 to the second, the second \2 has (\d+) times as many as the first\. How many \1 are (?:in the (first|second) \2 to begin with|(there altogether))\?")
 def fix_move(x):
     m = MOVE.search(x['q'])
     if not m: return
-    items, cont, n1, n2, k, which = m.group(1), m.group(2), int(m.group(3)), int(m.group(4)), int(m.group(5)), m.group(6)
+    items, cont, n1, n2, k, which = m.group(1), m.group(2), int(m.group(3)), int(m.group(4)), int(m.group(5)), m.group(6) or 'altogether'
     one = SING.get(items, items.rstrip('s')); pl = cont + ('es' if cont.endswith(('x', 's')) else 's'); C = cont.capitalize()
     mv = lambda n: f"{n} {one if n == 1 else items} {'moves' if n == 1 else 'move'}"
     new = (f"{C} A and {cont} B hold some {items}. If {mv(n1)} from {cont} A to {cont} B, both {pl} hold the same number. "
-           f"If {mv(n2)} from {cont} A to {cont} B, {cont} B then holds {k} times as many as {cont} A. How many {items} are in {cont} {'A' if which == 'first' else 'B'} at the start?")
+           f"If {mv(n2)} from {cont} A to {cont} B, {cont} B then holds {k} times as many as {cont} A. " + (f"How many {items} are there altogether?" if which == 'altogether' else f"How many {items} are in {cont} {'A' if which == 'first' else 'B'} at the start?"))
     x['q'] = x['q'][:m.start()] + new + x['q'][m.end():]
     d = 2 * n1
     y = next((y for y in range(0, 500) if y + n2 == k * (y + d - n2)), None)
     if y is not None:
         a1, b1 = y + d - n2, y + n2
         x['s'] = (f"Moving {n1} makes them equal, so {cont} A has {d} more than {cont} B. Try numbers: if {cont} B has {y}, {cont} A has {y + d}. "
-                  f"After moving {n2}, {cont} A has {a1} and {cont} B has {b1}, and {b1} = {k} × {a1}. So {cont} {'A' if which == 'first' else 'B'} has {y + d if which == 'first' else y} at the start.")
-        assert str(y + d if which == 'first' else y) == str(x['a']).strip(), (x['id'], y, x['a'])
+                  f"After moving {n2}, {cont} A has {a1} and {cont} B has {b1}, and {b1} = {k} × {a1}. " + (f"Altogether: {y + d} + {y} = {2 * y + d}." if which == 'altogether' else f"So {cont} {'A' if which == 'first' else 'B'} has {y + d if which == 'first' else y} at the start."))
+        want = 2 * y + d if which == 'altogether' else (y + d if which == 'first' else y)
+        assert str(want) == str(x['a']).strip(), (x['id'], want, x['a'])
 
 LSH = re.compile(r"\nL-shape: the bottom edge is (\d+) (\w+), the left edge is (\d+) \w+, the top edge is (\d+) \w+ and the lower right edge is (\d+) \w+\. All corners are right angles\.")
 VENN = re.compile(r'\n?The Venn diagram has two circles\. Only in "([^"]+)": (\d+)\. In both: (\d+)\. Only in "([^"]+)": (\d+)\. In neither: (\d+)\.')
@@ -103,13 +105,79 @@ def fix_hint(x):
              if re.search(r'smallest', last, re.I) else 'For the largest number, put the biggest digit in the highest place.')
     x['hint'] = h
 
+MORE = re.compile(r"^How many more (\w+)s are there in (\d+) than (\w+)s in (\d+)\?$|^How many (\w+)s are there in (\d+)\? How many (\w+)s are there in (\d+)\? What is the difference between your two answers\?$")
+PARTS = re.compile(r"^How many (\w+)s are there in (\d+) (\d+)/(\d+)\?$")
+def fix_parts(x):
+    m = MORE.match(x['q'])
+    if m:
+        a, n1, b, n2 = [g for g in m.groups() if g is not None]
+        x['q'] = f"How many {a}s are there in {n1}? How many {b}s are there in {n2}? What is the difference between your two answers?"
+        k = {'half': 2, 'third': 3, 'quarter': 4, 'fifth': 5, 'sixth': 6, 'seventh': 7, 'eighth': 8, 'ninth': 9, 'tenth': 10, 'eleventh': 11, 'twelfth': 12}
+        x['hint'] = f"1 whole = {k.get(a, '?')} {a}s and 1 whole = {k.get(b, '?')} {b}s. Find the {a}s in {n1} and the {b}s in {n2}, then take the smaller from the bigger."
+        return
+    m = PARTS.match(x['q'])
+    if m:
+        a, w, t, b = m.groups()
+        x['hint'] = f"Each whole has {b} {a}s. Count the {a}s in {w} wholes, then add the extra {t}."
+
+from fractions import Fraction as _F
+from math import gcd as _gcd
+FR = re.compile(r'(?:(\d+) )?(\d+)/(\d+) ([+−]) (?:(\d+) )?(\d+)/(\d+)')
+def _mixed(f):
+    w, r = divmod(f.numerator, f.denominator)
+    return f"{w}" if r == 0 else (f"{r}/{f.denominator}" if w == 0 else f"{w} {r}/{f.denominator}")
+def _tail(n, l):
+    """N/L, then simplified, then as a mixed number"""
+    out = [f"{n}/{l}"]; g = _gcd(n, l)
+    if g > 1 and n: out.append(f"{n // g}/{l // g}" if l // g != 1 else f"{n // g}")
+    f = _F(n, l)
+    if f.numerator > f.denominator and f.denominator != 1: out.append(_mixed(f))
+    return out
+def _ans(a):
+    m = re.fullmatch(r'\s*(?:(\d+) )?(\d+)/(\d+)\s*|\s*(\d+)\s*', str(a))
+    if not m: return None
+    if m.group(4): return _F(int(m.group(4)))
+    return int(m.group(1) or 0) + _F(int(m.group(2)), int(m.group(3)))
+def fix_fracwork(x):
+    s = x.get('s', '')
+    vague = re.search(r'Use a common denominator|Change to a common denominator|Whole numbers: \d+(?: [+−] \d+ = \d+)?\. Fractions|The denominators are the same', s)
+    if not vague: return
+    q = x['q'].split('\n')[-1]
+    m = FR.search(q)
+    if not m: return
+    w1, n1, d1, op, w2, n2, d2 = m.groups()
+    w1, w2 = int(w1 or 0), int(w2 or 0); n1, d1, n2, d2 = int(n1), int(d1), int(n2), int(d2)
+    A, B = w1 + _F(n1, d1), w2 + _F(n2, d2); R = A + B if op == '+' else A - B
+    if _ans(x['a']) != R: return
+    L = d1 * d2 // _gcd(d1, d2)
+    conv = lambda n, d: f"{n * (L // d)}/{L}"
+    lead = f"Use a common denominator of {L}" if d1 != d2 else "The denominators are the same"
+    if not w1 and not w2:
+        steps = [f"{n1}/{d1} {op} {n2}/{d2}"]
+        if d1 != d2: steps.append(f"{conv(n1, d1)} {op} {conv(n2, d2)}")
+        N = n1 * (L // d1) + (n2 * (L // d2) if op == '+' else -n2 * (L // d2))
+        steps += _tail(N, L)
+        x['s'] = f"{lead}: " + " = ".join(dict.fromkeys(steps)) + "."
+    elif op == '+':
+        W = w1 + w2; N = n1 * (L // d1) + n2 * (L // d2)
+        fs = [f"{n1}/{d1} + {n2}/{d2}"] + ([f"{conv(n1, d1)} + {conv(n2, d2)}"] if d1 != d2 else []) + _tail(N, L)
+        tot = f"{W} + {_mixed(_F(N, L))} = {_mixed(R)}" if N >= L else _mixed(R)
+        x['s'] = f"Whole numbers: {w1} + {w2} = {W}. Fractions: " + " = ".join(dict.fromkeys(fs)) + f". Total: {tot}."
+    else:
+        i1, i2 = w1 * d1 + n1, w2 * d2 + n2
+        parts = [f"{w1} {n1}/{d1} = {i1}/{d1}" if w1 else None, f"{w2} {n2}/{d2} = {i2}/{d2}" if w2 else None]
+        steps = [f"{i1}/{d1} − {i2}/{d2}"] + ([f"{i1 * (L // d1)}/{L} − {i2 * (L // d2)}/{L}"] if d1 != d2 else [])
+        N = i1 * (L // d1) - i2 * (L // d2)
+        steps += _tail(N, L)
+        x['s'] = "Change to improper fractions: " + " and ".join(p for p in parts if p) + ". " + (f"{lead}: " if d1 != d2 else "") + " = ".join(dict.fromkeys(steps)) + "."
+
 DROP = re.compile(r'\bmedian\b|\bthe range\b|rotational symmetry|\bprobability\b', re.I)
 
 def run(items):
     keep = []; dropped = 0; changed = 0
     for x in items:
         q0, s0 = x.get('q', ''), x.get('s', '')
-        fix_move(x); fix_pics(x); fix_lists(x); fix_hint(x)
+        fix_move(x); fix_pics(x); fix_lists(x); fix_hint(x); fix_parts(x); fix_fracwork(x)
         x['q'] = fix_q(x['q'])
         if 'hint' in x and isinstance(x['hint'], str): x['hint'] = fix_q(x['hint'])
         x['s'] = fix_s(x['s'], x['q'])
