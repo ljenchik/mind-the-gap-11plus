@@ -1,51 +1,61 @@
 <!DOCTYPE html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mind the Gap 11+ · 11+ maths practice for Year 5</title>
-<meta name="description" content="Maths practice for Year 5 children preparing for the CSSE 11+ test in Essex: an initial assessment, topic practice, 60 practice papers and help to fix mistakes.">
-<meta name="theme-color" content="#0f7c8c"><link rel="icon" href="app/icon-192.png"><link rel="stylesheet" href="style.css"></head>
+<title>Mind the Gap 11+ · CSSE 11+ maths practice for Year 5</title>
+<meta name="description" content="CSSE 11+ maths practice for Year 5: a starting check, short daily sessions, 60 CSSE-style practice papers, and a parent view that shows what to practise next.">
+<meta name="theme-color" content="#0f7c8c"><link rel="icon" href="app/icon-192.png"><link rel="stylesheet" href="style.css">
+<style>
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 0 8px; }
+.tile { font: inherit; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 12px; cursor: pointer; color: var(--ink); display: grid; gap: 4px; align-content: start; min-height: 96px; }
+.tile b { font-size: 16px; line-height: 1.25; }
+.tile span { color: var(--muted); font-size: 14px; line-height: 1.35; }
+.tile[aria-expanded="true"] { border: 2px solid var(--accent); padding: 13px 11px; }
+.more { grid-column: 1 / -1; background: var(--card); border: 2px solid var(--accent); border-radius: 16px; padding: 16px 18px; }
+.more h3 { margin: 0 0 6px; } .more p { margin: 6px 0; } .more ul { margin: 6px 0; padding-left: 20px; }
+.tap { color: var(--muted); font-size: 15px; margin: 0; }
+.steps { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 8px; }
+@media (max-width: 520px) { .tile { padding: 12px 10px; min-height: 84px; } .tile b { font-size: 15px; } .tile span { display: none; } }
+</style></head>
 <body>
 <header><div class="wrap"><a class="brand" href="/">Mind the Gap 11+</a><a class="btn" href="app/">Open the app</a></div></header>
 <main class="wrap">
 <section class="hero">
-  <h1>11+ maths practice for Year 5</h1>
-  <p>For children getting ready for the CSSE 11+ maths test in Essex. Your child finds out what they don't know yet, practises it, and fixes their mistakes.</p>
+  <h1>CSSE 11+ maths practice that finds the gaps and fixes them</h1>
+  <p>For Year 5 children getting ready for the Essex CSSE 11+ test. Short daily sessions build every skill, exam-like papers show how your child is doing, and the parent view tells you exactly what to practise next.</p>
   <div class="row"><a class="btn" href="app/">Start free</a><a class="btn ghost" href="#prices">Prices</a></div>
 </section>
 
-<h2>Why parents choose it</h2>
-<div class="grid">
-  <div class="card"><h3>Made for the CSSE maths test</h3><p>Questions follow its topics and order, from the first gentle paper to full test level.</p></div>
-  <div class="card"><h3>Mistakes are fixed, not just marked</h3><p>After a paper, your child gets new questions like the ones they got wrong, so they practise the method, not the answer.</p></div>
-  <div class="card"><h3>Help when stuck</h3><p>A help card for every part of every topic, and a worked answer for every question.</p></div>
-  <div class="card"><h3>Easy on a phone</h3><p>Big buttons, number boxes that only take numbers, and answers you can tap. Works on tablets and computers too.</p></div>
-  <div class="card"><h3>Nothing to distract</h3><p>No adverts, no prizes and no chat. Just maths, 10 to 20 minutes a day.</p></div>
-  <div class="card"><h3>You can see the gaps</h3><p>Scores by topic, an estimated test score and a short weekly note you can share.</p></div>
+<h2>Why families choose it</h2>
+<p class="tap">Tap a tile to read more.</p>
+<div class="tiles" id="tiles">
+  <button class="tile" type="button" aria-expanded="false" data-i="0"><b>Made for the CSSE test</b><span>Topics in the same order as the exam.</span></button>
+  <button class="tile" type="button" aria-expanded="false" data-i="1"><b>Starts with a check</b><span>Find out what your child knows.</span></button>
+  <button class="tile" type="button" aria-expanded="false" data-i="2"><b>A plan for each day</b><span>Short sessions on the right topics.</span></button>
+  <button class="tile" type="button" aria-expanded="false" data-i="3"><b>Over 6000 questions</b><span>8 topics, from easy to challenge.</span></button>
+  <button class="tile" type="button" aria-expanded="false" data-i="4"><b>60 exam-like papers</b><span>They open one at a time.</span></button>
+  <button class="tile" type="button" aria-expanded="false" data-i="5"><b>Mistakes get fixed</b><span>New questions on the same skill.</span></button>
+  <button class="tile" type="button" aria-expanded="false" data-i="6"><b>Help when stuck</b><span>Help cards and worked answers.</span></button>
+  <button class="tile" type="button" aria-expanded="false" data-i="7"><b>Easy for children</b><span>Calm, clear and phone friendly.</span></button>
+  <button class="tile" type="button" aria-expanded="false" data-i="8"><b>Parents see the gaps</b><span>Progress, notes and printing.</span></button>
 </div>
+<template id="more">
+  <div><h3>Made for the CSSE test</h3><p>Everything is built around the CSSE maths test: its topics, in its order. Practice papers have 20 questions, 50 to 55 marks and 60 minutes, with no calculator.</p></div>
+  <div><h3>Starts with a check</h3><p>The initial assessment is two short tests, A and B. They show which topics your child already knows and which need work, so practice starts in the right place.</p></div>
+  <div><h3>A plan for each day</h3><p>"Today's practice" is a short set of questions taken from the topics that need it most. 10 to 20 minutes a day is enough. Your child can still practise any topic they like: the plan suggests, it never locks.</p></div>
+  <div><h3>Over 6000 questions</h3><p>8 topics, from Number to Problem solving, split into 34 smaller parts. Pick one topic, mix several, or practise them all. Questions go from easy to challenge, with pictures, charts, tables and puzzles.</p></div>
+  <div><h3>60 exam-like papers</h3><p>CSSE-style papers with the topics in the same order as the exam. Paper 1 is the gentlest, and each one after it is a little harder.</p><ul><li>Paper 1 is open from the start.</li><li>The next paper opens after 55% on the first try, or after "Fix my mistakes".</li><li>Only the first try counts. A retake has different questions.</li></ul></div>
+  <div><h3>Mistakes get fixed</h3><p>After a set or a paper, "Fix my mistakes" gives new questions like the ones your child got wrong, so they practise the method, not the answer. In practice, a right answer on the second try still earns the mark.</p></div>
+  <div><h3>Help when stuck</h3><p>A help card for every part of every topic, with the key rule and an example. Every question has a worked answer: tap "How to work it out".</p></div>
+  <div><h3>Easy for children</h3><p>Big buttons, number boxes that only take numbers, and answers you can tap. No adverts, no prizes and no chat. Bigger text, a dark screen, easy-to-read letters and colour-blind friendly colours are one tap away. Works on phones, tablets and computers.</p></div>
+  <div><h3>Parents see the gaps</h3><p>The parents' area has a PIN. It shows scores for each topic, an estimated test score, a short weekly note you can share, and papers to print. Each child has their own profile, and brothers and sisters are half price.</p></div>
+</template>
 
 <h2>How it works</h2>
-<div class="grid">
-  <div class="card"><h3>1. Initial assessment</h3><p>Two short tests, A and B, show which topics your child knows and which need more work.</p></div>
-  <div class="card"><h3>2. Practise by topic</h3><p>Over 6000 questions in 8 topics, from Number to Problem solving. Pick one topic or several.</p></div>
-  <div class="card"><h3>3. 60 CSSE-style papers</h3><p>Exam-like practice papers with the topics in the same order as the CSSE test. Paper 1 is the gentlest; each one after it is a little harder.</p></div>
-  <div class="card"><h3>4. Fix my mistakes</h3><p>New questions on the parts your child got wrong, until the method sticks.</p></div>
-</div>
-
-<h2>How the papers open</h2>
-<div class="card">
-  <p>Paper 1 is open from the start. The next paper opens when your child either:</p>
-  <ul>
-    <li>scores 55% or more on their first try, or</li>
-    <li>finishes "Fix my mistakes" for that paper.</li>
-  </ul>
-  <p>Only the first try counts towards their score. They can take a paper again, but a retake has different questions.</p>
-</div>
-
-<h2>For the whole family</h2>
-<div class="grid">
-  <div class="card"><h3>A profile for each child</h3><p>Their own name, picture, colours and progress.</p></div>
-  <div class="card"><h3>Parents' area</h3><p>Protected by a PIN: progress for each child, printable papers and the plans.</p></div>
-  <div class="card"><h3>Easier to see</h3><p>Bigger text, a dark screen, easy-to-read letters and colour-blind friendly colours.</p></div>
-</div>
+<ol class="steps">
+  <li><b>Add your child.</b> A name or username, a picture and colours.</li>
+  <li><b>Take the initial assessment.</b> Two short tests show where the gaps are.</li>
+  <li><b>Practise a little each day.</b> Topic sets and "Today's practice".</li>
+  <li><b>Try the papers.</b> One at a time, then fix the mistakes.</li>
+</ol>
 
 <h2 id="prices">Prices</h2>
 <div class="grid price">
@@ -56,4 +66,22 @@
 <p>Brothers and sisters are half price. You pay in the app: Parents → Plan and access.</p>
 </main>
 <footer><div class="wrap">Mind the Gap 11+ is independent and not connected with CSSE. · <a href="privacy.html">Privacy policy</a></div></footer>
+<script>
+(() => {
+  const grid = document.getElementById("tiles"), texts = [...document.getElementById("more").content.children];
+  const cols = () => getComputedStyle(grid).gridTemplateColumns.split(" ").length;
+  let open = null;
+  grid.addEventListener("click", e => {
+    const t = e.target.closest(".tile"); if (!t) return;
+    const i = +t.dataset.i, was = open && open.dataset.for === String(i);
+    if (open) open.remove(); open = null;
+    grid.querySelectorAll(".tile").forEach(x => x.setAttribute("aria-expanded", "false"));
+    if (was) return;
+    const tiles = [...grid.querySelectorAll(".tile")], c = cols(), end = Math.min(tiles.length, Math.ceil((i + 1) / c) * c) - 1;
+    open = document.createElement("div"); open.className = "more"; open.dataset.for = i; open.setAttribute("role", "region");
+    open.innerHTML = texts[i].innerHTML; tiles[end].after(open); t.setAttribute("aria-expanded", "true");
+    open.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
+})();
+</script>
 </body></html>

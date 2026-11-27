@@ -92,13 +92,24 @@ def fix_lists(x):
     rest = x['q'][m.end():].strip()
     x['q'] = x['q'][:m.start()].strip() + ' The table shows the results.\nBrothers and sisters | Children\n' + '\n'.join(f'{k} | {c}' for c, k in rows) + ('\n' + rest if rest else '')
 
+def fix_hint(x):
+    h = x.get('hint')
+    if not isinstance(h, str) or not h: return
+    last = x['q'].split('\n')[-1]
+    if h.startswith('Probability ='):
+        h = 'Write it as a fraction: the part on top, the whole underneath. Then simplify it.'
+    if h.startswith('Put the biggest digit in the highest place'):
+        h = ('For the smallest number, put the smallest digit in the highest place (a number cannot start with 0).'
+             if re.search(r'smallest', last, re.I) else 'For the largest number, put the biggest digit in the highest place.')
+    x['hint'] = h
+
 DROP = re.compile(r'\bmedian\b|\bthe range\b|rotational symmetry|\bprobability\b', re.I)
 
 def run(items):
     keep = []; dropped = 0; changed = 0
     for x in items:
         q0, s0 = x.get('q', ''), x.get('s', '')
-        fix_move(x); fix_pics(x); fix_lists(x)
+        fix_move(x); fix_pics(x); fix_lists(x); fix_hint(x)
         x['q'] = fix_q(x['q'])
         if 'hint' in x and isinstance(x['hint'], str): x['hint'] = fix_q(x['hint'])
         x['s'] = fix_s(x['s'], x['q'])

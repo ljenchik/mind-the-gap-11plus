@@ -2895,28 +2895,29 @@ function pvGrid(n) {
 function hintFor(q) {
   const text = q.q.split(SPLIT)[0], flat = text.replace(/\n/g, "   ");
   const nums = (flat.match(/−?\d+(?:\.\d+)?/g) || []).map(x => +x.replace("−", "-"));
+  /* "pure" = a bare calculation, not a word problem */
+  const pure = !/[a-z]{3,}/i.test(flat.replace(/^\s*(Work out|What is)\b/i, "").replace(/[a-d]\)/g, ""));
   const say = (pic, msg) => `<div class="hint"><span class="hint-msg">${fracHTML(msg)}</span>${pic ? `<span class="hint-pic">${pic}</span>` : ""}</div>`;
   if (q.hint) return say("", q.hint);
   if (q.pic && /^line/.test(q.pic) && /arrow/i.test(flat)) return say("", "First work out what each jump is worth: (end number − start number) ÷ number of jumps. Then count the jumps to the arrow.");
   if (/___\s{5,}<|<\s+>\s+=/.test(q.q) && !nums.some(x => x < 0) && /[+−×÷-]\s*\d/.test(flat.replace(/<|>|=/g, ""))) return say("", "Work out each side first, then compare the two answers.");
   if (/January|February|March|April|May|June|July|August|September|October|November|December/.test(flat) && /days/i.test(flat)) return say("", "30 days have September, April, June and November. All the rest have 31, except February: 28 days (29 in a leap year). Find each month, then add them.");
-  if (/born|birthday/i.test(flat)) return say("", "Take the earlier year away from the later year to find the age. To find a year, add or take away the age.");
-  if (/years? old|older|younger|How old/i.test(flat) && !/halve|doubl/i.test(flat)) return say("", "Draw a bar for each person. Older means add the difference; younger means take it away. Everyone gets older by the same number of years.");
-  if (new Set((flat.replace(/school year/gi, "").match(/\b(second|minute|hour|day|week|month|year)s?\b/gi) || []).map(u => u.toLowerCase().replace(/s$/, ""))).size >= 2 && !/clock/i.test(flat)) return say("", "60 seconds = 1 minute, 60 minutes = 1 hour, 24 hours = 1 day, 7 days = 1 week, 12 months = 1 year.");
+  if (/how many (seconds|minutes|hours|days|weeks|months)|in (seconds|minutes|hours|days|weeks)\b/i.test(flat) && new Set((flat.replace(/school year/gi, "").match(/\b(second|minute|hour|day|week|month|year)s?\b/gi) || []).map(u => u.toLowerCase().replace(/s$/, ""))).size >= 2 && !/clock/i.test(flat)) return say("", "60 seconds = 1 minute, 60 minutes = 1 hour, 24 hours = 1 day, 7 days = 1 week, 12 months = 1 year.");
   if (/=/.test(flat) && /___/.test(flat) && /\d{4} = |= \d{4}$|\d{4}$/.test(flat) && /\+/.test(flat) && !/×/.test(flat)) { const v = nums.find(x => x >= 1000 && x <= 9999 && x % 1000); if (v) return say(pvGrid(v), `Put ${v} in a place value grid. Each digit shows how many thousands, hundreds, tens and ones.`); }
   if (/halve|doubl/i.test(flat) && /answer is|gets? \d|How old|What was (my|his|her)/i.test(flat)) return say("", "Work backwards from the answer and undo each step in reverse order. To undo halving, double. To undo doubling, halve.");
   if (q.t === "Think of a number" || /think of a number|thinks of a number|What was my number|What number did I/i.test(flat)) return say("", "Work backwards: start from the answer and undo each step in reverse order. Undo + with −, × with ÷.");
-  if (/\b(even|odd) numbers?\b/i.test(flat)) return say("", "Even numbers end in 0, 2, 4, 6 or 8. Odd numbers end in 1, 3, 5, 7 or 9.");
+  if (/\b(is it|odd or even|even or odd)\b/i.test(flat) && /\b(even|odd)\b/i.test(flat)) return say("", "Even numbers end in 0, 2, 4, 6 or 8. Odd numbers end in 1, 3, 5, 7 or 9.");
   if (/what fraction/i.test(flat)) return say("", "Write it as a fraction: the part on top, the whole underneath. Then see if you can simplify it.");
   if (/how long|how many minutes|journey took|did it take/i.test(flat) && (/\d:\d\d/.test(flat) || (q.pic && /^clock/.test(q.pic)))) return say("", "Read the start time first. Count on to the next o'clock, then on to the end time. Add the jumps together.");
   if (/24-hour/i.test(flat) || (/\d:\d\d/.test(flat) && /\b(1[3-9]|2[0-3]):\d\d\b/.test(flat))) return say("", "In the afternoon and evening, add 12 to the hours: 3:45 pm is 15:45.");
   { const im = flat.match(/(\d+)\/(\d+)/); if (im && +im[1] > +im[2] && /mixed/i.test(flat)) return say("", `${im[2]}/${im[2]} makes 1 whole. How many wholes fit into ${im[1]}/${im[2]}, and what is left over?`); }
   const rn = flat.match(/nearest (10|100|1000)\b/);
-  if (rn && /round/i.test(flat)) {
-    const n = +rn[1], v = nums.find(x => x !== n && x > n);
+  const rv = flat.match(/Round (\d+) to the nearest (10|100|1000)\b/i);
+  if (rn && rv) {
+    const n = +rv[2], v = +rv[1];
     if (v != null) { const lo = Math.floor(v / n) * n, hi = lo + n, step = n / 10; return say(picLine(lo, hi, 10, (v - lo) / step, [lo, "", "", "", "", lo + n / 2, "", "", "", "", hi]), `${v} is between ${lo} and ${hi}. Which one is it nearer? Halfway is ${lo + n / 2}.`); }
   }
-  if (nums.some(x => x < 0) || /°C|below zero|negative/i.test(flat)) {
+  if (/°C|below zero|temperature/i.test(flat)) {
     const lo = Math.min(...nums, 0), hi = Math.max(...nums, 0), a = Math.floor(lo / 2) * 2 - 2, b = Math.ceil(hi / 2) * 2 + 2, span = b - a;
     if (span <= 40) { const st = span <= 20 ? 1 : 2, steps = span / st, labels = []; for (let i = 0; i <= steps; i++) { const v = a + i * st; labels.push(v % (span <= 20 ? 2 : 4) === 0 ? v : ""); } return say(picLine(a, b, steps, null, labels), "Use the number line. Left is smaller, right is bigger. Count the jumps across 0."); }
   }
@@ -2930,21 +2931,18 @@ function hintFor(q) {
     if (q.t === "Simplest form") return say("", "Find a number that divides into both the top and the bottom. Divide both by it, and keep going until you can't.");
   }
   const fr = flat.match(/(\d+)\/(\d+)/);
-  if (fr && +fr[2] <= 12 && +fr[1] <= +fr[2]) return say(picBar(+fr[1], +fr[2]), `${fr[1]}/${fr[2]} means ${fr[1]} out of ${fr[2]} equal parts.`);
   if (q.t === "Short division") return say("", "Start on the left. Divide one digit at a time, and carry anything left over to the next digit.");
   if (q.t === "Column multiplication" && !/□|___/.test(flat)) return say("", "Multiply the ones first, then the tens, then the hundreds. Carry when an answer is 10 or more.");
   const mul = flat.match(/(\d+) × (\d+)/);
-  if (mul && +mul[1] <= 12 && +mul[2] <= 12) { const a = +mul[1], b = +mul[2], from = Math.max(1, b - 3), rows = []; for (let k = from; k < b; k++) rows.push(`${k}=${a * k}`); rows.push(`${b}=?`); return say(drawPic(`times ${a} ${rows.join(" ")}`), `Count on in ${a}s from a fact you know.`); }
+  if (pure && mul && +mul[1] <= 12 && +mul[2] <= 12) { const a = +mul[1], b = +mul[2], from = Math.max(1, b - 3), rows = []; for (let k = from; k < b; k++) rows.push(`${k}=${a * k}`); rows.push(`${b}=?`); return say(drawPic(`times ${a} ${rows.join(" ")}`), `Count on in ${a}s from a fact you know.`); }
   const dv = flat.match(/(\d+) ÷ (\d+)/);
-  if (dv && +dv[2] <= 12 && +dv[1] <= 144 && +dv[1] >= +dv[2]) return say("", `Think: which number times ${dv[2]} makes ${dv[1]}?`);
+  if (pure && dv && +dv[2] <= 12 && +dv[1] <= 144 && +dv[1] >= +dv[2]) return say("", `Think: which number times ${dv[2]} makes ${dv[1]}?`);
   const add = flat.match(/(\d{2,4}) \+ (\d{2,4})(?: \+ (\d{2,4}))?/);
-  if (add && !/□|___/.test(flat)) return say(drawPic(`column ${[add[1], add[2], add[3]].filter(Boolean).join("|")}|`), "Set it out in columns. Start with the ones and carry when a column makes 10 or more.");
-  if (/[IVXLC]{2,}|Roman/.test(flat)) return say("", "I = 1, V = 5, X = 10, L = 50, C = 100. A smaller letter before a bigger one means take it away.");
+  if (pure && add && !/□|___/.test(flat)) return say(drawPic(`column ${[add[1], add[2], add[3]].filter(Boolean).join("|")}|`), "Set it out in columns. Start with the ones and carry when a column makes 10 or more.");
+  if (/[IVXLC]{2,}|Roman/.test(flat)) return say("", (/I = 1/.test(flat) ? "" : "I = 1, V = 5, X = 10, L = 50, C = 100, D = 500, M = 1000. ") + "Work from left to right. A smaller letter before a bigger one means take it away: IV = 4, XC = 90.");
   if (q.pic && /^clock/.test(q.pic)) return say("", "The short hand shows the hour. Each number is 5 minutes for the long hand.");
-  if (/which place|value of the|more than|less than|missing number|largest|smallest/i.test(flat)) { const v = nums.find(x => x >= 1000 && x <= 9999 && x !== 1000); if (v) return say(pvGrid(v), `Put ${v} in a place value grid: thousands, hundreds, tens, ones.`); }
   const lines = text.split("\n");
   if (lines.length > 1 && /sequence|next|missing|counting|count|steps|___/i.test(text)) { const seq = lines[1].split(/\s{3,}/).map(x => x.replace("−", "-")); for (let i = 0; i + 1 < seq.length; i++) if (!isNaN(+seq[i]) && !isNaN(+seq[i + 1]) && seq[i] !== "" && seq[i + 1] !== "") { const d = +seq[i + 1] - +seq[i]; return say("", `Look at the jump from ${seq[i].replace("-", "−")} to ${seq[i + 1].replace("-", "−")}: it is ${d > 0 ? "+" : "−"}${Math.abs(d)}. Does it stay the same?`); } }
-  const h = helpFor(q); if (h) return say("", h.intro);
   return "";
 }
 
