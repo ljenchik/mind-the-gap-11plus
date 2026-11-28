@@ -10,7 +10,13 @@ def dec(fr):
     s = f"{v:.3f}".rstrip('0').rstrip('.')
     return s if F(s) == fr else s  # recurring ones shown to 3 places
 PLACE = {'10': 'ones', '100': 'tens', '1000': 'hundreds', 'thousand': 'hundreds', 'hundred': 'tens', 'ten': 'ones'}
+VUL = {'½': '1/2', '¼': '1/4', '¾': '3/4', '⅓': '1/3', '⅔': '2/3', '⅛': '1/8'}
+def vulgar(t):
+    t = re.sub(r'(\d)([½¼¾⅓⅔⅛])', lambda m: m[1] + ' ' + VUL[m[2]], t)
+    return re.sub(r'[½¼¾⅓⅔⅛]', lambda m: VUL[m[0]], t)
 def fix(x):
+    for f in ('q', 's', 'a', 'hint'):
+        if f in x and re.search(r'[½¼¾⅓⅔⅛]', x[f]): x[f] = vulgar(x[f])
     q, s, a = x['q'], x.get('s', ''), x['a']; n = 0
     # 1. drop "So the answer is X." when the step before already ends with the same number
     m = re.search(r'^(.*?(-?£?[\d.]+)[^\d]{0,12})\. So the answer is ([^.]+(?:\.\d+)?[^.]*)\.$', s)

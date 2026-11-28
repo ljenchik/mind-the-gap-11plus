@@ -3,6 +3,17 @@ function picMore(kind, rest) {
   const arg = rest.join(" "), esc = s => String(s).replace(/_/g, " ").replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" text-anchor="${o.a || "middle"}" font-size="${o.f || 15}" ${o.b ? 'font-weight="700"' : ""} fill="${o.c || "currentColor"}">${esc(s)}</text>`;
   const ink = 'stroke="currentColor" stroke-width="2" fill="none"';
+  if (kind === "machine") {   /* machine ×6;−20;in=8;out=? : a number machine with one box per step */
+    const parts = arg.split(";"), steps = parts.filter(x => !/^(in|out)=/.test(x)), get = k => (parts.find(x => x.startsWith(k + "=")) || "").slice(k.length + 1);
+    const vin = get("in"), vout = get("out"), bw = 74, gap = 26, n = steps.length, ends = 56, W = ends * 2 + n * bw + (n + 1) * gap, y = 34, h = 52;
+    const cols = ["#1971c2", "#e8590c", "#2f9e44", "#9c36b5"];
+    const arrow = x => `<line x1="${x}" y1="${y + h / 2}" x2="${x + gap - 6}" y2="${y + h / 2}" stroke="currentColor" stroke-width="2.5"/><path d="M${x + gap - 8},${y + h / 2 - 6} L${x + gap},${y + h / 2} L${x + gap - 8},${y + h / 2 + 6} Z" fill="currentColor"/>`;
+    const end = (x, lab, v) => `<rect x="${x}" y="${y + 4}" width="${ends}" height="${h - 8}" rx="22" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="${v ? "0" : "5 4"}"/>${T(x + ends / 2, y - 4, lab, { f: 12, b: 1 })}${T(x + ends / 2, y + h / 2 + 7, v || "", { f: 19, b: 1 })}`;
+    let x = 0, g = end(x, "IN", vin); x += ends;
+    steps.forEach((st, i) => { g += arrow(x); x += gap; g += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="8" fill="${cols[i % 4]}" fill-opacity=".14" stroke="${cols[i % 4]}" stroke-width="2.5"/>` + T(x + bw / 2, y + h / 2 + 8, st, { f: 21, b: 1, c: cols[i % 4] }); x += bw; });
+    g += arrow(x); x += gap; g += end(x, "OUT", vout);
+    return `<svg viewBox="-2 0 ${W + 4} ${y + h + 12}" width="${Math.min(340, W + 4)}" role="img" aria-label="Number machine: ${esc(steps.join(", then "))}">${g}</svg>`;
+  }
   if (kind === "journeys") {   /* journeys Name,start,end,km;Name,start,end,km : two steady journeys on one distance–time graph */
     const js = arg.split(";").map(j => { const [n, t0, t1, d] = j.split(","); const mm = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; }; return { n, a: mm(t0), b: mm(t1), d: +d }; });
     const a = Math.floor(Math.min(...js.map(j => j.a)) / 60) * 60, b = Math.ceil(Math.max(...js.map(j => j.b)) / 60) * 60, D = Math.max(...js.map(j => j.d));

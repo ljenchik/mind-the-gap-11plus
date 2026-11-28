@@ -177,6 +177,7 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 .back { background: transparent; color: var(--accent); font-weight: 700; padding: 4px 2px; border: 0; }
 .leave { border: 2px solid var(--sun); border-radius: 14px; padding: 14px; display: grid; gap: 10px; background: var(--bg); }
 #qmarks { color: var(--ink); }
+.quizfoot .navbtn { white-space: nowrap; }
 .quizfoot .total { margin-left: auto; color: var(--muted); font-weight: 600; }
 .quizfoot .total strong { color: var(--accent); }
 .paper { margin: 0; font-weight: 700; color: var(--accent); }
@@ -558,8 +559,10 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
   .opt { min-height: 56px; padding: 10px; }
   .quizfoot { position: sticky; bottom: 0; z-index: 4; background: var(--surface); margin: 0 -14px -14px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); border-radius: 0 0 16px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .quizfoot #next { grid-column: 1 / -1; min-height: 52px; font-size: 1.1rem; }
+  .quizfoot #prev:not([hidden]) + #next { grid-column: 2 / 3; }
+  .quizfoot #prev { min-height: 52px; }
   .quizfoot .ghost { padding: 10px 8px; font-size: .9rem; min-height: 44px; }
-  .quizfoot #skip[hidden] + #quit { grid-column: 1 / 2; }
+  .quizfoot #skip[hidden] + #quit { grid-column: 1 / -1; }
   .quizfoot .total { margin: 0; grid-column: 1 / -1; text-align: center; font-size: .9rem; }
   .count-row .muted { display: none; }
   .count-row label { flex: 1; }
@@ -650,7 +653,7 @@ body[data-view="quiz"] .tabbar, body[data-view="starterView"]:has(#stExam:not([h
     <p class="paper" id="qpaper" hidden></p>
     <div class="options" id="options"></div>
     <div id="feedback" class="feedback" hidden></div>
-    <div class="row quizfoot"><button class="primary" id="next" type="button" hidden>Next</button><button class="ghost" id="skip" type="button" hidden>Skip for now</button><button class="ghost" id="quit" type="button">Stop and see score</button><span class="total">Total: <strong id="qscore"></strong></span></div>
+    <div class="row quizfoot"><button class="ghost navbtn" id="prev" type="button" hidden aria-label="Previous question">‹ Previous</button><button class="primary" id="next" type="button" hidden>Next</button><button class="ghost" id="skip" type="button" hidden>Skip for now</button><button class="ghost" id="quit" type="button">Stop and see score</button><span class="total">Total: <strong id="qscore"></strong></span></div>
   </section>
 
   <section id="done" class="panel" hidden>
@@ -1251,7 +1254,7 @@ function buildQuestion(q) {
       if (wrong.length === 3) return { text: q.q, typed, options: shuffle([q.a, ...wrong]) };
     }
   }
-  return { text: q.q, typed, options: typed ? [] : shuffle(timeFill(q.a, [...new Set([q.a, ...wrongAnswersFor(q).map(ord).filter(o => !/^(1[3-9]|2\d|0):\d\d\s*[ap]m/i.test(o) && !timeOk(o, q.a))])])) };   /* no "20:57 pm", no second right answer */
+  return { text: q.q, typed, options: typed ? [] : shuffle(timeFill(q.a, [...new Set([q.a, ...wrongAnswersFor(q).map(ord).filter(o => !/^(1[3-9]|2\d|0):\d\d\s*[ap]m/i.test(o) && !timeOk(o, q.a) && !/^0\/\d+$/.test(o) && !(/^(\d+)\/\1$/.test(o)))])])) };   /* no "20:57 pm", no second right answer */
 }
 
 /* ---------- pictures drawn in code (SVG) ---------- */
@@ -1548,7 +1551,7 @@ function drawPic(spec) {
       <path d="M78,112 Q130,152 182,112" fill="none" stroke="${col}" stroke-width="2.5" marker-end="url(#eqa)"/>
       <text x="130" y="164" text-anchor="middle" font-size="18" font-weight="700" fill="${col}">${sym}${k}</text></svg>`;
   }
-  if (["venn", "pie", "angline", "tri", "rectfig", "dicenet", "symgrid", "spinner", "shapeq", "sqpat", "tilepat", "lshape", "travel", "journeys"].includes(kind)) return picMore(kind, rest);
+  if (["venn", "pie", "angline", "tri", "rectfig", "dicenet", "symgrid", "spinner", "shapeq", "sqpat", "tilepat", "lshape", "travel", "journeys", "machine"].includes(kind)) return picMore(kind, rest);
   if (kind === "pattern") return picPattern(rest[0]);
   if (kind === "cgrid") return picCgrid(rest);
   if (kind === "magic") return picMagic(rest.join(" "));
@@ -2357,6 +2360,17 @@ function tableHTML(rows) {
 }
 function renderQ() {
   if (run.i >= run.items.length) return finish();
+  renderQ0();
+  const it = run.items[run.i];
+  if (!run.mock && it.snap) {   /* a question already answered: show it as it was, with the feedback */
+    const fb = $("feedback"), box = $("options");
+    box.innerHTML = it.snap.opts; box.querySelectorAll("button, input").forEach(b => b.disabled = true);
+    fb.innerHTML = it.snap.fb; fb.className = it.snap.cls; fb.hidden = false;
+    const hl = fb.querySelector(".helpline button"), hc = hl && helpFor(it.q); if (hl && hc) hl.onclick = e => { e.target.parentNode.outerHTML = `<div class="helpbox">${helpBack(hc)}</div>`; };
+    const hb = document.querySelector("#quiz .hintbtn, #hintBtn"); if (hb) hb.hidden = true;
+  }
+}
+function renderQ0() {
   /* every new question starts at the top of the screen */
   { const ae = document.activeElement; if (ae && ae.tagName === "INPUT" && ae.blur) ae.blur(); }
   window.scrollTo(0, 0); { const kp = document.querySelector(".kbpanel"); if (kp) kp.scrollTop = 0; }
@@ -2365,11 +2379,16 @@ function renderQ() {
   $("qcount").textContent = (run.checkup ? "Check-up · " : run.paperName ? run.paperName + " · " : run.mock ? "Mock test · " : "") + `Question ${run.i + 1} of ${total}` + (run.auto ? ` · ${run.auto.lv}` : "");
   $("qscore").textContent = `${run.marks} ${run.marks === 1 ? "mark" : "marks"}`;
   $("bar").style.width = (run.i / total * 100) + "%";
-  { const segs = total <= 60; $("qprog").hidden = segs; $("qline").hidden = !segs;   /* one piece per question: done, this one, still to do */
+  { const segs = !!run.mock && total <= 60; $("qprog").hidden = segs; $("qline").hidden = !segs;   /* one piece per question: done, this one, still to do */
     if (segs) $("qline").innerHTML = run.items.map((_, k) => `<span class="${k < run.i ? "done" : k === run.i ? "now" : ""}"></span>`).join(""); }
   $("feedback").hidden = true; $("next").hidden = true;
   $("qreport").innerHTML = reportUI(run.items[run.i].q.id); wireReport($("qreport"));
-  $("skip").hidden = run.i >= run.items.length - 1;
+  $("skip").hidden = !run.mock || run.i >= run.items.length - 1;
+  if (!run.mock) {   /* topics: move back and forward freely; Next before answering leaves the question for later */
+    $("prev").hidden = run.i === 0;
+    $("next").hidden = false; $("next").textContent = run.i + 1 >= run.items.length ? "See my score" : "Next ›";
+    $("next").className = run.items[run.i].snap ? "primary" : "ghost";
+  } else $("prev").hidden = true;
   const { q, built } = run.items[run.i];
   const [first, ...rest] = built.text.split("\n");
   let shownText = /\ba\) /.test(first) ? first.replace(/\s+(?=[a-d]\) )/g, "\n") : first;
@@ -2402,7 +2421,7 @@ function renderQ() {
       $("orderPicked").innerHTML = ""; $("orderPool").innerHTML = "";
       picked.forEach((x, i) => { if (i) { const s = document.createElement("span"); s.className = "arrowsep"; s.textContent = "→"; $("orderPicked").append(s); } $("orderPicked").append(mk(x, () => { const k = picked.indexOf(x); if (k < 0) return; picked.splice(k, 1); pool.push(x); draw(); }, "on")); });
       if (!picked.length) $("orderPicked").innerHTML = '<span class="muted">Your order will appear here</span>';
-      pool.forEach(x => $("orderPool").append(mk(x, () => { const k = pool.indexOf(x); if (k < 0) return; pool.splice(k, 1); picked.push(x); draw(); }, "off")));
+      pool.forEach(x => $("orderPool").append(mk(x, () => { const k = pool.indexOf(x); if (k < 0) return; pool.splice(k, 1); picked.push(x); draw(); }, "avail")));
       $("orderCheck").disabled = pool.length > 0;
     };
     $("orderCheck").onclick = () => answer("order", picked.join(" · "));
@@ -2520,7 +2539,9 @@ function answer(btn, choice) {
   const last = run.i + 1 >= run.items.length;
   $("skip").hidden = true;
   $("next").hidden = false;
-  $("next").textContent = last ? "See my score" : "Next";
+  $("next").textContent = last ? "See my score" : "Next ›"; $("next").className = "primary";
+  document.querySelectorAll("#options input").forEach(i => i.setAttribute("value", i.value));
+  run.items[run.i].snap = { opts: $("options").innerHTML, fb: fb.innerHTML, cls: fb.className };
   run.answeredAt = Date.now();
   setTimeout(() => $("next").focus({ preventScroll: true }), 0);
 }
@@ -2598,6 +2619,7 @@ $("start").onclick = () => { FROM_SETUP = true; try { start(); } finally { FROM_
 $("count").onkeydown = e => { if (e.key === "Enter") $("start").onclick(); };
 $("skip").onclick = () => { if (run.i >= run.items.length - 1) return; const it = run.items.splice(run.i, 1)[0]; it.skipped = (it.skipped || 0) + 1; run.items.push(it); renderQ(); };
 $("next").onclick = () => { if (Date.now() - (run.answeredAt || 0) < 400) return; run.i++; renderQ(); };
+$("prev").onclick = () => { if (run.i > 0) { run.i--; renderQ(); } };
 $("quit").onclick = finish;
 $("retryMissed").onclick = () => run.paperName && run.mock ? startFix(run.paperName.replace(/ · retake$/, ""), run.missed.slice()) : startMistakes(run.missed.slice());
 const againDefault = () => (run && run.checkup ? show("home") : run && run.mock && !run.assignedAt ? startMock() : run && run.assignedAt ? show("home") : run && run.sks ? $("start").onclick() : start());

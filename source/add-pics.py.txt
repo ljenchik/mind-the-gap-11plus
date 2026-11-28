@@ -1,0 +1,58 @@
+"""Pictures for questions that only had words (27 Nov): angles, coordinates, rectangles, number machines,
+shape equations. Safe to run more than once (questions that already have a picture are left alone)."""
+import json, re
+SYM = {'□': 'sq', '△': 'tri', '★': 'star', '●': 'cir', '○': 'cir', '♥': 'heart', '⬡': 'hex', '◆': 'hex'}
+OPS = {'adds': '+', 'add': '+', 'takes away': '−', 'take away': '−', 'subtracts': '−', 'subtract': '−', 'multiplies it by': '×', 'multiplies by': '×', 'multiplies the input by': '×', 'divides it by': '÷', 'divides by': '÷', 'divides the input by': '÷'}
+def num(t): return t.replace('-', '−')
+def pic_for(x):
+    q, sk = x['q'], x.get('skill')
+    flat = q.replace('\n', ' ')
+    if sk == 'ang':
+        m = re.search(r'Two angles (?:of|in) a triangle are (\d+)° and (\d+)°', flat)
+        if m: return f"tri {m[1]}°,{m[2]}°,?"
+        m = re.search(r'isosceles triangle has a top angle of (\d+)°', flat)
+        if m: return f"tri ?,?,{m[1]}°"
+        m = re.search(r'(?:Two angles on a straight line are|The angles) (\d*x) and (\d*x)(?: lie on a straight line)?', flat)
+        if m: return f"angline {m[1]},{m[2]}"
+        m = re.search(r'(?:One|An) angle on a straight line is (\d+)°', flat)
+        if m: return f"angline {m[1]}°,?"
+        m = re.search(r'Three angles on a straight line are (\d+)°, (\d+)° and (\w+)', flat)
+        if m: return f"angline {m[1]}°,{m[2]}°,{m[3]}"
+    if sk == 'coord' and not re.search(r'reflect|translat|mirror', flat, re.I):
+        stem = q.split('\n')[0]
+        pts = re.findall(r'\b([A-Z])?\s?\((−?-?\d+), ?(−?-?\d+)\)', stem)
+        vals = [(int(a.replace('−', '-')), int(b.replace('−', '-'))) for _, a, b in pts]
+        if 2 <= len(pts) <= 4 and all(-6 <= v <= 6 for p in vals for v in p):
+            labs = [l or 'ABCD'[i] for i, (l, _, _) in enumerate(pts)]
+            return 'cgrid ' + ' '.join(f"{l}:{a},{b}" for l, (a, b) in zip(labs, vals))
+    if sk == 'rect' and not re.search(r'square|triangle|Rectangle B|two rectangles', flat, re.I):
+        m = re.search(r'rectangle (?:is|measures|has sides of|of) (\d+(?:\.\d+)?) (cm|m) by (\d+(?:\.\d+)?) \2', flat, re.I) or \
+            re.search(r'rectangle is (\d+(?:\.\d+)?) (cm|m) long and (\d+(?:\.\d+)?) \2 wide', flat, re.I)
+        if m: return f"rectfig {m[1]} {m[3]} {m[2]}"
+    if sk in ('mach', 'eq'):
+        m = re.search(r'(?:machine|number machine|thinks of a number,?) (multiplies (?:it |the input )?by|divides (?:it |the input )?by|adds|takes away|subtracts) (\d+),? (?:and )?(?:then )?(multiplies (?:it )?by|divides (?:it )?by|adds|takes away|subtracts|add|take away) (\d+)', flat)
+        if m:
+            o = lambda w: '×' if w.startswith('mult') else '÷' if w.startswith('div') else '+' if w.startswith('add') else '−'
+            st = f"{o(m[1])}{m[2]};{o(m[3])}{m[4]}"
+            i = re.search(r'(?:input|number) is (\d+)\b', flat); out = re.search(r'(?:output|answer) is (\d+)\b', flat)
+            if out and re.search(r'What was the (?:input|number)|What number', flat): return f"machine {st};in=?;out={out[1]}"
+            if i: return f"machine {st};in={i[1]};out=?"
+            if re.search(r'In:.*\|', q): return f"machine {st}"
+    if sk == 'eq' and re.search('[□△★●○♥]', q):
+        lines = [l.strip() for l in q.split('\n') if re.search(r'[□△★●○♥].*=\s*\d+$', l.strip())]
+        if lines:
+            rows = [re.sub(r'\s+', '', ''.join(SYM.get(c, c) for c in l)).replace('-', '−') for l in lines]
+            return 'shapeq ' + ';'.join(rows)
+    return None
+def fix(x):
+    if x.get('pic') or x.get('paper'): return 0
+    p = pic_for(x)
+    if not p: return 0
+    x['pic'] = p
+    if p.startswith('shapeq'):   # the sums are in the picture now
+        keep = [l for l in x['q'].split('\n') if not re.search(r'[□△★●○♥].*=\s*\d+$', l.strip())]
+        x['q'] = '\n'.join(keep)
+    return 1
+if __name__ == '__main__':
+    for f in ('questions.json', 'cem.json'):
+        d = json.load(open(f)); n = sum(fix(x) for x in d); json.dump(d, open(f, 'w'), ensure_ascii=False); print(f, n)
